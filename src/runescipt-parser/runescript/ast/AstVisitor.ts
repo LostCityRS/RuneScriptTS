@@ -29,6 +29,17 @@ import { GameVariableExpression } from './expr/variable/GameVariableExpression';
 import { LocalVariableExpression } from './expr/variable/LocalVariableExpression';
 import { ScriptFile } from './ScriptFile';
 import { Script } from './Scripts';
+import { ReturnStatement } from './statement/ReturnStatement';
+import { EmptyStatement } from './statement/EmptyStatement';
+import { IfStatement } from './statement/IfStatement';
+import { DeclarationStatement } from './statement/DeclarationStatement ';
+import { BlockStatement } from './statement/BlockStatement';
+import { WhileStatement } from './statement/WhileStatement';
+import { ExpressionStatement } from './statement/ExpressionStatement';
+import { SwitchCase } from './statement/SwitchCase';
+import { SwitchStatement } from './statement/SwitchStatement';
+import { AssignmentStatement } from './statement/AssignmentStatement';
+import { ArrayDeclarationStatement } from './statement/ArrayDeclarationStatement';
 
 export abstract class AstVisitor<R> {
     visitScriptFile(scriptFile: ScriptFile): R {
@@ -41,6 +52,50 @@ export abstract class AstVisitor<R> {
     
     visitParameter(parameter: Parameter): R {
         return this.visitNode(parameter);
+    }
+
+    visitBlockStatement(blockStatement: BlockStatement): R {
+        return this.visitBlockStatement(blockStatement);
+    }
+
+    visitReturnStatement(returnStatement: ReturnStatement): R {
+        return this.visitStatement(returnStatement);
+    }
+
+    visitIfStatement(ifStatement: IfStatement): R {
+        return this.visitStatement(ifStatement);
+    }
+
+    visitWhileStatement(whileStatement: WhileStatement): R {
+        return this.visitStatement(whileStatement);
+    }
+
+    visitSwitchStatement(switchStatement: SwitchStatement): R {
+        return this.visitStatement(switchStatement);
+    }
+
+    visitSwitchCase(switchCase: SwitchCase): R {
+        return this.visitNode(switchCase);
+    }
+
+    visitDeclarationStatement(declarationStatement: DeclarationStatement): R {
+        return this.visitStatement(declarationStatement);
+    }
+
+    visitArrayDeclarationStatement(arrayDeclarationStatement: ArrayDeclarationStatement): R {
+        return this.visitStatement(arrayDeclarationStatement);
+    }
+
+    visitAssignmentStatement(assignmentStatement: AssignmentStatement): R {
+        return this.visitStatement(assignmentStatement);
+    }
+
+    visitExpressionStatement(expressionStatement: ExpressionStatement): R {
+        return this.visitStatement(expressionStatement);
+    }
+
+    visitEmptyStatement(emptyStatement: EmptyStatement): R {
+        return this.visitStatement(emptyStatement);
     }
 
     visitStatement(statement: Statement): R {
