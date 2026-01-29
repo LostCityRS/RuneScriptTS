@@ -3,7 +3,6 @@ import { Node } from '../ast/Node';
 import { ParserRuleContext } from 'antlr4ts';
 import { Token as AntlrToken } from 'antlr4ts';
 import { NodeSourceLocation } from '../ast/NodeSourceLocation';
-import { start } from 'node:repl';
 import { TerminalNode } from 'antlr4ts/tree/TerminalNode';
 import { BlockStatementContext, ExpressionListContext, IfStatementContext, NullLiteralContext, ParameterContext, ParenthesisContext, ReturnStatementContext, ScriptContext, ScriptFileContext, SwitchCaseContext, SwitchStatementContext, WhileStatementContext } from '../../../antlr/out/RuneScriptParser';
 import { Expression } from '../ast/expr/Expression';
