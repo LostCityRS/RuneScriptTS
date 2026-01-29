@@ -1,9 +1,10 @@
-import { JavaObjects } from '../runescript/util/JavaObjects';
-import { ToStringHelper } from '../runescript/util/ToStringHelper';
+
 import { NodeSourceLocation } from './NodeSourceLocation';
 import { Node } from './Node';
 import { AstVisitor } from './AstVisitor';
-import { Hashable } from '../runescript/util/Hashable';
+import { Hashable } from '../../util/Hashable';
+import { JavaObjects } from '../../util/JavaObjects';
+import { ToStringHelper } from '../../util/ToStringHelper';
 
 /**
  * A simple node that contains an antlr [org.antlr.v4.runtime.Token] text.

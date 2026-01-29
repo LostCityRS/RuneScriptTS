@@ -1,6 +1,6 @@
-import { Hashable } from '../../runescript/util/Hashable';
-import { JavaObjects } from '../../runescript/util/JavaObjects';
-import { ToStringHelper } from '../../runescript/util/ToStringHelper';
+import { Hashable } from '../../../util/Hashable';
+import { JavaObjects } from '../../../util/JavaObjects';
+import { ToStringHelper } from '../../../util/ToStringHelper';
 import { AstVisitor } from '../AstVisitor';
 import { NodeSourceLocation } from '../NodeSourceLocation';
 import { CallExpression } from './call/CallExpression';

@@ -1,5 +1,6 @@
-import { JavaObjects } from '../runescript/util/JavaObjects';
-import { ToStringHelper } from '../runescript/util/ToStringHelper';
+
+import { JavaObjects } from '../../util/JavaObjects';
+import { ToStringHelper } from '../../util/ToStringHelper';
 import { AstVisitor } from './AstVisitor';
 import { Node } from './Node';
 import { NodeSourceLocation } from './NodeSourceLocation';

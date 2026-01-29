@@ -1,11 +1,11 @@
 import { Node } from './Node';
-import { Hashable } from '../runescript/util/Hashable';
 import { Identifier } from './expr/Identifier';
 import { NodeSourceLocation } from './NodeSourceLocation';
 import { Token } from './Token';
 import { AstVisitor } from './AstVisitor';
-import { JavaObjects } from '../runescript/util/JavaObjects';
-import { ToStringHelper } from '../runescript/util/ToStringHelper';
+import { Hashable } from '../../util/Hashable';
+import { JavaObjects } from '../../util/JavaObjects';
+import { ToStringHelper } from '../../util/ToStringHelper';
 
 /**
  * Represent a single parameter in a [Script].

@@ -1,5 +1,6 @@
-import { JavaObjects } from '../runescript/util/JavaObjects';
-import { ToStringHelper } from '../runescript/util/ToStringHelper';
+
+import { JavaObjects } from '../../util/JavaObjects';
+import { ToStringHelper } from '../../util/ToStringHelper';
 import { AstVisitor } from './AstVisitor';
 import { Identifier } from './expr/Identifier';
 import { Node } from './Node';
@@ -49,7 +50,6 @@ export class Script extends Node {
     this.returnTokens = returnTokens;
     this.statements = statements;
 
-    // Kotlin init { ... }
     this.addChild(trigger);
     this.addChild(name);
 
