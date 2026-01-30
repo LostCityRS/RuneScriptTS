@@ -21,15 +21,17 @@ export class PointerType {
     public static readonly LAST_TARGETSLOT = new PointerType("last_targetslot");
     public static readonly LAST_USEITEM = new PointerType("last_useitem");
     public static readonly LAST_USESLOT = new PointerType("last_useslot");
-    
-    private static readonly NAME_TO_TYPE: Record<string, PointerType> = Object.values(PointerType)
-        .filter((v): v is PointerType => v instanceof PointerType)
+
+    public static readonly ALL: PointerType[] = Object.values(PointerType)
+        .filter((v): v is PointerType => v instanceof PointerType);
+
+    private static readonly NAME_TO_TYPE: Record<string, PointerType> = PointerType.ALL
         .reduce((acc, type) => {
             acc[type.getName().toLowerCase()] = type;
             return acc;
-    }, {} as Record<string, PointerType>);
+        }, {} as Record<string, PointerType>);
 
-    private constructor(public readonly representation: string) {};
+    private constructor(public readonly representation: string) {}
 
     public getName(): string {
         for (const key of Object.keys(PointerType)) {
