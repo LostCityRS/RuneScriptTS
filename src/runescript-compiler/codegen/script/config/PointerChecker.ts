@@ -6,6 +6,7 @@ import { PointerHolder } from '../../../pointer/PointerHolder';
 import { PointerType } from '../../../pointer/PointerType';
 import { ScriptSymbol } from '../../../symbol/ScriptSymbol';
 import { BasicSymbol } from '../../../symbol/Symbol';
+import { TriggerType } from '../../../trigger/TriggerType';
 import { VarBitType, VarNpcType, VarPlayerType } from '../../../type/wrapped/GameVarType';
 import { Opcode } from '../../Opcode';
 import { RuneScript } from '../RuneScript';
@@ -14,10 +15,29 @@ import { InstructionNode } from './InstructionNode';
 import { PointerInstructionNode } from './PointerInstructionNode';
 
 export class PointerChecker {
+    /**
+     * Mapping of a scripts symbol to the code generated script.
+     */
     private readonly scriptsBySymbol: Map<ScriptSymbol, RuneScript>;
+
+    /**
+     * Local instance of the graph generator.
+     */
     private readonly graphGenerator: GraphGenerator;
+
+    /**
+     * Cache of script graphs.
+     */
     private readonly scriptGraphs = new Map<ScriptSymbol, InstructionNode[]>();
+
+    /**
+     * Cache of calculated [PointerHolder]s.
+     */
     private readonly scriptPointers = new Map<ScriptSymbol, PointerHolder>();
+
+    /**
+     * Contains the scripts currently having their pointers calculated.
+     */
     private readonly pendingScripts = new Set<ScriptSymbol>();
 
     constructor(
@@ -29,6 +49,11 @@ export class PointerChecker {
         this.graphGenerator = new GraphGenerator(commandPointers);
     }
 
+    /**
+     * The control flow graph for the script.
+     *
+     * Generates using [GraphGenerator] and caches the result for all future calls.
+     */
     getGraph(script: RuneScript): InstructionNode[] {
         const cached = this.scriptGraphs.get(script.symbol);
         if (cached) return cached;
@@ -81,9 +106,9 @@ export class PointerChecker {
 
         this.pendingScripts.add(symbol);
         for (const pointer of PointerType.ALL) {
-            if (this.requiresPointer(script, pointer)) required.add(pointer);
-            if (this.setsPointer(script, pointer)) set.add(pointer);
-            if (this.corruptsPointer(script, pointer)) corrupted.add(pointer);
+            if (this.requiresPointerScript(script, pointer)) required.add(pointer);
+            if (this.setsPointerScript(script, pointer)) set.add(pointer);
+            if (this.corruptsPointerScript(script, pointer)) corrupted.add(pointer);
         }
         this.pendingScripts.delete(symbol);
 
@@ -101,25 +126,193 @@ export class PointerChecker {
 
     /**
      * [RuneScript]
+     * Verifies that [pointer] is available everywhere that is it needed. If a pointer was deemed
+     * not valid, an error is reported to [diagnostics].
      */
     private validatePointer(script: RuneScript, pointer: PointerType): void {
         const graph = this.getGraph(script);
 
-        const required = graph.filter(node => this.requiresPointer(node, pointer));
-        const set = graph.filter(node => this.setsPointer(node, pointer));
+        const required = graph.filter(node => this.requiresPointerNode(node, pointer));
+        const set = graph.filter(node => this.setsPointerNode(node, pointer));
+        const corrupted = graph.filter(node => this.corruptsPointerNode(node, pointer));
+
+        // Check if the trigger implicitly defines the pointer.
+        if (!this.setsPointerTrigger(script.trigger, pointer)) {
+            /**
+             * If the trigger doesn't implicitly define the pointer we need to specify the starting
+             * node as corrupting it so that there is a path found, resulting in an error.
+             */ 
+            if (graph.length > 0) corrupted.push(graph[0]);
+        }
+
+        /**
+         * Attempt to find a path between any of the nodes that require the pointer and any node
+         * that corrupt the pointer.
+         */
+        const path = this.findEdgePath(
+            required,
+            node => corrupted.includes(node),
+            node => node.previous.filter(prev => !set.includes(prev))
+        );
+
+        /**
+         * If a path was found then there is an error to raise.
+         */
+        if (path !== null) {
+            const errorNode = path[0];
+            const errorLocation =
+                errorNode.instruction?.source ??
+                (() => { throw new Error("Unknown instruction source."); })();
+
+            const corruptedNode = path[path.length -1];
+            const isCorrupted =
+                corruptedNode !== graph[0] && corruptedNode !== errorNode;
+
+            const message = isCorrupted
+                ? DiagnosticMessage.POINTER_CORRUPTED
+                : DiagnosticMessage.POINTER_UNINITIALIZED;
+
+            this.diagnostics.report(
+                new Diagnostic(
+                    DiagnosticType.ERROR,
+                    errorLocation,
+                    message,
+                    [pointer.representation]
+                )
+            );
+
+            if (isCorrupted) {
+                const corruptedLocation =
+                    corruptedNode.instruction?.source ??
+                    (() => { throw new Error("Unknown instruction source."); })();
+
+                this.diagnostics.report(
+                    new Diagnostic(
+                        DiagnosticType.HINT,
+                        corruptedLocation,
+                        DiagnosticMessage.POINTER_CORRUPTED_LOC,
+                        [pointer.representation]
+                    )
+                );
+            }
+
+            const logProcRequirement = (node: InstructionNode): void => {
+                const opcode = node.instruction?.opcode;
+                if (opcode !== Opcode.Gosub && opcode !== Opcode.Jump) {
+                    return;
+                }
+
+                const symbol = node.instruction!.operand as ScriptSymbol;
+                const calledScript = this.scripts.find(s => s.symbol === symbol);
+                if (!calledScript) {
+                    throw new Error("Unable to find script.");
+                }
+
+                const scriptPath = this.requiresPointerPathScript(calledScript, pointer);
+                if (!scriptPath) {
+                    throw new Error("Unable to find requirement path?");
+                }
+
+                const requiredNode = scriptPath[0];
+                const requireLocation = 
+                    requiredNode.instruction?.source ??
+                    (() => { throw new Error("Invalid instruction/source."); })();
+
+                this.diagnostics.report(
+                    new Diagnostic(
+                        DiagnosticType.HINT,
+                        requireLocation,
+                        DiagnosticMessage.POINTER_REQUIRED_LOC,
+                        [pointer.representation]
+                    )
+                );
+
+                logProcRequirement(requiredNode);
+            };
+
+            logProcRequirement(errorNode);
+        }
     }
 
-    private corruptsPointer(script: RuneScript, pointer: PointerType): boolean {
+    /**
+     * Checks if the [TriggerType] sets [pointer] by default.
+     */
+    private setsPointerTrigger(
+        trigger: TriggerType,
+        pointer: PointerType
+    ): boolean {
+        const pointers = trigger.pointers;
+        return pointers != null && pointers.has(pointer);
+    }
+
+    /**
+     * Checks if [RuneScript] requires the [pointer] to be called.
+     */
+    private requiresPointerScript(
+        script: RuneScript,
+        pointer: PointerType
+    ): boolean {
+        return this.requiresPointerPathScript(script, pointer) !== null;
+    }
+
+    /**
+     * Finds a path from instructions that require [pointer] to the first node without passing through
+     * an instruction that sets the pointer.
+     */
+    private requiresPointerPathScript(
+        script: RuneScript,
+        pointer: PointerType
+    ): InstructionNode[] |null {
+        const graph = this.getGraph(script);
+        const usages = graph.filter(node =>
+            this.requiresPointerNode(node, pointer)
+        );
+
+        return this.findEdgePath(
+            usages,
+            node => node === graph[0],
+            node =>
+                node.previous.filter(
+                    prev => !this.setsPointerNode(prev, pointer)
+                )
+        );
+    }
+
+    /**
+     * Checks if [RuneScript] sets the [pointer] after being called.
+     */
+    private setsPointerScript(
+        script: RuneScript,
+        pointer: PointerType
+    ): boolean {
+        const graph = this.getGraph(script);
+        const returns = graph.filter(
+            n => n.instruction?.opcode === Opcode.Return
+        );
+
+        return this.findEdgePath(
+            returns,
+            node => node === graph[0] || this.corruptsPointerNode(node, pointer),
+            node => node.previous.filter(
+                prev => !this.setsPointerNode(prev, pointer)
+            )
+        ) === null;
+    }
+
+    /**
+     * Checks if [RuneScript] corrupts the [pointer] after being called.
+     */
+    private corruptsPointerScript(script: RuneScript, pointer: PointerType): boolean {
         const graph = this.getGraph(script);
 
         const returns = graph.filter(
-            node => node.instruction?.opcode === Opcode.Return;
+            node => node.instruction?.opcode === Opcode.Return
         );
 
         return this.findEdgePath(
             returns,
             node => this.corruptsPointerNode(node, pointer),
-            node => node.previous.filter(prev => !this.setsPointer(prev, pointer))
+            node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
         ) !== null;
     }
 
@@ -127,7 +320,7 @@ export class PointerChecker {
      * [InstructionNode]
      * Checks if the instruction requires [pointer].
      */
-    private requiresPointer(node: InstructionNode, pointer: PointerType): boolean {
+    private requiresPointerNode(node: InstructionNode, pointer: PointerType): boolean {
         const inst = node.instruction;
         if (!inst) return false;
 
@@ -207,7 +400,7 @@ export class PointerChecker {
      * [InstructionNode]
      * Checks if the instruction sets [pointer].
      */
-    private setsPointer(node: InstructionNode, pointer: PointerType): boolean {
+    private setsPointerNode(node: InstructionNode, pointer: PointerType): boolean {
         if (node instanceof PointerInstructionNode) {
             // Special node inserted for commands that conditionally set a pointer.
             return node.set.has(pointer);
@@ -236,7 +429,7 @@ export class PointerChecker {
      * [InstructionNode]
      * Checks if the instruction corrupts [pointer].
      */
-    private corruptsPointer(node: InstructionNode, pointer: PointerType): boolean {
+    private corruptsPointerNode(node: InstructionNode, pointer: PointerType): boolean {
         const inst = node.instruction;
         if (!inst) return false;
 
