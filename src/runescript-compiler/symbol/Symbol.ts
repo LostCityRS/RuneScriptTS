@@ -18,7 +18,7 @@ export class LocalVariableSymbol implements Symbol {
 }
 
 /**
- * Symbols with constant values, new ones sohuld also be included in TypeChecking.isConstantSymbol
+ * Symbols with constant values, new ones should also be included in TypeChecking.isConstantSymbol
  */
 export class BasicSymbol implements Symbol {
     constructor(
