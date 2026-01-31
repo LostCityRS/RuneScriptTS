@@ -9,15 +9,39 @@ export class Diagnostic {
     public readonly message: string;
     public readonly messageArgs: any[];
 
+    /**
+     * [Node] based constructor
+     */
     constructor(
         type: DiagnosticType,
         sourceLocation: Node,
         message: string,
         ...messageArgs: any[]
+    );
+    
+    /**
+     * [NodeSourceLocation] based constructor 
+     */
+    constructor(
+        type: DiagnosticType,
+        sourceLocation: NodeSourceLocation,
+        message: string,
+        ...messageArgs: any[]
+    );
+    
+    constructor(
+        type: DiagnosticType,
+        nodeOrSource: Node | NodeSourceLocation,
+        message: string,
+        ...messageArgs: any[]
     ) {
         this.type = type;
-        
-        this.sourceLocation = sourceLocation.source;
+      
+        if ("source" in nodeOrSource) {
+            this.sourceLocation = nodeOrSource.source;
+        } else {
+            this.sourceLocation = nodeOrSource;
+        }
         
         this.messageArgs = messageArgs;
         this.message = message;
