@@ -55,7 +55,7 @@ export abstract class AstVisitor<R> {
     }
 
     visitBlockStatement(blockStatement: BlockStatement): R {
-        return this.visitBlockStatement(blockStatement);
+        return this.visitStatement(blockStatement);
     }
 
     visitReturnStatement(returnStatement: ReturnStatement): R {
