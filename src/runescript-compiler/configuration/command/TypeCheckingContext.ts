@@ -6,11 +6,13 @@ import { Diagnostic } from '../../diagnostics/Diagnostic';
 import { DiagnosticMessage } from '../../diagnostics/DiagnosticMessage';
 import { Diagnostics } from '../../diagnostics/Diagnostics';
 import { DiagnosticType } from '../../diagnostics/DiagnosticType';
+import { TypeChecking } from '../../semantics/TypeChecking';
 import { BasicSymbol } from '../../symbol/Symbol';
 import { MetaType } from '../../type/MetaType';
 import { TupleType } from '../../type/TupleType';
 import { Type } from '../../type/Type';
 import { TypeManager } from '../../type/TypeManager';
+import { Node } from '../../../runescipt-parser/ast/Node';
 
 /**
  * Contains the context of the [TypeChecking] and supplies useful functions when
@@ -173,7 +175,7 @@ export class TypeCheckingContext {
      * Passes the node through the type checker if it is not `null`.
      */
     public visitNode(node?: Node) {
-        if (node) this.typeChecker.visit(node);
+        if (node) this.typeChecker.visitNodeOrNull(node);
     }
 
     /**
@@ -182,7 +184,7 @@ export class TypeCheckingContext {
     public visitExpression(expr?: Expression, typeHint?: Type) {
         if (!expr) return;
         if (typeHint) expr.typeHint = typeHint;
-        this.typeChecker.visit(expr);
+        this.typeChecker.visitNodeOrNull(expr);
     }
 
     /**
@@ -191,7 +193,7 @@ export class TypeCheckingContext {
     public visitNodeList(nodes?: Node[]) {
         if (!nodes) return;
         for (const node of nodes) {
-            this.typeChecker.visit(node);
+            this.typeChecker.visitNodeOrNull(node);
         }
     }
 
