@@ -1,0 +1,1321 @@
+import { ANTLRErrorListener } from 'antlr4ts/ANTLRErrorListener';
+import { AstVisitor } from '../../runescipt-parser/ast/AstVisitor';
+import { Node } from '../../runescipt-parser/ast/Node';
+import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
+import { DynamicCommandHandler } from '../configuration/command/DynamicCommandHandler';
+import { Diagnostics } from '../diagnostics/Diagnostics';
+import { SymbolTable } from '../symbol/SymbolTable';
+import { TriggerManager } from '../trigger/TriggerManager';
+import { TriggerType } from '../trigger/TriggerType';
+import { PrimitiveType } from '../type/PrimitiveType';
+import { TypeManager } from '../type/TypeManager';
+import { Recognizer } from 'antlr4ts/Recognizer';
+import { RecognitionException } from 'antlr4ts/RecognitionException';
+import { Diagnostic } from '../diagnostics/Diagnostic';
+import { DiagnosticType } from '../diagnostics/DiagnosticType';
+import { Token } from '../../runescipt-parser/ast/Token';
+import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, Symbol } from '../symbol/Symbol';
+import { ClientScriptSymbol, ScriptSymbol } from '../symbol/ScriptSymbol';
+import { Type } from '../type/Type';
+import { CommandTrigger } from '../trigger/CommandTrigger';
+import { MetaType } from '../type/MetaType';
+import { ArrayType } from '../type/wrapped/ArrayType';
+import { Expression } from '../../runescipt-parser/ast/expr/Expression';
+import { TupleType } from '../type/TupleType';
+import { DiagnosticMessage } from '../diagnostics/DiagnosticMessage';
+import { Identifier } from '../../runescipt-parser/ast/expr/Identifier';
+import { ExpressionStringPart, StringPart } from '../../runescipt-parser/ast/expr/StringPart';
+import { JoinedStringExpression } from '../../runescipt-parser/ast/expr/JoinedStringExpression';
+import { StringLiteral } from '../../runescipt-parser/ast/expr/literal/StringLiteral';
+import { ParserErrorListener } from '../ParserErrorListener';
+import { ScriptParser } from '../../runescipt-parser/parser/ScriptParser';
+import { CharStreams, CommonTokenStream } from 'antlr4ts';
+import { RuneScriptParser } from '../../antlr/out/RuneScriptParser';
+import { RuneScriptLexer } from '../../antlr/out/RuneScriptLexer';
+import { ClientScriptExpression } from '../../runescipt-parser/ast/expr/ClientScriptExpression';
+import { getBlockScope, getScriptReturnType, getScriptScope, getScriptTriggerType, getStringSubExpression, getSwitchCaseScope, getSwitchType, setCallReference, setConstantSubExpression, setDeclarationSymbol, setIdentifierReference, setStringReference, setStringSubExpression, setSwitchDefaultCase, setVariableReference } from '../NodeAttributes';
+import { NullLiteral } from '../../runescipt-parser/ast/expr/literal/NullLiteral';
+import { CharacterLiteral } from '../../runescipt-parser/ast/expr/literal/CharacterLiteral';
+import { BooleanLiteral } from '../../runescipt-parser/ast/expr/literal/BooleanLiteral';
+import { CoordLiteral } from '../../runescipt-parser/ast/expr/literal/CoordLiteral';
+import { IntegerLiteral } from '../../runescipt-parser/ast/expr/literal/IntegerLiteral';
+import { ConstantVariableExpression } from '../../runescipt-parser/ast/expr/variable/ConstantVariableExpression';
+import { SymbolType } from '../symbol/SymbolType';
+import { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
+import { GameVariableExpression } from '../../runescipt-parser/ast/expr/variable/GameVariableExpression';
+import { GameVarType } from '../type/wrapped/GameVarType';
+import { CallExpression } from '../../runescipt-parser/ast/expr/call/CallExpression';
+import { LocalVariableExpression } from '../../runescipt-parser/ast/expr/variable/LocalVariableExpression';
+import { CommandCallExpression } from '../../runescipt-parser/ast/expr/call/CommandCallExpression';
+import { JumpCallExpression } from '../../runescipt-parser/ast/expr/call/JumpCallExpression';
+import { ProcCallExpression } from '../../runescipt-parser/ast/expr/call/ProcCallExpression';
+import { TypeCheckingContext } from '../configuration/command/TypeCheckingContext';
+import { Script } from '../../runescipt-parser/ast/Scripts';
+import { CalcExpression } from '../../runescipt-parser/ast/expr/CalcExpression';
+import { ArithmeticExpression } from '../../runescipt-parser/ast/expr/ArithmeticExpression';
+import { ConditionExpression } from '../../runescipt-parser/ast/expr/ConditionExpression';
+import { ParenthesizedExpression } from '../../runescipt-parser/ast/expr/ParenthesizedExpression';
+import { EmptyStatement } from '../../runescipt-parser/ast/statement/EmptyStatement';
+import { ExpressionStatement } from '../../runescipt-parser/ast/statement/ExpressionStatement';
+import { AssignmentStatement } from '../../runescipt-parser/ast/statement/AssignmentStatement';
+import { ArrayDeclarationStatement } from '../../runescipt-parser/ast/statement/ArrayDeclarationStatement';
+import { DeclarationStatement } from '../../runescipt-parser/ast/statement/DeclarationStatement ';
+import { Literal } from '../../runescipt-parser/ast/expr/literal/Literal';
+import { SwitchCase } from '../../runescipt-parser/ast/statement/SwitchCase';
+import { SwitchStatement } from '../../runescipt-parser/ast/statement/SwitchStatement';
+import { WhileStatement } from '../../runescipt-parser/ast/statement/WhileStatement';
+import { IfStatement } from '../../runescipt-parser/ast/statement/IfStatement';
+import { ReturnStatement } from '../../runescipt-parser/ast/statement/ReturnStatement';
+import { BlockStatement } from '../../runescipt-parser/ast/statement/BlockStatement';
+
+/**
+ * An implementation of [AstVisitor] that implements all remaining semantic/type
+ * checking required to safely build scripts. This implementation assumes [PreTypeChecking]
+ * is run beforehand.
+ */
+export class TypeChecking extends AstVisitor<void> {
+    /**
+     * The trigger that represents 'command'.
+     */
+    private readonly commandTrigger: TriggerType;
+
+    /**
+     * The trigger that represents `proc`.
+     */
+    private readonly procTrigger: TriggerType;
+
+    /**
+     * The trigger that represents `clientscript`. This trigger is optional.
+     */
+    private readonly clientscriptTrigger: TriggerType | null;
+
+    /**
+     * The trigger that represents `label`. This trigger is optional.
+     */
+    private readonly labelTrigger: TriggerType | null;
+
+    /**
+     * The current table. This is updated each time when entering a new script or block.
+     */
+    private table: SymbolTable;
+
+    /**
+     * A set of symbols that are currently being evaluated. Used to prevent re-entering
+     * a constant and causing a stack overflow.
+     */
+    private readonly constantsBeingEvaluated: Set<Symbol>;
+
+    constructor(
+        protected readonly typeManager: TypeManager,
+        protected readonly triggerManager: TriggerManager,
+        protected readonly rootTable: SymbolTable,
+        protected readonly dynamicCommands: Map<string, DynamicCommandHandler>,
+        protected readonly diagnostics: Diagnostics
+    ) {
+        super();
+        this.commandTrigger = this.triggerManager.find("command");
+        this.procTrigger = this.triggerManager.find("proc");
+        this.clientscriptTrigger = this.triggerManager.findOrNull("clientscript");
+        this.labelTrigger = this.triggerManager.findOrNull("label");
+
+        this.table = this.rootTable;
+
+        this.constantsBeingEvaluated = new Set();
+    }
+
+    /**
+     * Sets the active [table] to [newTable] and runs [block] then sets [table] back to what it was originally.
+     */
+    private scoped(newTable: SymbolTable, block: () => void): void {
+        const oldTable = this.table;
+        this.table = newTable;
+        block();
+        this.table = oldTable;
+    }
+
+    override visitScriptFile(scriptFile: ScriptFile): void {
+        // Visit all scripts in the file.
+        this.visitNodes(scriptFile.scripts);
+    }
+
+    override visitScript(script: Script): void {
+        this.scoped(getScriptScope(script), () => {
+            /**
+             * Visit all statements, we don't need to do anything else with the
+             * script since all the other stuff is handled in pre-type checking.
+             */
+            this.visitNodes(script.statements);
+        })
+    }
+
+    override visitBlockStatement(blockStatement: BlockStatement): void {
+        this.scoped(getBlockScope(blockStatement), () => {
+            // Visit all statements.
+            this.visitNodes(blockStatement.statements);
+        })
+    }
+
+    override visitReturnStatement(returnStatement: ReturnStatement): void {
+        const script = returnStatement.findParentByType(Script);
+        if (script == null) {
+            /**
+             * A return statement should always be within a script,
+             * if not then we have problems!
+             */
+            this.reportError(returnStatement, DiagnosticMessage.RETURN_ORPHAN);
+            return;
+        }
+        // Use the return types from the script node and get the types being returned.
+        const expectedTypes = TupleType.toList(getScriptReturnType(script));
+        const actualTypes = this.typeHintExpressionList(expectedTypes, returnStatement.expressions);
+
+        // Convert the types into a single type.
+        const expectedType = TupleType.fromList(expectedTypes);
+        const actualType = TupleType.fromList(actualTypes);
+
+        // Type check
+        this.checkTypeMatch(returnStatement, expectedType, actualType);
+    }
+
+    override visitIfStatement(ifStatement: IfStatement): void {
+        this.checkCondition(ifStatement.condition);
+        this.visitNodeOrNull(ifStatement.thenStatement);
+        this.visitNodeOrNull(ifStatement.elseStatement);
+    }
+
+    override visitWhileStatement(whileStatement: WhileStatement): void {
+        this.checkCondition(whileStatement.condition);
+        this.visitNodeOrNull(whileStatement.thenStatement);
+    }
+
+    /**
+     * Handles type hinting and visiting the expression, then checking if it is a valid conditional
+     * expression. If the condition returns anything other than `boolean`, or is not a valid
+     * condition expression, an error is emitted.
+     */
+    private checkCondition(expression: Expression) {
+        // Type hint and visit condition.
+        expression.typeHint = PrimitiveType.BOOLEAN;
+
+        // Attempts to find the first expression that isn't a binary expression or parenthesis expression.
+        const invalidExpression = this.findInvalidConditionExpression(expression);
+        if (invalidExpression == null) {
+            /**
+             * Visit expression and type check it, we don't visit outside this because we don't want
+             * to report type mistmatches AND invalid condition at the same time.
+             */
+            this.visitNodeOrNull(expression);
+            this.checkTypeMatch(expression, PrimitiveType.BOOLEAN, expression.type);
+        } else {
+            // Report invalid condition expression on the erroneous node.
+            this.reportError(invalidExpression, DiagnosticMessage.CONDITION_INVALID_NODE_TYPE);
+        }
+    }
+
+    /**
+     * Finds the first [Expression] node in the tree that is not either a [BinaryExpression] or
+     * [ParenthesizedExpression]. If `null` is returned then that means the whole tree is valid
+     * is all valid conditional expressions.
+     */
+    private findInvalidConditionExpression(expression: Expression): Node | null {
+        if (expression instanceof ConditionExpression){
+            const op = expression.operator.text;
+            if (op === "|" || op === "&") {
+                /**
+                 * Check the left side and return it if it isn't null, otherwise 
+                 * return the value of the right side.
+                 */
+                return (
+                    this.findInvalidConditionExpression(expression.left) ??
+                    this.findInvalidConditionExpression(expression.right)
+                );
+            } else {
+                // All other operators are valid.
+                return null;
+            }
+        } else if (expression instanceof ParenthesizedExpression) {
+            return this.findInvalidConditionExpression(expression.expression);
+        } else {
+            return expression;
+        }
+    }
+
+    override visitSwitchStatement(switchStatement: SwitchStatement): void {
+        const expectedType = getSwitchType(switchStatement);
+
+        // Type hint the condition and visit it.
+        const condition = switchStatement.condition;
+        condition.typeHint = expectedType;
+        this.visitNodeOrNull(condition);
+        this.checkTypeMatch(condition, expectedType, condition.type);
+
+        /**
+         * TODO: Check for duplicate case lables (other than default).
+         * Visit all the cases, cases will be type checked here.
+         */
+        let defaultCase: SwitchCase | null = null;
+        for (const caseEntry of switchStatement.cases) {
+            if (caseEntry.isDefault) {
+                if (defaultCase == null) {
+                    defaultCase = caseEntry;
+                } else {
+                    this.reportError(caseEntry, DiagnosticMessage.SWITCH_DUPLICATE_DEFAULT);
+                }
+            }
+            this.visitNodeOrNull(caseEntry);
+        }
+        setSwitchDefaultCase(switchStatement, defaultCase);
+    }
+
+    override visitSwitchCase(switchCase: SwitchCase): void {
+        const switchType = getSwitchType(switchCase.findParentByType(SwitchStatement));
+        if (switchType == null) {
+            // The parent should always be a switch statemtn, if not we're in trouble...
+            this.reportError(switchCase, DiagnosticMessage.CASE_WITHOUT_SWITCH);
+            return;
+        }
+
+        // Visit the case keys
+        for (const key of switchCase.keys) {
+            // Type hint and visit so we can access more information in constant expression check.
+            key.typeHint = switchType;
+            this.visitNodeOrNull(key);
+
+            if (!this.isConstantExpression(key)) {
+                this.reportError(key, DiagnosticMessage.SWITCH_CASE_NOT_CONSTANT);
+                continue;
+            }
+
+            // Expression is a constant, now we need to verify the types match.
+            this.checkTypeMatch(key, switchType, key.type);
+        }
+
+        this.scoped(getSwitchCaseScope(switchCase), () => {
+            // Visit the statements.
+            this.visitNodes(switchCase.statements)
+        });
+    }
+
+    /**
+     * Checks if the result of [expression] is known at compile time.
+     */
+    public isConstantExpression(expression: Expression): boolean {
+        if (expression instanceof ConstantVariableExpression) {
+            return true;
+        }
+
+        if (expression instanceof StringLiteral) {
+            /**
+             * We need to special case this since it's possible for a string literal to have been
+             * transformed intoa another expression tpye (e.g graphic or clientscript).
+             */
+            const sub = getStringSubExpression(expression);
+            return sub == null || this.isConstantExpression(sub);
+        }
+
+        if (expression instanceof Literal) {
+            return true;
+        }
+
+        if (expression instanceof Identifier) {
+            const ref = expression.reference;
+            return ref == null || this.isConstantSymobl(ref);
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if the value of [symbol] is known at compile time.
+     */
+    private isConstantSymobl(symbol: Symbol): boolean {
+        return symbol instanceof BasicSymbol || symbol instanceof ConstantSymbol;
+    }
+
+    override visitDeclarationStatement(declarationStatement: DeclarationStatement): void {
+        const typeName = declarationStatement.typeToken.text.replace(/^dev_/, "");
+        const name = declarationStatement.name.text;
+        const type = this.typeManager.findOrNull(typeName);
+
+        // Notify invalid type.
+        if (!type) {
+            this.reportError(declarationStatement.typeToken, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
+        } else if(!type.options.allowDeclaration) {
+            this.reportError(declarationStatement.typeToken, DiagnosticMessage.LOCAL_DECLARATION_INVALID_TYPE, type.representation);
+        }
+
+        // Attempt to insert the local variable into the symbol table and display error if failed to insert.
+        const symbol = new LocalVariableSymbol(name, type ?? MetaType.Error);
+        const inserted = this.table.insert(SymbolType.localVariable(), symbol);
+        if (!inserted) {
+            this.reportError(declarationStatement.name, DiagnosticMessage.SCRIPT_LOCAL_REDECLARATION, name);
+        }
+
+        // Visit the initializer if it exists to resolve references in it.
+        const initializer = declarationStatement.initializer;
+        if (initializer != null) {
+            // Type hint that we want whatever the declaration type is then visit.
+            initializer.typeHint = symbol.type;
+            this.visitNodeOrNull(initializer);
+
+            this.checkTypeMatch(initializer, symbol.type, initializer.type);
+        }
+
+        setDeclarationSymbol(declarationStatement, symbol);
+    }
+
+    override visitArrayDeclarationStatement(arrayDeclarationStatement: ArrayDeclarationStatement): void {
+        const typeName = arrayDeclarationStatement.typeToken.text.replace(/^def_/, "");
+        const name = arrayDeclarationStatement.name.text;
+        let type = this.typeManager.findOrNull(typeName);
+
+        // Notify invalid type.
+        if (!type) {
+            this.reportError(arrayDeclarationStatement.typeToken, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
+        } else if (!type.options.allowDeclaration) {
+            this.reportError(arrayDeclarationStatement.typeToken, DiagnosticMessage.LOCAL_DECLARATION_INVALID_TYPE, type.representation);
+        } else if (!type.options.allowArray) {
+            this.reportError(arrayDeclarationStatement.typeToken, DiagnosticMessage.LOCAL_ARRAY_INVALID_TYPE, type.representation);
+        }
+
+        // Convert type into an array of type if type exists, otherwise give it error type.
+        type = type != null ? new ArrayType(type) : MetaType.Error;
+
+        // Visit the initializer if it exists to resolve references in it.
+        const initializer = arrayDeclarationStatement.initializer;
+        initializer.typeHint = PrimitiveType.INT;
+        this.visitNodeOrNull(initializer);
+        this.checkTypeMatch(initializer, PrimitiveType.INT, initializer.type);
+
+        // Attempt to insert the local variable into the symbol table and display error if failed to insert.
+        const symbol = new LocalVariableSymbol(name, type);
+        const inserted = this.table.insert(SymbolType.localVariable(), new LocalVariableSymbol(name, type));
+        if (!inserted) {
+            this.reportError(arrayDeclarationStatement.name, DiagnosticMessage.SCRIPT_LOCAL_REDECLARATION, name);
+        }
+
+        setDeclarationSymbol(arrayDeclarationStatement, symbol);
+    }
+
+    override visitAssignmentStatement(assignmentStatement: AssignmentStatement): void {
+        const vars = assignmentStatement.vars;
+
+        // Visist the lhs to fetch the references.
+        this.visitNodes(vars);
+
+        // Store the lhs types to help with the type hinting.
+        const leftTypes = vars.map(v => v.type);
+        const rightTypes = this.typeHintExpressionList(leftTypes, assignmentStatement.expressions);
+
+        // Convert types to [TupleType] if necessary for easy comparison.
+        const leftType = TupleType.fromList(leftTypes);
+        const rightType = TupleType.fromList(rightTypes);
+
+        this.checkTypeMatch(assignmentStatement, leftType, rightType);
+
+        // Prevent multi-assignment involving arrays.
+        const firstArrayReference = vars.find(v => v instanceof LocalVariableExpression && v.isArray);
+        if (vars.length > 1 && firstArrayReference) {
+            this.reportError(firstArrayReference, DiagnosticMessage.ASSIGN_MULTI_ARRAY);
+        }
+    }
+
+    override visitExpressionStatement(expressionStatement: ExpressionStatement): void {
+        // Just visit the inside expression.
+        this.visitNodeOrNull(expressionStatement.expression)
+    }
+
+    override visitEmptyStatement(emptyStatement: EmptyStatement): void {
+        // NO-OP
+    }
+
+    override visitParenthesizedExpression(parenthesizedExpression: ParenthesizedExpression): void {
+        const innerExpression = parenthesizedExpression.expression;
+
+        // Relay the type hint to the inner expression and visit it.
+        innerExpression.typeHint = parenthesizedExpression.typeHint;
+        this.visitNodeOrNull(innerExpression);
+
+        // Set the type to the type of what the expression evaluates to.
+        parenthesizedExpression.type = innerExpression.type;
+    }
+
+    override visitConditionExpression(conditionExpression: ConditionExpression): void {
+        const left = conditionExpression.left;
+        const right = conditionExpression.right;
+        const operator = conditionExpression.operator;
+
+        // Check for validation based on if we're within 'calc' or 'condition'.
+        const validOperation = this.checkBinaryConditionOperation(left, operator, right);
+
+        // Early return if it isn't a valid operation.
+        if (!validOperation) {
+            conditionExpression.type = MetaType.Error;
+            return;
+        }
+
+        // Conditions expect boolean.
+        conditionExpression.type = PrimitiveType.BOOLEAN;
+    }
+
+    /**
+     * Verified the binary expression is a valid condition operation. 
+     */
+    private checkBinaryConditionOperation(left: Expression, operator: Token, right: Expression): boolean {
+        // Some operators expect a specific type on bith sides, specify those type(s) here.
+        let allowedTypes: Type[] | null;
+
+        switch (operator.text) {
+            case "&":
+            case "|":
+                allowedTypes = TypeChecking.ALLOWED_LOGICAL_TYPES;
+                break;
+            case "<":
+            case ">":
+            case "<=":
+            case ">=":
+                allowedTypes = TypeChecking.ALLOWED_RELATIONAL_TYPES;
+                break;
+            default:
+                allowedTypes = null;
+        }
+
+        /**
+         * If required type is set we should hint with those, otherwise use the opposite
+         * sides type as a hint.
+         */
+        if (allowedTypes != null) {
+            left.typeHint = allowedTypes[0];
+            right.typeHint = allowedTypes[0];
+        } else {
+            // Assign the type hints using the opposite side if it isn't already assigned.
+            left.typeHint = left.typeHint ?? right.nullableType;
+            right.typeHint = right.typeHint ?? left.nullableType;
+        }
+
+        /**
+         * TODO: Better logic for this to allow things such as 'if (null ! $var)', should also revisit the above.
+         * Visit left side to get the type for hinting to the right side if needed.
+         */
+        this.visitNodeOrNull(left);
+
+        // Type hint right if not already hinted to the left type and then visit.
+        right.typeHint = right.typeHint ?? left.type;
+        this.visitNodeOrNull(right);
+
+        // Verify the left and right type only return 1 type that is not 'unit'.
+        if (left.type instanceof TupleType || right.type instanceof TupleType) {
+            if (left.type instanceof TupleType) {
+                this.reportError(left, DiagnosticMessage.BINOP_TUPLE_TYPE, "Left", left.type.representation);
+            }
+            if (right.type instanceof TupleType) {
+                this.reportError(right, DiagnosticMessage.BINOP_TUPLE_TYPE, "Right", right.type.representation);
+            }
+            return false;
+        } else if (left.type == MetaType.Unit || right.type == MetaType.Unit) {
+            this.reportError(
+                operator,
+                DiagnosticMessage.BINOP_INVALID_TYPES,
+                operator.text,
+                left.type.representation,
+                right.type.representation
+            );
+            return false;
+        }
+
+        // Handle operator specific required types, this applies toa ll except '!' and '='.
+        if (allowedTypes != null) {
+            if (!this.checkTypeMatchAny(left, allowedTypes, left.type) || !this.checkTypeMatchAny(right, allowedTypes, right.type)) {
+                this.reportError(operator, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type.representation, right.type.representation);
+                return false;
+            }
+        }
+
+        // Handle equality operator, which allows any type on either side as long as they match.
+        if (!this.checkTypeMatch(left, left.type, right.type, false)) {
+            this.reportError(operator, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type.representation, right.type.representation);
+            return false;
+        } else if (left.type == PrimitiveType.STRING && right.type == PrimitiveType.STRING) {
+            this.reportError(operator, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type.representation, right.type.representation);
+            return false;
+        }
+        
+        // Other cases are true.
+        return true;
+    } 
+
+    override visitArithmeticExpression(arithmeticExpression: ArithmeticExpression): void {
+        const left = arithmeticExpression.left;
+        const right = arithmeticExpression.right;
+        const operator = arithmeticExpression.operator;
+
+        // Arithmetic expression only expect 'int' or 'long' return types, but just allow.
+        const expectedType = arithmeticExpression.typeHint ?? PrimitiveType.INT;
+
+        // Visit left-hand side.
+        left.typeHint = expectedType;
+        this.visitNodeOrNull(left);
+
+        // Visit right-hand side.
+        right.typeHint = expectedType;
+        this.visitNodeOrNull(right);
+
+        // Verify if both sides are 'int' or 'long' and are of the same type.
+        if (
+            !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, left.type) ||
+            !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, right.type) ||
+            !this.checkTypeMatch(left, expectedType, left.type, false) ||
+            !this.checkTypeMatch(right, expectedType, right.type, false)
+        ) {
+            this.reportError(operator, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type.representation, right.type.representation);
+            arithmeticExpression.type = MetaType.Error;
+            return;
+        }
+
+        arithmeticExpression.type = MetaType.Error;
+    }
+
+    override visitCalcExpression(calcExpression: CalcExpression): void {
+        const typeHint = calcExpression.typeHint ?? PrimitiveType.INT;
+        const innerExpression = calcExpression.expression;
+
+        // Hint to the expression that we expect an 'int'.
+        innerExpression.typeHint = typeHint;
+        this.visitNodeOrNull(innerExpression);
+
+        // Verify type is an 'int'.
+        if (!this.checkTypeMatchAny(innerExpression, TypeChecking.ALLOWED_ARITHMETIC_TYPES, innerExpression.type)) {
+            this.reportError(innerExpression, DiagnosticMessage.ARITHMETIC_INVALID_TYPE, innerExpression.type.representation);
+            calcExpression.type = MetaType.Error;
+        } else {
+            calcExpression.type = innerExpression.type;
+        }
+    }
+
+    override visitCommandCallExpression(commandCallExpression: CommandCallExpression): void {
+        const name = commandCallExpression.nameString;
+
+        // Attempt to call the dynamic command handlers type checker (if one exists).
+        if (this.checkDynamicCommand(name, commandCallExpression)) {
+            return;
+        }
+
+        // Check the command call.
+        this.checkCallExpression(commandCallExpression, this.commandTrigger, DiagnosticMessage.COMMAND_REFERENCE_UNRESOLVED);
+    }
+
+    override visitJumpCallExpression(jumpCallExpression: JumpCallExpression): void {
+        if (!this.labelTrigger) {
+            this.reportError(jumpCallExpression, "Jump expression not allowed.");
+            return;
+        }
+
+        const currentScript = jumpCallExpression.findParentByType(Script);
+        if (!currentScript) throw new Error("Parent script not found.");
+
+        if (getScriptTriggerType(currentScript) === this.procTrigger) {
+            this.reportError(jumpCallExpression, "Unable to jump to labels from within a proc.");
+            return;
+        }
+
+        // Check the jump call
+        this.checkCallExpression(jumpCallExpression, this.labelTrigger, DiagnosticMessage.JUMP_REFERENCE_UNRESOLVED);
+    }
+
+    /**
+     * Runs the type checking for dynamic command if one exists with [name].
+     */
+    private checkDynamicCommand(name: string, expression: Expression): boolean {
+        const dynamicCommand = this.dynamicCommands.get(name);
+        if (!dynamicCommand) return false;
+
+        (() => {
+            // Invoke the custom command type checking
+            const context = new TypeCheckingContext(this, this.typeManager, expression, this.diagnostics);
+            dynamicCommand.typeCheck(context);
+
+            // Verify tye type has been set.
+            if (!expression.nullableType) {
+                this.reportError(expression, DiagnosticMessage.CUSTOM_HANDLER_NOTYPE);
+            }
+
+            // If the symbol was not manually specified, attempt to look up a predefined one.
+            const needsSymbol = 
+                (expression instanceof Identifier && !expression.reference) ||
+                (expression instanceof CallExpression && !expression.reference);
+
+            if (needsSymbol) {
+                const symbol = this.rootTable.find(SymbolType.serverScript(this.commandTrigger), name);
+                if (!symbol) {
+                    this.reportError(expression, DiagnosticMessage.CUSTOM_HANDLER_NOSYMBOL);
+                }
+
+                if (expression instanceof Identifier) {
+                    setIdentifierReference(expression, symbol);
+                } else if (expression instanceof CallExpression) {
+                    setCallReference(expression, symbol);
+                }
+            }
+        })();
+
+        return true;
+    }
+
+    /**
+     * Handles looking up and type checking all call expressions. 
+     */
+    private checkCallExpression(call: CallExpression, trigger: TriggerType, unresolvedSymbolMessage: string): void {
+        // Lookup the symbol using the symbol type and name.
+        const name = call.name.text;
+        const symbolType = SymbolType.serverScript(trigger);
+        const symbol = this.rootTable.find(symbolType, name) as ScriptSymbol | null;
+        if (!symbol) {
+            call.type = MetaType.Error;
+            this.reportError(call, unresolvedSymbolMessage, name);
+        } else {
+            setCallReference(call, symbol);
+            call.type = symbol.returns;
+        }
+
+        // Verify the arguments are all valid.
+        this.typeCheckArguments(symbol, call, name);
+    }
+
+    override visitClientScriptExpression(clientScriptExpression: ClientScriptExpression): void {
+        if (!this.clientscriptTrigger) {
+            this.reportError(clientScriptExpression, DiagnosticMessage.TRIGGER_TYPE_NOT_FOUND, "clientscript");
+            return;
+        }
+
+        const typeHint = clientScriptExpression.typeHint;
+        if (!(typeHint instanceof MetaType.Hook)) {
+            throw new Error("Expected MetaType Hook");
+        }
+
+        // Lookup the symbol by name.
+        const name = clientScriptExpression.name.text;
+        const symbolType = SymbolType.clientScript(this.clientscriptTrigger);
+        const symbol = this.rootTable.find(symbolType, name) as ClientScriptSymbol | null;
+
+        // Verify the clientscript exists.
+        if (!symbol) {
+            this.reportError(clientScriptExpression, DiagnosticMessage.CLIENTSCRIPT_REFERENCE_UNRESOLVED, name);
+            clientScriptExpression.type = MetaType.Error;
+        } else {
+            setCallReference(clientScriptExpression, symbol);
+            clientScriptExpression.type = typeHint;
+        }
+
+        // Verify arguments are all valid.
+        this.typeCheckArguments(symbol, clientScriptExpression, name);
+
+        // Disallow transmit list when not expected.
+        const transmitListType = typeHint.transmitListType;
+        if (transmitListType == MetaType.Unit && clientScriptExpression.transmitList.length > 0){
+            this.reportError(clientScriptExpression.transmitList[0], DiagnosticMessage.HOOK_TRANSMIT_LIST_UNEXPECTED);
+            clientScriptExpression.type = MetaType.Error;
+            return;
+        }
+
+        for (const expr of clientScriptExpression.transmitList) {
+            expr.typeHint = transmitListType;
+            this.visitNodeOrNull(expr);
+            this.checkTypeMatch(expr, transmitListType, expr.type);
+        }
+    }
+
+    /**
+     * Verifies that [callExpression] arguments match the parameter types from [symbol].
+     */
+    private typeCheckArguments(symbol: ScriptSymbol | null, callExpression: CallExpression, name: string): void {
+        /**
+         * Type check the parameters, use `unit` if there are no parameters.
+         * We will display a special message if the parameter ends up having `unit`
+         * as the type but arguments are supplied.
+         * 
+         * If the symbol is null then that means we failed to look up the symbol,
+         * therefore we should specify the parameter types as error, so we can continue
+         * analysis on all the arguments without worrying about a type mismatch.
+         */
+        const parameterTypes = symbol?.parameters ?? MetaType.Error;
+        const expectedTypes = parameterTypes instanceof TupleType
+            ? [...parameterTypes.children]
+            : [parameterTypes];
+
+        const actualTypes = this.typeHintExpressionList(expectedTypes, callExpression.arguments);
+
+        // Convert the type lists into a singular type, used for type checking.
+        const expectedType = TupleType.fromList(expectedTypes);
+        const actualType = TupleType.fromList(actualTypes);
+
+        // Special case for the temporary state of using `unit` for no arguments.
+        if (expectedType == MetaType.Unit && actualType != MetaType.Unit) {
+            let errorMessage: string;
+
+            if (callExpression instanceof CommandCallExpression) {
+                errorMessage = DiagnosticMessage.COMMAND_NOARGS_EXPECTED;
+            } else if (callExpression instanceof ProcCallExpression) {
+                errorMessage = DiagnosticMessage.PROC_NOARGS_EXPECTED;
+            } else if (callExpression instanceof JumpCallExpression) {
+                errorMessage = DiagnosticMessage.JUMP_NOARGS_EXPECTED;
+            } else if (callExpression instanceof ClientScriptExpression) {
+                errorMessage = DiagnosticMessage.CLIENTSCRIPT_NOARGS_EXPECTED;
+            } else {
+                throw new Error(`Unexpected callExpression type: ${callExpression}`);
+            }
+
+            this.reportError(callExpression, errorMessage, name, actualType.representation);
+            return;
+        }
+
+        // Do the actual type checking.
+        this.checkTypeMatch(callExpression, expectedType, actualType);
+    }   
+
+    /**
+     * Type check the index value of expression if it is defined.
+     */
+    override visitLocalVariableExpression(localVariableExpression: LocalVariableExpression): void {
+        const name = localVariableExpression.name.text;
+        const symbol = this.table.find(SymbolType.localVariable(), name) as LocalVariableSymbol | null;
+        if (!symbol) {
+            // Trying to reference a variable that isn't defined.
+            this.reportError(localVariableExpression, DiagnosticMessage.LOCAL_REFERENCE_UNRESOLVED, name);
+            localVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        const symbolIsArray = (symbol.type instanceof ArrayType);
+        if (!symbolIsArray && localVariableExpression.isArray) {
+            // Trying to reference non-array local variable and specifying an index.
+            this.reportError(localVariableExpression, DiagnosticMessage.LOCAL_REFERENCE_NOT_ARRAY, name);
+            localVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        if (symbolIsArray && !localVariableExpression.isArray) {
+            // Trying to reference array variable without specifying index in which to access.
+            this.reportError(localVariableExpression, DiagnosticMessage.LOCAL_ARRAY_REFERENCE_NOINDEX, name);
+            localVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        const indexExpression = localVariableExpression.index;
+        if ((symbol.type instanceof ArrayType) && indexExpression != null) {
+            // Visit the index to set the type of any references.
+            this.visitNodeOrNull(indexExpression);
+            this.checkTypeMatch(indexExpression, PrimitiveType.INT, indexExpression.type);
+        }
+
+        setVariableReference(localVariableExpression, symbol);
+        localVariableExpression.type = symbol.type instanceof ArrayType ? symbol.type.inner : symbol.type;
+    }
+
+    override visitGameVariableExpression(gameVariableExpression: GameVariableExpression): void {
+        const name = gameVariableExpression.name.text;
+        const symbol = this.rootTable
+            .findAll<BasicSymbol>(name)
+            .find(sym => sym.type instanceof GameVarType);
+
+        if (!symbol ||!(symbol.type instanceof GameVarType)) {
+            gameVariableExpression.type = MetaType.Error;
+            this.reportError(gameVariableExpression, DiagnosticMessage.GAME_REFERENCE_UNRESOLVED, name);
+            return;
+        }
+
+        gameVariableExpression.reference = symbol;
+        gameVariableExpression.type = symbol.type.inner;
+    }
+
+    override visitConstantVariableExpression(constantVariableExpression: ConstantVariableExpression): void {
+        const name = constantVariableExpression.name.text;
+
+        // Constants rely on having a type to parse the constant value for.
+        const typeHint = constantVariableExpression.typeHint;
+        if (!typeHint) {
+            this.reportError(constantVariableExpression, DiagnosticMessage.CONSTANT_UNKNOWN_TYPE, name);
+            constantVariableExpression.type = MetaType.Error;
+            return;
+        } else if (typeHint == MetaType.Error) {
+            /**
+             * Avoid attempting to parse the constant if it was type hinted to error.
+             * This is safe because if the hint type is error that means an error happened
+             * elsewhere so an error will have been reported.
+             */
+            constantVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        // Lookup the constant.
+        const symbol = this.rootTable.find(SymbolType.constant(), name) as ConstantSymbol;
+        if (!symbol) {
+            this.reportError(constantVariableExpression, DiagnosticMessage.CONSTANT_REFERENCE_UNRESOLVED, name);
+            constantVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        // Check if we're trying to evaluate a constant that is still being evaluated.
+        if (this.constantsBeingEvaluated.has(symbol)) {
+            // Create a stack string and append the symbol that was the start of the loop to it.
+            let stack = Array.from(this.constantsBeingEvaluated)
+                .map(it => `^${it.name}`)
+                .join(" -> ");
+            
+            stack += ` -> ^${symbol.name}`;
+            this.reportError(constantVariableExpression, DiagnosticMessage.CONSTANT_CYCLIC_REF, stack);
+            constantVariableExpression.type = MetaType.Error;
+            return;
+        }
+
+        // Add the symbol to the set of constants being evalutated.
+        this.constantsBeingEvaluated.add(symbol);
+
+        try {
+            // Base the source information on the string literal.
+            const { name, line, column } = constantVariableExpression.source;
+
+            // Check if the expected type is a string type.
+            const graphicType = this.typeManager.findOrNull("graphic");
+            const stringExpected = typeHint == PrimitiveType.STRING || graphicType != null && typeHint == graphicType;
+            
+            const parsedExpression: Expression | null = stringExpected
+                ? new StringLiteral(
+                    new NodeSourceLocation(name, line - 1, column - 1),
+                    symbol.value
+                )
+                : ScriptParser.invokeParser(
+                    CharStreams.fromString(symbol.value, name),
+                    parser => parser.singleExpression(),
+                    TypeChecking.DISCARD_ERROR_LISTENER,
+                    line - 1,
+                    column - 1
+                ) as Expression | null;
+            
+            // Verify that the expression is parsed properly.
+            if (!parsedExpression) {
+                this.reportError(constantVariableExpression, DiagnosticMessage.CONSTANT_PARSE_ERROR, symbol.value, typeHint.representation);
+                constantVariableExpression.type = MetaType.Error;
+                return;
+            }
+
+            // Type hint the parsed expression to the expected type and then visit it.
+            parsedExpression.typeHint = typeHint;
+            this.visitNodeOrNull(parsedExpression);
+
+            // Verify the constant evaluates to a constant expression (No macros!).
+            if (!this.isConstantExpression(parsedExpression)) {
+                this.reportError(constantVariableExpression, DiagnosticMessage.CONSTANT_NONCONSTANT, symbol.value);
+                constantVariableExpression.type = MetaType.Error;
+                return;
+            }
+
+            // Set the sub-expresssion to the parser expression and the type to the parsed expressions type.
+            setConstantSubExpression(constantVariableExpression, parsedExpression);
+            constantVariableExpression.type = parsedExpression.type;
+        } finally {
+            // Remove the symbol from the set since it is no longer being evaluated.
+            this.constantsBeingEvaluated.delete(symbol);
+        }
+    }
+
+    override visitIntegerLiteral(integerLiteral: IntegerLiteral): void {
+        integerLiteral.type = PrimitiveType.INT;
+    }
+
+    override visitCoordLiteral(coordLiteral: CoordLiteral): void {
+        coordLiteral.type = PrimitiveType.COORD;
+    }
+
+    override visitBooleanLiteral(booleanLiteral: BooleanLiteral): void {
+        booleanLiteral.type = PrimitiveType.BOOLEAN;
+    }
+
+    override visitCharacterLiteral(characterLiteral: CharacterLiteral): void {
+        characterLiteral.type = PrimitiveType.CHAR;
+    }
+
+    override visitNullLiteral(nullLiteral: NullLiteral): void {
+        const hint = nullLiteral.typeHint;
+        if (hint != null) {
+            // Infer the type if the hint base type is an 'int' OR 'long'.
+            nullLiteral.type = hint;
+            return;
+        }
+        nullLiteral.type = PrimitiveType.INT;
+    }
+
+    override visitStringLiteral(stringLiteral: StringLiteral): void {
+        const hint = stringLiteral.typeHint;
+
+        /**
+         * These ugle conditions are here to enable special cases.
+         * 1) If the hint is a hook.
+         * 2) If the hint is not a string, and not any of the other types
+         *    representable by a literal expression. It shoould be possible to
+         *    reference a symbol via quoting it, this enables the ability to reference
+         *    a symbol without it being a valid identifier.
+         */
+        if (!hint || this.typeManager.check(hint, PrimitiveType.STRING)) {
+            /**
+             * Early check if string is assignable to hint.
+             * This mostly exists for when the expected type is `any`, we just
+             * treat it as a string.
+             */
+            stringLiteral.type = PrimitiveType.STRING;
+        } else if(hint instanceof MetaType.Hook) {
+            this.handleClientScriptExpression(stringLiteral, hint);
+        } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
+            setStringReference(stringLiteral, this.resolveSymbol(stringLiteral, stringLiteral.value, hint) )
+        } else {
+            stringLiteral.type = PrimitiveType.STRING
+        }
+    }
+
+    /**
+     * Handles parsing and checking a [ClientScriptExpression] that is parsed from withing the [stringLiteral].
+     *
+     * This assigns the [StringLiteral.type] to [MetaType.Hook] and stores the [ClientScriptExpression]
+     * as an attribute on [stringLiteral] for usage later.
+     */
+    private handleClientScriptExpression(stringLiteral: StringLiteral, typeHint: Type): void {
+        // Base the source information on the string literal.
+        const { name, line, column } = stringLiteral.source;
+
+        // Invoke the parser to parse the text within the string.
+        const errorListener = new ParserErrorListener(name, this.diagnostics, line - 1, column);
+        const clientScriptExpression = ScriptParser.invokeParser(
+            CharStreams.fromString(stringLiteral.value, name),
+            (parser: RuneScriptParser) =>  parser.clientScript(),
+            errorListener,
+            line - 1,
+            column
+        ) as ClientScriptExpression | null;
+
+        // Parser returns null if there was a parse error.
+        if (!clientScriptExpression) {
+            stringLiteral.type = MetaType.Error;
+            return;
+        }
+
+        // Set typehint to the same as the argument.
+        clientScriptExpression.typeHint = typeHint;
+        this.visitNodeOrNull(clientScriptExpression);
+
+        // Copy the type from the parsed expression.
+        setStringSubExpression(stringLiteral, clientScriptExpression);
+        stringLiteral.type = clientScriptExpression.type;
+    }
+
+    override visitJoinedStringExpression(joinedStringExpression: JoinedStringExpression): void {
+        // Visit all parts.
+        joinedStringExpression.parts.forEach(part => part.accept(this));
+        
+        // Set the resulting type.
+        joinedStringExpression.type = PrimitiveType.STRING;
+    }
+
+    override visitJoinedStringPart(stringPart: StringPart): void {
+        if (stringPart instanceof ExpressionStringPart) {
+            // Type hint the inner expression.
+            const expression = stringPart.expression;
+            expression.typeHint = PrimitiveType.STRING;
+
+            // Visit the inner expression.
+            expression.accept(this);
+
+            // Check that the type matches string.
+            this.checkTypeMatch(expression, PrimitiveType.STRING, expression.type);
+        }
+    }
+
+    override visitIdentifier(identifier: Identifier): void {
+        const name = identifier.text;
+        const hint = identifier.typeHint;
+
+        // Attempt to call the dynamic command handler's type checker (if one exists).
+        if (this.checkDynamicCommand(name, identifier)) {
+            return;
+        }
+
+        // Error is reported inside 'resolveSymbol'.
+        const symbol = this.resolveSymbol(identifier, name, hint);
+        if (!symbol) return;
+
+        if (symbol instanceof ScriptSymbol && symbol.trigger === this.commandTrigger && symbol.parameters !== MetaType.Unit) {
+            this.reportError(identifier, DiagnosticMessage.GENERIC_TYPE_MISMATCH, "<unit>", symbol.parameters.representation);
+        }
+
+        // TODO: This might need some extra fallback handling.
+        if (symbol instanceof BasicSymbol) {
+            identifier.reference = symbol;
+        }
+    }
+
+    private resolveSymbol(node: Expression, name: string, hint?: Type): Symbol | null {
+        // Look through the current scopes table for a symbol with the given name and type.
+        let symbol: Symbol | null = null;
+        let type: Type | null = null;
+
+        for (const temp of this.table.findAll<Symbol>(name)) {
+            const tempType = this.symbolToType(temp);
+            if(!tempType) continue;
+
+            if (!hint && tempType instanceof MetaType.Script) {
+                // If the hint is unknown it means we're somewhere that probably shouldn't
+                // be referring to a script by only the name. This will not capture command
+                // "scripts" since the symbolToType for commands returns the return value of
+                // the command instead of being wrapped in MetaType.Script.
+                continue;
+            } else if (!hint ||this.typeManager.check(hint, tempType)) {
+                // Hint type matches (or is undefined), so we can stop looking.
+                symbol = temp;
+                type = tempType;
+                break;
+            } else if (!symbol) {
+                // Default the symbol to the first thing found just in case
+                // no exact matches exist.
+                symbol = temp;
+                type = tempType;
+            }
+        }
+
+        // Unable to resolve the symbol.
+        if (!symbol) {
+            node.type = MetaType.Error;
+            this.reportError(node, DiagnosticMessage.GENERIC_UNRESOLVED_SYMBOL, name);
+            return null;
+        }
+
+        // Compiler error if the symbol type isn't defined here.
+        if (!type) {
+            node.type = MetaType.Error;
+            this.reportError(node, DiagnosticMessage.UNSUPPORTED_SYMBOLTYPE_TO_TYPE, symbol.constructor.name);
+            return null;
+        }
+
+        node.type = type;
+        return symbol;
+    }
+
+    /**
+     * Attempts to figure out the return type of [symbol].
+     *
+     * If the symbol is not valid for direct identifier lookup then `null` is returned.
+     */
+    private symbolToType(symbol: Symbol): Type | null {
+        if (symbol instanceof ScriptSymbol) {
+            if (symbol.trigger === CommandTrigger) {
+                // Only commands can be referenced by an indentifier and return a value
+                return symbol.returns;
+            } else {
+                // All other triggers get wrapped in a script type.
+                return new MetaType.Script(symbol.trigger, symbol.parameters, symbol.returns);
+            }
+            
+        } else if (symbol instanceof LocalVariableSymbol) {
+            if (symbol.type instanceof ArrayType) {
+                // Only local array variables are accessible by only their identifier.
+                return symbol.type;
+            } else {
+                return null;
+            }
+        } else if (symbol instanceof BasicSymbol) {
+            return symbol.type;
+        } else if (symbol instanceof ConstantSymbol) {
+            return null;
+        }
+        return null;
+    }
+
+    override visitToken(token: Token): void {
+        // NO-OP
+    }
+
+    override visitNode(node: Node): void {
+        const parent = node.parent;
+        if (!parent) {
+            this.reportInfo(node, `Unhandled node: ${node.constructor.name}.`);
+        } else {
+            this.reportInfo(node, `Unhandled node: ${node.constructor.name}. Parent: ${parent.constructor.name}.`);
+        }
+    }
+
+    /**
+     * Takes [expectedTypes] and iterates over [expressions] assigning each [Expression.typeHint]
+     * a type from [expectedTypes]. All of the [expressions] types are then returned for comparison
+     * at call site.
+     *
+     * This is only useful when the expected types are known ahead of time (e.g. assignments and calls).
+     */
+    private typeHintExpressionList(expectedTypes: Type[], expressions: Expression[]): Type[] {
+        const actualTypes: Type[] = [];
+        let typeCounter = 0;
+
+        for (const expr of expressions) {
+            // SEt the type hint if we haven't exchausted the expected types.
+            expr.typeHint = typeCounter < expectedTypes.length ? expectedTypes[typeCounter]: null;
+
+            // Visit the expresson (evaluates its type).
+            expr.accept(this);
+
+            // Add the evaluated type.
+            actualTypes.push(expr.type);
+
+            // Increment the counter for type hinting.
+            if (expr.type instanceof TupleType) {
+                typeCounter += expr.type.children.length;
+            } else {
+                typeCounter += 1;
+            }
+        }
+
+        return actualTypes;
+    }
+
+    /**
+     * Checks if the [expected] and [actual] match, including accepted casting.
+     *
+     * If the types passed in are a [TupleType] they will be compared using their flattened types.
+     *
+     * @see TypeManager.check
+     */
+    checkTypeMatch(
+        node: Node,
+        expected: Type,
+        actual: Type,
+        reportError = true
+    ): boolean {
+        const expectedFlattened = expected instanceof TupleType ? expected.children : [expected];
+        const actualFlattened = actual instanceof TupleType ? actual.children : [actual];
+
+        let match = true;
+
+        // If the expected type is an error, allow anything to prevent error propagation.
+        if (expected === MetaType.Error) {
+            match = true;
+        } else if (expectedFlattened.length !== actualFlattened.length) {
+            match = false;
+        } else {
+            for (let i = 0; i < expectedFlattened.length; i++) {
+                match = match && this.typeManager.check(expectedFlattened[i], actualFlattened[i]);
+            }
+        }
+
+        if (!match && reportError) {
+            const actualRepresentation = actual === MetaType.Unit ? "<unit>" : actual.representation;
+            this.reportError(node, DiagnosticMessage.GENERIC_TYPE_MISMATCH, actualRepresentation, expected.representation);
+        }
+
+        return match;
+    }
+
+    /**
+     * Checks if the [actual] matches any of [expected], including accepted casting.
+     *
+     * If the types passed in are a [TupleType] they will be compared using their flattened types.
+     *
+     * @see TypeManager.check
+     */
+    private checkTypeMatchAny(
+        node: Node,
+        expected: Type[],
+        actual: Type
+    ): boolean {
+        for (const type of expected) {
+            if (this.checkTypeMatch(node, type, actual, false)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Helper function to report a diagnostic with the type of [DiagnosticType.INFO].
+     */
+    private reportInfo(node: Node, message: string, ...args: unknown[]) {
+        this.diagnostics.report(new Diagnostic(DiagnosticType.INFO, node, message, ...args));
+    }
+
+    /**
+     * Helper function to report a diagnostic with the type of [DiagnosticType.WARNING].
+     */
+    private reportWarning(node: Node, message: string, ...args: unknown[]) {
+        this.diagnostics.report(new Diagnostic(DiagnosticType.WARNING, node, message, ...args));
+    }
+
+    /**
+     * Helper function to report a diagnostic with the type of [DiagnosticType.ERROR].
+     */
+    private reportError(node: Node, message: string, ...args: unknown[]) {
+        this.diagnostics.report(new Diagnostic(DiagnosticType.ERROR, node, message, ...args))
+    }
+
+    /**
+     * Shortcut to [Node.accept] for nullable nodes.
+     */
+    public visitNodeOrNull(node: Node | null | undefined): void {
+        if (!node) return;
+        node.accept(this);
+    }
+
+    /**
+     * Calls [Node.accept] on all nodes in a list.
+     */
+    private visitNodes(nodes: readonly Node[] | null | undefined): void {
+        if (!nodes) return;
+        for (const n of nodes) {
+            this.visitNodeOrNull(n);
+        }
+    }
+
+    /**
+     * Array of valid types allowed in logical conditional expressions.
+     */
+    private static readonly ALLOWED_LOGICAL_TYPES = [
+        PrimitiveType.BOOLEAN
+    ];
+
+    /**
+     * Array of valid types allowed in relational conditional expressions.
+     */
+    private static readonly ALLOWED_RELATIONAL_TYPES = [
+        PrimitiveType.INT,
+        PrimitiveType.LONG
+    ];
+
+    /**
+     * Array of valid types allowed in arithmetic expressions.
+     */
+    private static readonly ALLOWED_ARITHMETIC_TYPES = [
+        PrimitiveType.INT,
+        PrimitiveType.LONG
+    ];
+
+    /**
+     * Set of types that have a literal representation.
+     */
+    private static readonly LITERAL_TYPES: ReadonlySet<Type> = new Set<Type>([
+        PrimitiveType.INT,
+        PrimitiveType.BOOLEAN,
+        PrimitiveType.COORD,
+        PrimitiveType.STRING,
+        PrimitiveType.CHAR,
+        PrimitiveType.LONG
+    ]);
+    
+    /**
+     * A parser error listener that discards any syntax errors.
+     */
+    private static readonly DISCARD_ERROR_LISTENER: ANTLRErrorListener<any> = {
+        syntaxError<T>(
+            recognizer: Recognizer<T, any> | undefined,
+            offendingSymbol: any,
+            line: number,
+            charPositionInLine: number,
+            msg: string,
+            e: RecognitionException | undefined
+        ): void {
+            // NO-OP
+        }
+    }
+}
