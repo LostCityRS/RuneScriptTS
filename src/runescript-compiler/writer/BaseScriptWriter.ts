@@ -25,7 +25,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
             for (const instruction of block.instructions) {
                 // Write the current instruction
                 this.writeInstruction(context, instruction);
-                
+
                 // Update current instruction index
                 context.curIndex++;
             }
@@ -41,7 +41,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
     protected abstract finishWrite(script: RuneScript, context: T): void;
 
     close(): void {
-        // No-op
+        // NO-OP
     }
 
     /**

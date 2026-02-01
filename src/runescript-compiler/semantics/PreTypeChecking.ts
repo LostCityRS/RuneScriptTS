@@ -52,7 +52,6 @@ export class PreTypeChecking extends AstVisitor<void> {
     private readonly categoryType: Type | null;
 
     constructor(
-        
         private readonly typeManager: TypeManager,
         private readonly triggerManager: TriggerManager,
         private readonly rootTable: SymbolTable,
