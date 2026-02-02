@@ -91,7 +91,7 @@ export class CodeGenerator extends AstVisitor<void> {
     /**
      * An immutable list of scripts that were defined in the file.
      */
-    private get scripts(): RuneScript[] {
+    public get scripts(): RuneScript[] {
         return this._scripts;
     }
 
