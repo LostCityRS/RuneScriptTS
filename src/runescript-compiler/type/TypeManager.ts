@@ -70,12 +70,9 @@ export class TypeManager {
     /**
      * Registers all values within [enumMimic] to the name lookup.
      */
-    registerAll<T extends Type>(enumMimic: Record<string, T>): void {
-        for (const key in enumMimic) {
-            const value = enumMimic[key];
-            if (typeof value !== 'number') {
-                this.register(value);
-            }
+    registerAll(enumClass: { ALL: readonly Type[] }): void {
+        for (const value of enumClass.ALL) {
+            this.register(value);
         }
     }
 
