@@ -1,4 +1,3 @@
-import { ToStringHelper } from '../../../../util/ToStringHelper';
 import { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
@@ -17,12 +16,5 @@ export abstract class CallExpression extends Expression {
 
     this.addChild(name);
     this.addChildren(args);
-  }
-
-  toString(): string {
-    return new ToStringHelper(this)
-      .add("name", this.name)
-      .add("arguments", this.arguments)
-      .toString();
   }
 }

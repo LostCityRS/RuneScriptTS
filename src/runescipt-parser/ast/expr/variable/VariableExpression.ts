@@ -1,4 +1,3 @@
-import { ToStringHelper } from '../../../runescript/util/ToStringHelper';
 import { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
@@ -15,11 +14,5 @@ export abstract class VariableExpression extends Expression {
     this.name = name;
 
     this.addChild(name);
-  }
-
-  toString(): string {
-    return new ToStringHelper(this)
-      .add("name", this.name)
-      .toString();
   }
 }

@@ -1,4 +1,3 @@
-import { JavaObjects } from '../../../runescript/util/JavaObjects';
 import { AstVisitor } from '../../AstVisitor';
 import { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Identifier } from '../Identifier';
@@ -19,16 +18,5 @@ export class ConstantVariableExpression extends VariableExpression {
 
   accept<R>(visitor: AstVisitor<R>): R {
     return visitor.visitConstantVariableExpression(this);
-  }
-
-  hashCode(): number {
-    return JavaObjects.hash(this.name);
-  }
-
-  equals(other: unknown): boolean {
-    if (this === other) return true;
-    if (!(other instanceof ConstantVariableExpression)) return false;
-
-    return JavaObjects.equals(this.name, other.name);
   }
 }

@@ -1,6 +1,5 @@
 import { BaseVarType } from './BaseVarType';
 import { Type } from './Type';
-import { JavaObjects } from '../../util/JavaObjects';
 import { MetaType } from './MetaType';
 import { MutableOptionsType, TypeOptions } from './TypeOptions';
 
@@ -30,14 +29,6 @@ export class TupleType implements Type {
         }
         this.children = flattened;
         this.representation = this.children.map((c) => c.representation).join(",");
-    }
-
-    hashCode(): number {
-        return JavaObjects.hash(...this.children);
-    }
-
-    equals(other: any): boolean {
-        return JavaObjects.equals(this, other);
     }
 
     /**

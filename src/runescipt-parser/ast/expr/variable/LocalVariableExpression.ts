@@ -1,5 +1,3 @@
-import { JavaObjects } from '../../../runescript/util/JavaObjects';
-import { ToStringHelper } from '../../../runescript/util/ToStringHelper';
 import { AstVisitor } from '../../AstVisitor';
 import { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
@@ -33,24 +31,4 @@ export class LocalVariableExpression extends VariableExpression {
     return visitor.visitLocalVariableExpression(this);
   }
 
-  hashCode(): number {
-    return JavaObjects.hash(this.name, this.index);
-  }
-
-  equals(other: unknown): boolean {
-    if (this === other) return true;
-    if (!(other instanceof LocalVariableExpression)) return false;
-
-    return (
-      JavaObjects.equals(this.name, other.name) &&
-      JavaObjects.equals(this.index, other.index)
-    );
-  }
-
-  toString(): string {
-    return new ToStringHelper(this)
-      .add("name", this.name)
-      .add("index", this.index)
-      .toString();
-  }
 }
