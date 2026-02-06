@@ -13,10 +13,12 @@ export class LongQueueCommandHandler implements DynamicCommandHandler {
     }
 
     typeCheck(context: TypeCheckingContext): void {
-        context.checkArgument(0, this.queueType);
-        context.checkArgument(1, PrimitiveType.INT);
-        context.checkArgument(2, PrimitiveType.INT);
-        context.checkArgument(3, PrimitiveType.INT);
+        context.checkArgument(0, this.queueType);       // Script to queue.
+        context.checkArgument(1, PrimitiveType.INT);    // Delay before running script.
+        context.checkArgument(2, PrimitiveType.INT);    // Int arg to pass to script.
+        context.checkArgument(3, PrimitiveType.INT);    // Action to perform if logout succeeds mid-queue.
+
+        // TODO: (Type safety) Make sure queu script only execute up to 1 int arg (parameterType).
 
         const expectedTypesList: Type[] = [
             this.queueType,
