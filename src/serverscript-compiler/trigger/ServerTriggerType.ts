@@ -9,6 +9,8 @@ import { ScriptVarType } from "../type/ScriptVarType";
  * An enumeration of valid trigger types for use in serverscript.
  */
 export class ServerTriggerType implements TriggerType {
+    static readonly ALL: ServerTriggerType[] = [];
+
     readonly id: number;
     readonly subjectMode: SubjectMode;
     readonly allowParameters: boolean;
@@ -44,8 +46,9 @@ export class ServerTriggerType implements TriggerType {
         this.allowReturns = allowReturns;
         this.returns = returns;
         this.pointers = pointers ?? null;
-
         this.identifier = name.toLowerCase();
+
+        ServerTriggerType.ALL.push(this);
     }
 }
 
