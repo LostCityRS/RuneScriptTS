@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
-import toml from '@iarna/toml';
+import { parse } from '@iarna/toml';
 import { exit } from 'process';
 import { ServerScriptCompilerConfig } from './configuration/ServerScriptCompilerconfig';
 import { PointerType } from '../runescript-compiler/pointer/PointerType';
@@ -39,7 +39,7 @@ function loadConfig(configPath: string) : ServerScriptCompilerConfig {
     }
 
     const tomlText = readFileSync(configPath, 'utf-8');
-    const rawConfig = toml.parse(tomlText) as any;
+    const rawConfig = parse(tomlText) as any;
 
     // Map fields if needed.
     const config: ServerScriptCompilerConfig = {
