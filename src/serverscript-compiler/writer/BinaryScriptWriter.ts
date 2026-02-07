@@ -4,7 +4,7 @@ import { Label } from "../../runescript-compiler/codegen/script/Label";
 import { RuneScript } from "../../runescript-compiler/codegen/script/RuneScript";
 import { SwitchTable } from "../../runescript-compiler/codegen/script/SwitchTable";
 import { ScriptSymbol } from "../../runescript-compiler/symbol/ScriptSymbol";
-import { BasicSymbol, LocalVariableSymbol, Symbol } from "../../runescript-compiler/symbol/Symbol";
+import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from "../../runescript-compiler/symbol/Symbol";
 import { SubjectMode } from "../../runescript-compiler/trigger/SubjectMode";
 import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
 import { MetaType } from "../../runescript-compiler/type/MetaType";
@@ -91,7 +91,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
         throw new Error("Not supported.");
     }
 
-    protected override writePushConstantSymbol(context: BinaryScriptWriterContext, value: Symbol): void {
+    protected override writePushConstantSymbol(context: BinaryScriptWriterContext, value: RuneScriptSymbol): void {
         let id: number;
 
         if (value instanceof LocalVariableSymbol) {
@@ -227,7 +227,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
         });
     }
 
-    private findCaseKeyValue(key: number | Symbol): number {
+    private findCaseKeyValue(key: number | RuneScriptSymbol): number {
         if (typeof key === "number") {
             return key;
         } else if (key instanceof Symbol) {

@@ -12,7 +12,7 @@ import { TypeManager } from '../type/TypeManager';
 import { Recognizer } from 'antlr4ts/Recognizer';
 import { RecognitionException } from 'antlr4ts/RecognitionException';
 import { Token } from '../../runescipt-parser/ast/Token';
-import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, Symbol } from '../symbol/Symbol';
+import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
 import { ClientScriptSymbol, ScriptSymbol } from '../symbol/ScriptSymbol';
 import { Type } from '../type/Type';
 import { CommandTrigger } from '../trigger/CommandTrigger';
@@ -99,7 +99,7 @@ export class TypeChecking extends AstVisitor<void> {
      * A set of symbols that are currently being evaluated. Used to prevent re-entering
      * a constant and causing a stack overflow.
      */
-    private readonly constantsBeingEvaluated: Set<Symbol>;
+    private readonly constantsBeingEvaluated: Set<RuneScriptSymbol>;
 
     constructor(
         protected readonly typeManager: TypeManager,
@@ -324,7 +324,7 @@ export class TypeChecking extends AstVisitor<void> {
     /**
      * Checks if the value of [symbol] is known at compile time.
      */
-    private isConstantSymobl(symbol: Symbol): boolean {
+    private isConstantSymobl(symbol: RuneScriptSymbol): boolean {
         return symbol instanceof BasicSymbol || symbol instanceof ConstantSymbol;
     }
 
@@ -1041,12 +1041,12 @@ export class TypeChecking extends AstVisitor<void> {
         }
     }
 
-    private resolveSymbol(node: Expression, name: string, hint?: Type): Symbol | null {
+    private resolveSymbol(node: Expression, name: string, hint?: Type): RuneScriptSymbol | null {
         // Look through the current scopes table for a symbol with the given name and type.
-        let symbol: Symbol | null = null;
+        let symbol: RuneScriptSymbol | null = null;
         let type: Type | null = null;
 
-        for (const temp of this.table.findAll<Symbol>(name)) {
+        for (const temp of this.table.findAll<RuneScriptSymbol>(name)) {
             const tempType = this.symbolToType(temp);
             if(!tempType) continue;
 
@@ -1092,7 +1092,7 @@ export class TypeChecking extends AstVisitor<void> {
      *
      * If the symbol is not valid for direct identifier lookup then `null` is returned.
      */
-    private symbolToType(symbol: Symbol): Type | null {
+    private symbolToType(symbol: RuneScriptSymbol): Type | null {
         if (symbol instanceof ScriptSymbol) {
             if (symbol.trigger === CommandTrigger) {
                 // Only commands can be referenced by an indentifier and return a value

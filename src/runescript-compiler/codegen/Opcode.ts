@@ -1,5 +1,5 @@
 import { ScriptSymbol } from '../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol, Symbol } from '../symbol/Symbol';
+import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
 import { BaseVarType } from '../type/BaseVarType';
 import { Label } from './script/Label';
 import { SwitchTable } from './script/SwitchTable';
@@ -36,7 +36,7 @@ export class Opcode<T> {
      *
      * Operand: The value to push to the stack.
      */
-    static readonly PushConstantSymbol = new Opcode<Symbol>();
+    static readonly PushConstantSymbol = new Opcode<RuneScriptSymbol>();
     
     /**
      * Pushes the value of the local variable to the stack.

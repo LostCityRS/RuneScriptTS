@@ -2,13 +2,13 @@ import { PointerChecker } from '../codegen/script/config/PointerChecker';
 import { PointerHolder } from '../pointer/PointerHolder';
 import { TriggerType } from '../trigger/TriggerType';
 import { Type } from '../type/Type';
-import { Symbol } from './Symbol';
+import { RuneScriptSymbol } from './Symbol';
 
 /**
  * A script symbol is a type of symbol that defines any type of script. Each script
  * must define its trigger type, name, parameter type(s), and return type(s).
  */
-export abstract class ScriptSymbol implements Symbol {
+export abstract class ScriptSymbol implements RuneScriptSymbol {
     constructor(
         public readonly trigger: TriggerType,
         public readonly name: string,

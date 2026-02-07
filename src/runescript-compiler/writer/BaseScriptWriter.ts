@@ -5,7 +5,7 @@ import { Label } from '../codegen/script/Label';
 import { LocalTable, RuneScript } from '../codegen/script/RuneScript';
 import { SwitchTable } from '../codegen/script/SwitchTable';
 import { ScriptSymbol } from '../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol, Symbol } from '../symbol/Symbol';
+import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
 import { BaseVarType } from '../type/BaseVarType';
 import { ArrayType } from '../type/wrapped/ArrayType';
 import { ScriptWriter } from './ScriptWriter';
@@ -60,7 +60,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
                 this.writePushConstantLong(context, operand as bigint);
                 break;
             case Opcode.PushConstantSymbol:
-                this.writePushConstantSymbol(context, operand as Symbol);
+                this.writePushConstantSymbol(context, operand as RuneScriptSymbol);
                 break;
             case Opcode.PushLocalVar:
                 this.writePushLocalVar(context, operand as LocalVariableSymbol);
@@ -147,7 +147,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
     protected writePushConstantInt(context: T, value: number): void { throw new Error("Not implemented"); }
     protected writePushConstantString(context: T, value: string): void { throw new Error("Not implemented"); }
     protected writePushConstantLong(context: T, value: bigint): void { throw new Error("Not implemented"); }
-    protected writePushConstantSymbol(context: T, value: Symbol): void { throw new Error("Not implemented"); }
+    protected writePushConstantSymbol(context: T, value: RuneScriptSymbol): void { throw new Error("Not implemented"); }
     protected writePushLocalVar(context: T, symbol: LocalVariableSymbol): void { throw new Error("Not implemented"); }
     protected writePopLocalVar(context: T, symbol: LocalVariableSymbol): void { throw new Error("Not implemented"); }
     protected writePushVar(context: T, symbol: BasicSymbol, dot: boolean): void { throw new Error("Not implemented"); }
@@ -272,5 +272,5 @@ export interface IdProvider {
      *
      * The main symbol types are `ScriptSymbol`, `ConfigSymbol`, and `BasicSymbol`.
      */
-    get(symbol: Symbol): number;
+    get(symbol: RuneScriptSymbol): number;
 }

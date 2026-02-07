@@ -1,5 +1,5 @@
 import { ScriptSymbol } from "../runescript-compiler/symbol/ScriptSymbol";
-import { Symbol } from "../runescript-compiler/symbol/Symbol";
+import { RuneScriptSymbol } from "../runescript-compiler/symbol/Symbol";
 import { CommandTrigger } from "../runescript-compiler/trigger/CommandTrigger";
 import { IdProvider } from "../runescript-compiler/writer/BaseScriptWriter";
 
@@ -25,9 +25,9 @@ export class SymbolMapper implements IdProvider {
     /**
      * A map of each symbol to their id.
      */
-    private readonly symbols = new Map<Symbol, number>();
+    private readonly symbols = new Map<RuneScriptSymbol, number>();
 
-    putSymbol(id: number, symbol: Symbol): void {
+    putSymbol(id: number, symbol: RuneScriptSymbol): void {
         if (this.symbols.has(symbol)) {
             throw new Error(`Duplicate symbol: ${symbol}.`);
         }
@@ -48,7 +48,7 @@ export class SymbolMapper implements IdProvider {
         this.scripts.set(name, id);
     }
 
-    get(symbol: Symbol): number {
+    get(symbol: RuneScriptSymbol): number {
         if (symbol instanceof ScriptSymbol) {
             if (symbol.trigger === CommandTrigger) {
                 // Trim off dot commands.

@@ -1,4 +1,4 @@
-import { Symbol } from './Symbol';
+import { RuneScriptSymbol } from './Symbol';
 import { SymbolType } from './SymbolType';
 
 /**
@@ -10,14 +10,14 @@ import { SymbolType } from './SymbolType';
  * @see createSubTable
  */
 export class SymbolTable {
-    private symbols: Map<string, Map<string, Symbol>> = new Map();
+    private symbols: Map<string, Map<string, RuneScriptSymbol>> = new Map();
 
     constructor(private parent: SymbolTable | null = null) {}
 
     /**
      * Inserts [symbol] into the table and indicates if the insertion was successful.
      */
-    insert<T extends Symbol>(type: SymbolType<T>, symbol: T): boolean {
+    insert<T extends RuneScriptSymbol>(type: SymbolType<T>, symbol: T): boolean {
         const key = type.kind;
 
         // Check up the parent chain to prevent shadowing
@@ -41,7 +41,7 @@ export class SymbolTable {
     /**
      * Searches for a symbol with [name] and [type].
      */
-    find<T extends Symbol>(type: SymbolType<T>, name: string): T | null {
+    find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
         const table = this.symbols.get(type.kind);
         const symbol = table?.get(name) as T | undefined;
 
@@ -53,7 +53,7 @@ export class SymbolTable {
      * Searches for all symbols with the given name,
      * optionally restricted by kind.
      */
-    findAll<T extends Symbol>(name: string, type?: { new (...args: any[]): T }): T[] {
+    findAll<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): T[] {
         const results: T[] = [];
         for (const table of this.symbols.values()) {
           const symbol = table.get(name);

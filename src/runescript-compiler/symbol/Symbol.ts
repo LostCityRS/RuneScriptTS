@@ -6,21 +6,21 @@ import { Type } from '../type/Type';
  *
  * @see SymbolTable
  */
-export interface Symbol {
+export interface RuneScriptSymbol {
     readonly name: string;
 }
 
 /**
  * Script local variables
  */
-export class LocalVariableSymbol implements Symbol {
+export class LocalVariableSymbol implements RuneScriptSymbol {
     constructor(public readonly name: string, public readonly type: Type) {}
 }
 
 /**
  * Symbols with constant values, new ones should also be included in TypeChecking.isConstantSymbol
  */
-export class BasicSymbol implements Symbol {
+export class BasicSymbol implements RuneScriptSymbol {
     constructor(
         public readonly name: string,
         public readonly type: Type,
@@ -28,6 +28,6 @@ export class BasicSymbol implements Symbol {
     ) {}
 }
 
-export class ConstantSymbol implements Symbol {
+export class ConstantSymbol implements RuneScriptSymbol {
     constructor(public readonly name: string, public readonly value: string) {}
 }

@@ -1,7 +1,7 @@
 import { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
-import { Symbol } from '../../../../runescript-compiler/symbol/Symbol';
+import { RuneScriptSymbol } from '../../../../runescript-compiler/symbol/Symbol';
 
 /**
  * A base representation of a variable being used as an [Expression].
@@ -13,7 +13,7 @@ export abstract class VariableExpression extends Expression {
   /**
    * The symbol that the variable references.
    */
-  public reference: Symbol | null = null;
+  public reference: RuneScriptSymbol | null = null;
 
   protected constructor(source: NodeSourceLocation, name: Identifier) {
     super(source);
