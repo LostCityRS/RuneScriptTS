@@ -2,6 +2,8 @@ import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
 import { Type } from "../../runescript-compiler/type/Type";
 
 export class ScriptVarType extends Type {
+    static readonly ALL: ScriptVarType[] = [];
+
     readonly code: string | null;
     readonly baseType: BaseVarType;
     readonly defaultValue: any;
@@ -18,6 +20,8 @@ export class ScriptVarType extends Type {
         this.baseType = baseType;
         this.defaultValue = defaultValue;
         this.representation = representation ?? this.name.toLowerCase();
+
+        ScriptVarType.ALL.push(this);
     }
 
     // INT / BOOLEAN
@@ -71,49 +75,6 @@ export class ScriptVarType extends Type {
     static readonly MESANIM = new ScriptVarType('Á');
     static readonly VERIFY_OBJECT = new ScriptVarType('®', BaseVarType.INTEGER, -1, 'verifyobj');
 
-    static readonly ALL: readonly ScriptVarType[] = [
-        ScriptVarType.SEQ,
-        ScriptVarType.LOC_SHAPE,
-        ScriptVarType.COMPONENT,
-        ScriptVarType.IDKIT,
-        ScriptVarType.MIDI,
-        ScriptVarType.NPC_MODE,
-        ScriptVarType.NAMEDOBJ,
-        ScriptVarType.SYNTH,
-        ScriptVarType.AREA,
-        ScriptVarType.STAT,
-        ScriptVarType.NPC_STAT,
-        ScriptVarType.WRITEINV,
-        ScriptVarType.MAPAREA,
-        ScriptVarType.GRAPHIC,
-        ScriptVarType.FONTMETRICS,
-        ScriptVarType.ENUM,
-        ScriptVarType.HUNT,
-        ScriptVarType.JINGLE,
-        ScriptVarType.LOC,
-        ScriptVarType.MODEL,
-        ScriptVarType.NPC,
-        ScriptVarType.OBJ,
-        ScriptVarType.PLAYER_UID,
-        ScriptVarType.SPOTANIM,
-        ScriptVarType.NPC_UID,
-        ScriptVarType.INV,
-        ScriptVarType.TEXTURE,
-        ScriptVarType.CATEGORY,
-        ScriptVarType.MAPELEMENT,
-        ScriptVarType.HITMARK,
-        ScriptVarType.STRUCT,
-        ScriptVarType.DBROW,
-        ScriptVarType.INTERFACE,
-        ScriptVarType.TOPLEVELINTERFACE,
-        ScriptVarType.OVERLAYINTERFACE,
-        ScriptVarType.MOVESPEED,
-        ScriptVarType.ENTITYOVERLAY,
-        ScriptVarType.DBTABLE,
-        ScriptVarType.STRINGVECTOR,
-        ScriptVarType.MESANIM,
-        ScriptVarType.VERIFY_OBJECT,
-    ];
 
     /** Hack: emulate Kotlin enum `name` property for representation fallback */
     private get name(): string {
