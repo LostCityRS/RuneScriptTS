@@ -2,7 +2,7 @@ import { Diagnostic } from '../../runescript-compiler/diagnostics/Diagnostic';
 import { Diagnostics } from '../../runescript-compiler/diagnostics/Diagnostics';
 import { DiagnosticType } from '../../runescript-compiler/diagnostics/DiagnosticType';
 import { AstVisitor } from './AstVisitor';
-import { NodeSourceLocation } from './NodeSourceLocation';
+import type { NodeSourceLocation } from './NodeSourceLocation';
 
 /**
  * The base [abstract syntax tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) node.
@@ -30,9 +30,9 @@ export abstract class Node {
    */
   private readonly attributes = new Map<string, unknown>();
 
-  protected constructor(
-    public readonly source: NodeSourceLocation
-  ) {}
+  protected constructor(public readonly source: NodeSourceLocation) {
+    this.source = source;
+  }
 
   /**
    * Calls the node specific method on the [visitor].
@@ -47,7 +47,7 @@ export abstract class Node {
       return;
     }
 
-    if (node.parent !== null) {
+    if (node.parent) {
       throw new Error("Parent already set.");
     }
 
@@ -64,7 +64,7 @@ export abstract class Node {
         continue;
       }
 
-      if (node.parent !== null) {
+      if (node.parent) {
         throw new Error("Parent already set.");
       }
 

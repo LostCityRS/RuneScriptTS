@@ -13,7 +13,7 @@ import { MutableOptionsType as MutableTypeOptions, TypeOptions } from './TypeOpt
 
 type TypeBuilder = (opts: MutableTypeOptions) => void;
 
-export class PrimitiveType implements Type {
+export class PrimitiveType extends Type {
     readonly representation: string;
     readonly options: TypeOptions;
 
@@ -22,11 +22,12 @@ export class PrimitiveType implements Type {
      */
     private constructor(
         name: string,
-        public readonly code: string | null,
+        public readonly code: string | undefined,
         public readonly baseType: BaseVarType,
         public readonly defaultValue: unknown,
         builder?: TypeBuilder
     ) {
+        super();
         this.representation = name.toLowerCase();
 
         const opts = new MutableTypeOptions();

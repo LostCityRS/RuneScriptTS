@@ -1,5 +1,6 @@
 import { AstVisitor } from "../../AstVisitor";
-import { NodeSourceLocation } from "../../NodeSourceLocation";
+import { NodeKind } from "../../NodeKind";
+import type { NodeSourceLocation } from "../../NodeSourceLocation";
 import { Literal } from "./Literal";
 
 /**
@@ -11,11 +12,13 @@ import { Literal } from "./Literal";
  * ```
  */
 export class CharacterLiteral extends Literal<string> {
-  constructor(source: NodeSourceLocation, value: string) {
-    super(source, value);
-  }
+    public readonly kind = NodeKind.CharacterLiteral;
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitCharacterLiteral(this);
-  }
+    public constructor(source: NodeSourceLocation, value: string) {
+        super(source, value);
+    }
+
+    public accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitCharacterLiteral(this);
+    }
 }

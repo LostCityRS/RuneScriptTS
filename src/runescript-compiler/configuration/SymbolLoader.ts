@@ -23,7 +23,7 @@ export abstract class SymbolLoader {
      * Returns [ConstantSymbol] that was inserted.
      */
     addConstant(symbolTable: SymbolTable, name: string, value: string): ConstantSymbol {
-        const symbol: ConstantSymbol = new ConstantSymbol(name, value);
+        const symbol = new ConstantSymbol(name, value);
         if (!symbolTable.insert(SymbolType.constant(), symbol)) {
             throw new Error(`Unable to add constant: name=${name}, value=${value}.`);
         }
@@ -40,9 +40,13 @@ export abstract class SymbolLoader {
      */
     addBasic(symbolTable: SymbolTable, type: Type, name: string, isProtected: boolean = false): BasicSymbol {
         const symbol: BasicSymbol = new BasicSymbol(name, type, isProtected);
+
         if (!symbolTable.insert(SymbolType.basic(type), symbol)) {
-            throw new Error(`Unable to add basic: type=${type}, name=${name}`)
+            console.log(symbol.type);
+            throw new Error(`Unable to add basic: type=${type}, name=${name}`);
         }
+
+        console.debug(`Added basic: type=${type.baseType}, name=${name}`);
 
         return symbol;
     }

@@ -1,6 +1,7 @@
 import { AstVisitor } from '../AstVisitor';
 import { Expression } from '../expr/Expression';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -16,29 +17,23 @@ import { Statement } from './Statement';
  * ```
  */
 export class IfStatement extends Statement {
+    public readonly kind = NodeKind.IfStatement;
     public readonly condition: Expression;
     public readonly thenStatement: Statement;
-    public readonly elseStatement?: Statement;
+    public readonly elseStatement: Statement | null;
 
-    constructor(
-        source: NodeSourceLocation,
-        condition: Expression,
-        thenStatement: Statement,
-        elseStatement?: Statement
-    ) {
+    public constructor(source: NodeSourceLocation, condition: Expression, thenStatement: Statement, elseStatement: Statement | null) {
         super(source);
         this.condition = condition;
         this.thenStatement = thenStatement;
         this.elseStatement = elseStatement;
 
-        this.addChild(condition);
-        this.addChild(thenStatement);
-        if (elseStatement) {
-            this.addChild(elseStatement);
-        }
+        this.addChild(this.condition);
+        this.addChild(this.thenStatement);
+        this.addChild(this.elseStatement);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
          return visitor.visitIfStatement(this);
     }
 }

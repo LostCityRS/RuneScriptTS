@@ -9,14 +9,16 @@ import { WrappedType } from './wrapped/WrappedType';
  */
 export class MetaType implements MainType {
     readonly representation: string;
-    readonly code: string;
     readonly baseType: BaseVarType = BaseVarType.INTEGER;
     readonly defaultValue: unknown = -1;
     readonly options: TypeOptions = new MutableOptionsType({ allowSwitch: false, allowArray: false, allowDeclaration: false});
 
     private constructor(private readonly name: string) {
         this.representation = name.toLowerCase();
-        this.code = (() => { throw new Error("MetaType has no character representation."); })();
+    }
+
+    public get code(): string {
+        throw new Error("MetaType has no character representation.");
     }
 
     /**

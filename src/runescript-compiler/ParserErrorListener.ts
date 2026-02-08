@@ -1,6 +1,6 @@
 import { ANTLRErrorListener, RecognitionException, Recognizer } from 'antlr4ts';
 import { Diagnostics } from './diagnostics/Diagnostics';
-import { NodeSourceLocation } from '../runescipt-parser/ast/NodeSourceLocation';
+import type { NodeSourceLocation } from '../runescipt-parser/ast/NodeSourceLocation';
 import { Diagnostic } from './diagnostics/Diagnostic';
 import { DiagnosticType } from './diagnostics/DiagnosticType';
 

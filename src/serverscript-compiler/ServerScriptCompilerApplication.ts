@@ -8,9 +8,11 @@ import { SymbolMapper } from './SymbolMapper';
 import { JagFileScriptWriter } from './writer/JagFileScriptWriter';
 import { PointerHolder } from '../runescript-compiler/pointer/PointerHolder';
 import { ServerScriptCompiler } from './ServerScriptCompiler';
+import * as console from 'console';
+
 
 export function main(args: string[]) {
-    const configPath = args.length > 0 ? resolve(args[0]) : resolve('neptume.toml');
+    const configPath = args.length > 0 ? resolve(args[0]) : resolve('neptune.toml');
     const config = loadConfig(configPath);
 
     const sourcePaths = config.sourcePaths.map(p => resolve(p));
@@ -21,7 +23,14 @@ export function main(args: string[]) {
     const { binary: binaryWriterConfig} = config.writers;
     
     const mapper = new SymbolMapper();
-    const writer = binaryWriterConfig ? new JagFileScriptWriter(resolve(binaryWriterConfig.outputPath), mapper) : (() => { console.error(`No writer configured.`); exit(1); })();
+    let writer: JagFileScriptWriter;
+
+    if (binaryWriterConfig) {
+        writer = new JagFileScriptWriter(resolve(binaryWriterConfig.output), mapper);
+    } else {
+        console.error(`No writer configured.`);
+        exit(1);
+    }
 
     const commandPointers = new Map<string, PointerHolder>();
     loadSpecialSymbols(symbolPaths, mapper, commandPointers, checkPointers);
@@ -47,7 +56,9 @@ function loadConfig(configPath: string) : ServerScriptCompilerConfig {
         symbolPaths: rawConfig.symbols ?? [],
         excludePaths: rawConfig.excluded ?? [],
         checkPointers: rawConfig.check_pointers ?? false,
-        writers: rawConfig.writer ?? {}
+        writers: {
+            binary: rawConfig.writer?.binary
+        }
     };
 
     console.debug(`Loading configuration from ${configPath}.`);
@@ -85,14 +96,15 @@ function loadSpecialSymbols(symbolPaths: string[], mapper: SymbolMapper, command
 
                     commandPointers.set(name, { required, set: setter, conditionalSet, corrupted} as PointerHolder);
                     if (required2.size || setter2.size || corrupted2.size) {
-                        commandPointers.set(`.${name}`, {required: required2, set: setter2, conditionalSet, corrupted: corrupted2})
+                        commandPointers.set(`.${name}`, { required: required2, set: setter2, conditionalSet, corrupted: corrupted2 })
                     }
                 }
-
+                //console.log(`Command added: ${id}, '${name}'.`);
                 mapper.putCommand(id, name);
             }
         }
     }
+    //throw new Error(`booooom`);
 }
 
 function parsePointerList(text?: string): Set<PointerType> {
@@ -105,4 +117,8 @@ function parsePointerList(text?: string): Set<PointerType> {
         else throw new Error(`Invalid pointer name: ${name}.`);
     }
     return pointers;
+}
+
+if (import.meta.main) {
+    main(process.argv.slice(2));
 }

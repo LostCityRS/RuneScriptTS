@@ -1,5 +1,6 @@
 import { AstVisitor } from "../AstVisitor";
-import { NodeSourceLocation } from "../NodeSourceLocation";
+import { NodeKind } from "../NodeKind";
+import type { NodeSourceLocation } from "../NodeSourceLocation";
 import { Token } from "../Token";
 import { BinaryExpression } from "./BinaryExpression";
 import { Expression } from "./Expression";
@@ -10,16 +11,13 @@ import { Expression } from "./Expression";
  * The valid operators are: `*` (multiply), `/` (divide), `%` (modulo), `+` (add), `-` (subtract), `&` (and), `|` (or).
  */
 export class ArithmeticExpression extends BinaryExpression {
-  constructor(
-    source: NodeSourceLocation,
-    left: Expression,
-    operator: Token,
-    right: Expression
-  ) {
-    super(source, left, operator, right);
-  }
+    public readonly kind = NodeKind.ArithmeticExpression;  
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitArithmeticExpression(this);
-  }
+    public constructor(source: NodeSourceLocation, left: Expression, operator: Token, right: Expression) {
+        super(source, left, operator, right);
+    }
+
+    public accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitArithmeticExpression(this);
+    }
 }

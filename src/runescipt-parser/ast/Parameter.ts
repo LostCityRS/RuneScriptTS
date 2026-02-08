@@ -1,6 +1,6 @@
 import { Node } from './Node';
 import { Identifier } from './expr/Identifier';
-import { NodeSourceLocation } from './NodeSourceLocation';
+import type { NodeSourceLocation } from './NodeSourceLocation';
 import { Token } from './Token';
 import { AstVisitor } from './AstVisitor';
 import { LocalVariableSymbol } from '../../runescript-compiler/symbol/Symbol';
@@ -23,8 +23,8 @@ export class Parameter extends Node {
         this.typeToken = typeToken;
         this.name = name;
 
-        this.addChild(typeToken);
-        this.addChild(name);
+        this.addChild(this.typeToken);
+        this.addChild(this.name);
     }
 
     accept<R>(visitor: AstVisitor<R>): R {

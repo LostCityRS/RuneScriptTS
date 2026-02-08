@@ -1,7 +1,6 @@
-import { BasicSymbol } from '../../../runescript-compiler/symbol/Symbol';
 import { Type } from '../../../runescript-compiler/type/Type';
 import { Node } from '../Node';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 
 /** 
  * The base expression node that all expressions extend.

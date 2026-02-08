@@ -1,6 +1,7 @@
 import { RuneScriptSymbol } from "../../../../runescript-compiler/symbol/Symbol";
 import { AstVisitor } from "../../AstVisitor";
-import { NodeSourceLocation } from "../../NodeSourceLocation";
+import { NodeKind } from "../../NodeKind";
+import type { NodeSourceLocation } from "../../NodeSourceLocation";
 import { Expression } from "../Expression";
 import { Literal } from "./Literal";
 
@@ -14,14 +15,15 @@ import { Literal } from "./Literal";
  * ```
  */
 export class StringLiteral extends Literal<string> {
-  public symbol: RuneScriptSymbol | null = null;
-  public subExpression: Expression | null = null;
+    public readonly kind = NodeKind.StringLiteral;
+    public symbol: RuneScriptSymbol | null = null;
+    public subExpression: Expression | null = null;
 
-  constructor(source: NodeSourceLocation, value: string) {
-    super(source, value);
-  }
+    constructor(source: NodeSourceLocation, value: string) {
+        super(source, value);
+    }
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitStringLiteral(this);
-  }
+    accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitStringLiteral(this);
+    }
 }

@@ -40,7 +40,11 @@ export class ServerTriggerType implements TriggerType {
         pointers?: Set<PointerType> | null;
     }) {
         this.id = id;
-        this.subjectMode = subjectMode;
+        if (subjectMode == null) {
+            this.subjectMode = SubjectMode.Name;
+        } else {
+            this.subjectMode = subjectMode;
+        }
         this.allowParameters = allowParameters;
         this.parameters = parameters;
         this.allowReturns = allowReturns;
@@ -664,7 +668,7 @@ export class ServerTriggerType implements TriggerType {
             PointerType.ACTIVE_PLAYER2,
         ]),
     });
-    
+
     static readonly APPLAYERT = new ServerTriggerType({
         id: 93,
         name: "APPLAYERT",

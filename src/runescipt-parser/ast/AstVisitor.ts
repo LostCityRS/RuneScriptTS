@@ -207,6 +207,6 @@ export abstract class AstVisitor<R> {
     }
 
     visitNode(node: Node): R {
-        throw new Error(`not implemented: ${node.constructor.name}`);
+        throw new Error(`Not implemented: ${node.constructor.name}`);
     }
 }

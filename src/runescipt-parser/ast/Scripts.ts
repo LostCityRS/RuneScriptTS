@@ -7,7 +7,8 @@ import { Type } from '../../runescript-compiler/type/Type';
 import { AstVisitor } from './AstVisitor';
 import { Identifier } from './expr/Identifier';
 import { Node } from './Node';
-import { NodeSourceLocation } from './NodeSourceLocation';
+import { NodeKind } from './NodeKind';
+import type { NodeSourceLocation } from './NodeSourceLocation';
 import { Parameter } from './Parameter';
 import { Statement } from './statement/Statement';
 import { Token } from './Token';
@@ -28,11 +29,12 @@ import { Token } from './Token';
  * ```
  */
 export class Script extends Node {
+  public readonly kind = NodeKind.Script;
     public readonly trigger: Identifier;
     public readonly name: Identifier;
     public readonly isStar: boolean;
-    public readonly parameters?: Parameter[];
-    public readonly returnTokens?: Token[];
+    public readonly parameters: Parameter[] | null;
+    public readonly returnTokens: Token[] | null;
     public readonly statements: Statement[];
     public block: SymbolTable;
     public symbol: ScriptSymbol;
@@ -41,45 +43,45 @@ export class Script extends Node {
     public subjectReference: BasicSymbol | null = null;
     public parameterType: Type;
 
-    constructor(
+    public constructor(options: {
         source: NodeSourceLocation,
         trigger: Identifier,
         name: Identifier,
         isStar: boolean,
-        parameters: Parameter[] | undefined,
-        returnTokens: Token[] | undefined,
-        statements: Statement[]
-    ) {
-        super(source);
-        this.trigger = trigger;
-        this.name = name;
-        this.isStar = isStar;
-        this.parameters = parameters;
-        this.returnTokens = returnTokens;
-        this.statements = statements;
+        parameters: Parameter[] | null,
+        returnTokens: Token[] | null,
+        statements: Statement[];
+    }) {
+        super(options.source);
+        this.trigger = options.trigger;
+        this.name = options.name;
+        this.isStar = options.isStar;
+        this.parameters = options.parameters;
+        this.returnTokens = options.returnTokens;
+        this.statements = options.statements;
 
-        this.addChild(trigger);
-        this.addChild(name);
+        this.addChild(this.trigger);
+        this.addChild(this.name);
 
-        if (parameters) {
-          this.addChildren(parameters);
+        if (this.parameters) {
+          this.addChildren(this.parameters);
         }
 
-        if (returnTokens) {
-          this.addChildren(returnTokens);
+        if (this.returnTokens) {
+          this.addChildren(this.returnTokens);
         }
 
-        this.addChildren(statements);
+        this.addChildren(this.statements);
     }
 
     /**
      * Script name, including '*' suffix when applicable.
      */
-    get nameString(): string {
+    public get nameString(): string {
       return this.isStar ? `${this.name.text}*` : this.name.text;
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
       return visitor.visitScript(this);
     }
 }

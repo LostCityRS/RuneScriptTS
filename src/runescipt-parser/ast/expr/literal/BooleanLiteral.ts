@@ -1,5 +1,6 @@
 import { AstVisitor } from "../../AstVisitor";
-import { NodeSourceLocation } from "../../NodeSourceLocation";
+import { NodeKind } from "../../NodeKind";
+import type { NodeSourceLocation } from "../../NodeSourceLocation";
 import { Literal } from "./Literal";
 
 /**
@@ -11,11 +12,13 @@ import { Literal } from "./Literal";
  * ```
  */
 export class BooleanLiteral extends Literal<boolean> {
-    constructor(source: NodeSourceLocation, value: boolean) {
+    public readonly kind = NodeKind.BooleanLiteral;
+
+    public constructor(source: NodeSourceLocation, value: boolean) {
         super(source, value);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitBooleanLiteral(this);    
     }
 }

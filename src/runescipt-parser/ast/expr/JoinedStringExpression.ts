@@ -1,5 +1,6 @@
 import { AstVisitor } from '../AstVisitor';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Expression } from './Expression';
 import { StringPart } from './StringPart';
 
@@ -12,16 +13,17 @@ import { StringPart } from './StringPart';
  * ```
  */
 export class JoinedStringExpression extends Expression {
+    public readonly kind = NodeKind.JoinedStringExpression;
     public readonly parts: StringPart[];
 
-    constructor(source: NodeSourceLocation, parts: StringPart[]) {
+    public constructor(source: NodeSourceLocation, parts: StringPart[]) {
         super(source);
         this.parts = parts;
 
-        this.addChildren(parts);
+        this.addChildren(this.parts);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitJoinedStringExpression(this);
     }
 }

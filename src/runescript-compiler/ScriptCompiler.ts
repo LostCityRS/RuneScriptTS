@@ -45,7 +45,7 @@ export class ScriptCompiler{
     /**
      * The root table that contains all global symbols.
      */
-    private readonly rootTable: SymbolTable;
+    private readonly rootTable = new SymbolTable();
 
     /**
      * A list of [SymbolLoader]s called before attempting compilation.
@@ -66,6 +66,8 @@ export class ScriptCompiler{
      * The [TriggerManager] for the compiler that is used for registering and looking up script triggers.
      */
     public readonly triggers: TriggerManager = new TriggerManager();
+
+    public static readonly DEFAULT_DIAGNOSTICS_HANDLER: DiagnosticsHandler = new BaseDiagnosticsHandler();
 
     /**
      * Called after every step with all diagnostics that were collected during it.
@@ -214,7 +216,7 @@ export class ScriptCompiler{
         let fileCount = 0;
 
         for (const sourcePath of this.sourcePaths) {
-            this.logger.debug(`Parsing files in ${sourcePath}.`);
+            this.logger.debug(`Parsing files in '${sourcePath}'.`);
 
             // Recursively walk all files.
             const files = this.walkTopDown(sourcePath);
@@ -223,6 +225,7 @@ export class ScriptCompiler{
                 if (!fs.statSync(file).isFile() || path.extname(file) !== `.${ext}`) {
                     continue;
                 }
+                this.logger.debug(`Attempting to parse: ${file}.`);
 
                 const start = performance.now();
                 const errorListener = new ParserErrorListener(file, diagnostics);
@@ -233,7 +236,7 @@ export class ScriptCompiler{
                 fileCount++;
 
                 const time = (performance.now() - start).toFixed(2);
-                this.logger.trace(`Parsed ${file} in ${time}ms.`);
+                this.logger.debug(`Parsed ${file} in ${time}ms.`);
             }
         }
 
@@ -256,10 +259,11 @@ export class ScriptCompiler{
 
         const preTypeChecking = new PreTypeChecking(this.types, this.triggers, this.rootTable, diagnostics);
         for (const file of files) {
+            this.logger.debug(`Pre-check on script: ${file.source.name}.`)
             const fileStart = performance.now();
             file.accept(preTypeChecking);
             const fileTime = (performance.now() - fileStart).toFixed(2);
-            this.logger.trace(`Pre-type checked ${file.source.name} in ${fileTime}ms.`);
+            this.logger.debug(`Pre-type checked ${file.source.name} in ${fileTime}ms.`);
         }
 
         const preTypeCheckingTime = (performance.now() - preTypeStart).toFixed(2);
@@ -274,7 +278,7 @@ export class ScriptCompiler{
             const fileStart = performance.now();
             file.accept(typeChecking);
             const fileTime = (performance.now() - fileStart).toFixed(2);
-            this.logger.trace(`Type checked ${file.source.name} in ${fileTime}ms.`);
+            this.logger.debug(`Type checked ${file.source.name} in ${fileTime}ms.`);
         }
 
         const typeCheckingTime = (performance.now() - typeStart).toFixed(2);
@@ -405,6 +409,4 @@ export class ScriptCompiler{
         }
         return results;
     }
-
-    public static readonly DEFAULT_DIAGNOSTICS_HANDLER: DiagnosticsHandler = new BaseDiagnosticsHandler();
 }

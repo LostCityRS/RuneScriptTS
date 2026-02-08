@@ -31,14 +31,16 @@ export class TypeManager {
      */
     register(arg1: string | Type, arg2?: Type): void {
         if (typeof arg1 === 'string') {
+            console.log(`arg1=string: ${arg1}`);
             const existing = this.nameToType.get(arg1);
             if (existing) throw new Error(`Type '${arg1} is already registered.`);
             if (!arg2) throw new Error('Type must be provided.');
             this.nameToType.set(arg1, arg2);
         } else {
             const name = arg1.representation;
+            console.log(name);
             const existing = this.nameToType.get(name);
-            if (existing) throw new Error(`Type '${name} is already registered.`);
+            if (existing) throw new Error(`Type '${name}' is already registered.`);
             this.nameToType.set(name, arg1);
         }
     }
@@ -72,6 +74,7 @@ export class TypeManager {
      */
     registerAll(enumClass: { ALL: readonly Type[] }): void {
         for (const value of enumClass.ALL) {
+            console.log(value.code);
             this.register(value);
         }
     }

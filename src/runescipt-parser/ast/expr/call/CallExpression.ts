@@ -1,4 +1,4 @@
-import { NodeSourceLocation } from '../../NodeSourceLocation';
+import type { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
 import { RuneScriptSymbol } from '../../../../runescript-compiler/symbol/Symbol';
@@ -9,15 +9,14 @@ import { RuneScriptSymbol } from '../../../../runescript-compiler/symbol/Symbol'
 export abstract class CallExpression extends Expression {
   public readonly name: Identifier;
   public readonly arguments: Expression[];
-
   public symbol: RuneScriptSymbol | null;
 
-  constructor(source: NodeSourceLocation, name: Identifier, args: Expression[]) {
+  public constructor(source: NodeSourceLocation, name: Identifier, args: Expression[]) {
     super(source);
     this.name = name;
     this.arguments = args;
 
-    this.addChild(name);
-    this.addChildren(args);
+    this.addChild(this.name);
+    this.addChildren(this.arguments);
   }
 }

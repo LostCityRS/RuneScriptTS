@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "antlr": "bunx antlr4ts-cli -visitor -listener -Xexact-output-dir -o src/antlr/out src/antlr/RuneScriptLexer.g4 src/antlr/RuneScriptParser.g4",
+    "antlr": "bunx antlr4ts-cli -visitor -no-listener -o src/antlr/out src/antlr/RuneScriptParser.g4",
+    "antlr:lexer": "bunx antlr4ts-cli -o src/antlr/out src/antlr/RuneScriptLexer.g4",
     "build": "tsc",
     "clean": "rm -rf dist",
     "prepare": "bun run antlr && bun run build"

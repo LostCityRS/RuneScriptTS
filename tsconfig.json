@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "es2022",
+    "module": "esnext",
     "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "types": ["node"]
   }
 }

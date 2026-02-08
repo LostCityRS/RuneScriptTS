@@ -31,7 +31,7 @@ export interface DiagnosticsHandler {
  * A base implementation of a diagnostics handler that points to the line an error occurs on
  * and exits the process with exit code `1` if there were any errors during any steps.
  */
-export class BaseDiagnosticsHandler {
+export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
     handleParse(diagnostics: Diagnostics): void {
         this.handleShared(diagnostics);
     }
@@ -56,7 +56,7 @@ export class BaseDiagnosticsHandler {
 
             // Lazy load file lines
             if (!fileLines.has(filePath)) {
-                fileLines.set(filePath, fs.readFileSync(filePath, "utf-8").split("\n"));
+                fileLines.set(filePath, fs.readFileSync(filePath, "utf-8").split(/\r?\n/));
             }
 
             const lines = fileLines.get(filePath)!;
@@ -64,12 +64,20 @@ export class BaseDiagnosticsHandler {
 
             console.log(`${location}: ${diag.type}: ${diag.message}`);
 
-            if (diag.sourceLocation.line - 1 < lines.length) {
-                const line = lines[diag.sourceLocation.line - 1];
+            const lineIndex = diag.sourceLocation.line - 1;
+
+            if (lineIndex >= 0 && lineIndex < lines.length) {
+                const line = lines[lineIndex];
                 const lineNoTabs = line.replace(/\t/g, "    ");
-                const tabCount = (line.match(/\t/g) || []).length;
+                const tabCount = (line.match(/\t/g) ?? []).length;
+            
+                const rawColumn = diag.sourceLocation.column ?? 1;
+                const column = Math.max(1, rawColumn);
+
+                const caretOffset = Math.max(0, tabCount * 3 + (column - 1));
+
                 console.log(`    > ${lineNoTabs}`);
-                console.log(`    > ${" ".repeat(tabCount * 3 + (diag.sourceLocation.column - 1))}^`);
+                console.log(`    > ${" ".repeat(caretOffset)}^`);
             }
         }
 

@@ -200,7 +200,6 @@ export class PreTypeChecking extends AstVisitor<void> {
 
         // Trigger only allows global
         if (mode === SubjectMode.None) {
-            script.name.reportError(this.diagnostics, DiagnosticMessage.SCRIPT_SUBJECT_ONLY_GLOBAL, trigger.identifier);
             return;
         }
 
@@ -391,6 +390,8 @@ export class PreTypeChecking extends AstVisitor<void> {
     }
 
     override visitParameter(parameter: Parameter): void {
+        //console.log(parameter);
+
         const name = parameter.name.text;
         const typeText = parameter.typeToken.text;
         const type = this.typeManager.findOrNull(typeText, true);

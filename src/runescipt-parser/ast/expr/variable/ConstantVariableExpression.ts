@@ -1,5 +1,6 @@
 import { AstVisitor } from '../../AstVisitor';
-import { NodeSourceLocation } from '../../NodeSourceLocation';
+import { NodeKind } from '../../NodeKind';
+import type { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
 import { VariableExpression } from './VariableExpression';
@@ -13,13 +14,14 @@ import { VariableExpression } from './VariableExpression';
  * ```
  */
 export class ConstantVariableExpression extends VariableExpression {
-  public subExpression: Expression | null = null;
+    public readonly kind = NodeKind.ConstantVariableExpression;
+    public subExpression: Expression | null = null;
 
-  constructor(source: NodeSourceLocation, name: Identifier) {
-    super(source, name);
-  }
+    public constructor(source: NodeSourceLocation, name: Identifier) {
+        super(source, name);
+    }
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitConstantVariableExpression(this);
-  }
+    public accept<R>(visitor: AstVisitor<R>): R {
+      return visitor.visitConstantVariableExpression(this);
+    }
 }

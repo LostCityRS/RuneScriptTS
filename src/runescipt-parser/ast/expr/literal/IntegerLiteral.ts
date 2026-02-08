@@ -1,5 +1,6 @@
 import { AstVisitor } from '../../AstVisitor';
-import { NodeSourceLocation } from '../../NodeSourceLocation';
+import { NodeKind } from '../../NodeKind';
+import type { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Literal } from './Literal';
 
 /**
@@ -11,11 +12,13 @@ import { Literal } from './Literal';
  * ```
  */
 export class IntegerLiteral extends Literal<number> {
-    constructor(source: NodeSourceLocation, value: number) {
+    public readonly kind = NodeKind.IntegerLiteral;
+
+    public constructor(source: NodeSourceLocation, value: number) {
         super(source, value);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitIntegerLiteral(this);    
     }
 }

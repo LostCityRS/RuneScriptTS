@@ -156,7 +156,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.addSymLoader('dbrow', ScriptVarType.DBROW);
         this.addSymLoader('dbtable', ScriptVarType.DBTABLE);
 
-        // Debuggin
+        // Debugging
         this.addDynamicCommandHandler('dump', new DumpCommandHandler());
         this.addDynamicCommandHandler('script', new ScriptCommandHandler());
     }
@@ -175,8 +175,8 @@ export class ServerScriptCompiler extends ScriptCompiler {
     }
 
     private addSymLoaderWithSupplier(name: string, typeSupplier: (subTypes: Type) => Type): void {
-        for (const symbolPAth of this.symbolPaths) {
-            const typeFile = path.join(symbolPAth, `${name}.sym`);
+        for (const symbolPath of this.symbolPaths) {
+            const typeFile = path.join(symbolPath, `${name}.sym`);
             if (fs.existsSync(typeFile)) {
                 this.addSymbolLoader(new TsvSymbolLoader(this.mapper, typeFile, typeSupplier));
             }

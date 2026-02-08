@@ -1,5 +1,5 @@
 import { AstVisitor } from '../AstVisitor';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Token } from '../Token';
 import { Expression } from './Expression';
 
@@ -16,27 +16,22 @@ import { Expression } from './Expression';
  * @see ArithmeticExpression
  */
 export abstract class BinaryExpression extends Expression {
-  public readonly left: Expression;
-  public readonly operator: Token;
-  public readonly right: Expression;
+    public readonly left: Expression;
+    public readonly operator: Token;
+    public readonly right: Expression;
 
-  protected constructor(
-    source: NodeSourceLocation,
-    left: Expression,
-    operator: Token,
-    right: Expression
-  ) {
-    super(source);
-    this.left = left;
-    this.operator = operator;
-    this.right = right;
+    protected constructor(source: NodeSourceLocation, left: Expression, operator: Token, right: Expression) {
+        super(source);
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
 
-    this.addChild(left);
-    this.addChild(operator);
-    this.addChild(right);
-  }
+        this.addChild(this.left);
+        this.addChild(this.operator);
+        this.addChild(this.right);
+    }
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitBinaryExpression(this);
-  }
+    public accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitBinaryExpression(this);
+    }
 }

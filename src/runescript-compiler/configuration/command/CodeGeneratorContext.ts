@@ -2,7 +2,7 @@ import { CallExpression } from '../../../runescipt-parser/ast/expr/call/CallExpr
 import { CommandCallExpression } from '../../../runescipt-parser/ast/expr/call/CommandCallExpression';
 import { Expression } from '../../../runescipt-parser/ast/expr/Expression';
 import { Identifier } from '../../../runescipt-parser/ast/expr/Identifier';
-import { NodeSourceLocation } from '../../../runescipt-parser/ast/NodeSourceLocation';
+import type { NodeSourceLocation } from '../../../runescipt-parser/ast/NodeSourceLocation';
 import { CodeGenerator } from '../../codegen/CodeGenerator';
 import { Opcode } from '../../codegen/Opcode';
 import { Diagnostics } from '../../diagnostics/Diagnostics';

@@ -1,7 +1,7 @@
 
 import { AstVisitor } from './AstVisitor';
 import { Node } from './Node';
-import { NodeSourceLocation } from './NodeSourceLocation';
+import type { NodeSourceLocation } from './NodeSourceLocation';
 import { Script } from './Scripts';
 
 /**
@@ -16,7 +16,7 @@ export class ScriptFile extends Node {
         super(source);
         this.scripts = scripts;
 
-        this.addChildren(scripts);
+        this.addChildren(this.scripts);
     }
 
     accept<R>(visitor: AstVisitor<R>): R {

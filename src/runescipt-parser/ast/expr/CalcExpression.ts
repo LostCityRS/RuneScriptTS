@@ -1,5 +1,6 @@
 import { AstVisitor } from "../AstVisitor";
-import { NodeSourceLocation } from "../NodeSourceLocation";
+import { NodeKind } from "../NodeKind";
+import type { NodeSourceLocation } from "../NodeSourceLocation";
 import { Expression } from "./Expression";
 
 /**
@@ -11,16 +12,17 @@ import { Expression } from "./Expression";
  * ```
  */
 export class CalcExpression extends Expression {
+    public readonly kind = NodeKind.CalcExpression;
     public readonly expression: Expression;
     
-    constructor(source: NodeSourceLocation, expression: Expression) {
+    public constructor(source: NodeSourceLocation, expression: Expression) {
         super(source);
         this.expression = expression;
 
-        this.addChild(expression);
+        this.addChild(this.expression);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitCalcExpression(this);
     }
 } 

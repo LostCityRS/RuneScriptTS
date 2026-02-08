@@ -1,5 +1,6 @@
 import { AstVisitor } from '../AstVisitor';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -11,11 +12,13 @@ import { Statement } from './Statement';
  * ```
  */
 export class EmptyStatement extends Statement {
-    constructor(source: NodeSourceLocation) {
+    public readonly = NodeKind.EmptyStatement;
+
+    public constructor(source: NodeSourceLocation) {
         super(source);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitEmptyStatement(this);
     }
 }

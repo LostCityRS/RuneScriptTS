@@ -1,6 +1,7 @@
 import { AstVisitor } from '../AstVisitor';
 import { Expression } from '../expr/Expression';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -12,16 +13,17 @@ import { Statement } from './Statement';
  * ```
  */
 export class ReturnStatement extends Statement {
+    public readonly kind = NodeKind.ReturnStatement;
     public readonly expressions: Expression[];
 
-    constructor(source: NodeSourceLocation, expressions: Expression[]) {
+    public constructor(source: NodeSourceLocation, expressions: Expression[]) {
         super(source);
         this.expressions = expressions;
 
-        this.addChildren(expressions);
+        this.addChildren(this.expressions);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitReturnStatement(this);
     }
 }

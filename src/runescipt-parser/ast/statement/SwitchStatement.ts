@@ -1,7 +1,8 @@
 import { Type } from '../../../runescript-compiler/type/Type';
 import { AstVisitor } from '../AstVisitor';
 import { Expression } from '../expr/Expression';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Token } from '../Token';
 import { Statement } from './Statement';
 import { SwitchCase } from './SwitchCase';
@@ -20,29 +21,25 @@ import { SwitchCase } from './SwitchCase';
  * ```
  */
 export class SwitchStatement extends Statement {
+    public readonly kind = NodeKind.SwitchStatement;
     public readonly typeToken: Token;
     public readonly condition: Expression;
     public readonly cases: SwitchCase[];
     public defaultCase: SwitchCase | null = null;
     public type: Type;
 
-    constructor(
-        source: NodeSourceLocation,
-        typeToken: Token,
-        condition: Expression,
-        cases: SwitchCase[]
-    ) {
+    public constructor(source: NodeSourceLocation, typeToken: Token, condition: Expression, cases: SwitchCase[]) {
         super(source);
         this.typeToken = typeToken;
         this.condition = condition;
         this.cases = cases;
 
-        this.addChild(typeToken);
-        this.addChild(condition);
-        this.addChildren(cases);
+        this.addChild(this.typeToken);
+        this.addChild(this.condition);
+        this.addChildren(this.cases);
     }
     
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitSwitchStatement(this);
     }
 }

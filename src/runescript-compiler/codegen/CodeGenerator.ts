@@ -22,7 +22,7 @@ import { ConstantVariableExpression } from '../../runescipt-parser/ast/expr/vari
 import { GameVariableExpression } from '../../runescipt-parser/ast/expr/variable/GameVariableExpression';
 import { LocalVariableExpression } from '../../runescipt-parser/ast/expr/variable/LocalVariableExpression';
 import { Node } from '../../runescipt-parser/ast/Node';
-import { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
+import type { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
 import { Parameter } from '../../runescipt-parser/ast/Parameter';
 import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
 import { Script } from '../../runescipt-parser/ast/Scripts';

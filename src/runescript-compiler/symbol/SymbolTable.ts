@@ -10,7 +10,7 @@ import { SymbolType } from './SymbolType';
  * @see createSubTable
  */
 export class SymbolTable {
-    private symbols: Map<string, Map<string, RuneScriptSymbol>> = new Map();
+    private symbols: Map<SymbolType<any>, Map<string, RuneScriptSymbol>> = new Map();
 
     constructor(private parent: SymbolTable | null = null) {}
 
@@ -18,36 +18,41 @@ export class SymbolTable {
      * Inserts [symbol] into the table and indicates if the insertion was successful.
      */
     insert<T extends RuneScriptSymbol>(type: SymbolType<T>, symbol: T): boolean {
-        const key = type.kind;
+      let current: SymbolTable | null = this;
 
-        // Check up the parent chain to prevent shadowing
-        let current: SymbolTable | null = this;
-        while (current) {
-            const table = current.symbols.get(key);
-            if (table?.has(symbol.name)) {
+      while (current) {
+          const table = current.symbols.get(type);
+          if (table?.has(symbol.name)) {
               return false;
-            }
-            current = current.parent;
-        }
+          }
+          current = current.parent;
+      }
 
-        if (!this.symbols.has(key)) {
-            this.symbols.set(key, new Map());
-        }
+      let table = this.symbols.get(type);
+      if (!table) {
+          table = new Map();
+          this.symbols.set(type, table);
+      }
 
-        this.symbols.get(key)!.set(symbol.name, symbol);
-        return true;
-    }
+      table.set(symbol.name, symbol);
+      return true;
+  }
 
     /**
      * Searches for a symbol with [name] and [type].
      */
-    find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
-        const table = this.symbols.get(type.kind);
-        const symbol = table?.get(name) as T | undefined;
-
-        if (symbol) return symbol;
-        return this.parent?.find(type, name) ?? null;
-    }
+  find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
+      
+      console.log(this.symbols.has(type.kind));
+      console.log(`Find call, type: ${type.kind}, name: ${name}.`);
+      console.log(`Symbols size: ${this.symbols.size}`);
+      const table = this.symbols.get(type);
+      console.debug(`table fetch: ${table}`);
+      const symbol = table?.get(name) as T | undefined;
+  
+      if (symbol) return symbol;
+      return this.parent?.find(type, name) ?? null;
+  }
 
     /**
      * Searches for all symbols with the given name,

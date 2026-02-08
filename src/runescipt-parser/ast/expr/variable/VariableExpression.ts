@@ -1,4 +1,4 @@
-import { NodeSourceLocation } from '../../NodeSourceLocation';
+import type { NodeSourceLocation } from '../../NodeSourceLocation';
 import { Expression } from '../Expression';
 import { Identifier } from '../Identifier';
 import { RuneScriptSymbol } from '../../../../runescript-compiler/symbol/Symbol';
@@ -19,6 +19,6 @@ export abstract class VariableExpression extends Expression {
     super(source);
     this.name = name;
 
-    this.addChild(name);
+    this.addChild(this.name);
   }
 }

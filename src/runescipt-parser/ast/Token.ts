@@ -1,5 +1,5 @@
 
-import { NodeSourceLocation } from './NodeSourceLocation';
+import type { NodeSourceLocation } from './NodeSourceLocation';
 import { Node } from './Node';
 import { AstVisitor } from './AstVisitor';
 

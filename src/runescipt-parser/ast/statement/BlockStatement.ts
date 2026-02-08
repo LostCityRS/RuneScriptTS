@@ -1,6 +1,7 @@
 import { SymbolTable } from '../../../runescript-compiler/symbol/SymbolTable';
 import { AstVisitor } from '../AstVisitor';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -14,17 +15,17 @@ import { Statement } from './Statement';
  * ```
  */
 export class BlockStatement extends Statement {
+    public readonly kind = NodeKind.BlockStatement;
     public readonly statements: Statement[];
     public scope: SymbolTable;
 
-    constructor(source: NodeSourceLocation, statements: Statement[]) {
+    public constructor(source: NodeSourceLocation, statements: Statement[]) {
         super(source);
         this.statements = statements;
-
-        this.addChildren(statements);
+        this.addChildren(this.statements);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitBlockStatement(this);
     }
 }

@@ -1,6 +1,7 @@
 import { AstVisitor } from '../AstVisitor';
 import { Expression } from '../expr/Expression';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -15,22 +16,20 @@ import { Statement } from './Statement';
  * ```
  */
 export class WhileStatement extends Statement {
+    public readonly kind = NodeKind.WhileStatement;
     public readonly condition: Expression;
     public readonly thenStatement: Statement;
-    constructor(
-        source: NodeSourceLocation,
-        condition: Expression,
-        thenStatement: Statement
-    ) {
+    
+    public constructor(source: NodeSourceLocation, condition: Expression, thenStatement: Statement) {
         super(source);
         this.condition = condition;
         this.thenStatement = thenStatement;
     
-        this.addChild(condition);
-        this.addChild(thenStatement);
-  }
+        this.addChild(this.condition);
+        this.addChild(this.thenStatement);
+    }
 
-  accept<R>(visitor: AstVisitor<R>): R {
-      return visitor.visitWhileStatement(this);
-  }
+    public accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitWhileStatement(this);
+    }
 }

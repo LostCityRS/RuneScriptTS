@@ -37,7 +37,7 @@ import { CoordLiteral } from '../../runescipt-parser/ast/expr/literal/CoordLiter
 import { IntegerLiteral } from '../../runescipt-parser/ast/expr/literal/IntegerLiteral';
 import { ConstantVariableExpression } from '../../runescipt-parser/ast/expr/variable/ConstantVariableExpression';
 import { SymbolType } from '../symbol/SymbolType';
-import { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
+import type { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
 import { GameVariableExpression } from '../../runescipt-parser/ast/expr/variable/GameVariableExpression';
 import { GameVarType } from '../type/wrapped/GameVarType';
 import { CallExpression } from '../../runescipt-parser/ast/expr/call/CallExpression';
@@ -658,7 +658,12 @@ export class TypeChecking extends AstVisitor<void> {
         // Lookup the symbol using the symbol type and name.
         const name = call.name.text;
         const symbolType = SymbolType.serverScript(trigger);
+        console.debug(symbolType);
         const symbol = this.rootTable.find(symbolType, name) as ScriptSymbol | null;
+        console.debug(symbol);
+
+        throw new Error();
+
         if (!symbol) {
             call.type = MetaType.Error;
             call.reportError(this.diagnostics, unresolvedSymbolMessage, name);

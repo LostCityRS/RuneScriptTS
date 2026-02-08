@@ -1,4 +1,4 @@
-import { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
+import type { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
 import { Opcode } from './Opcode';
 
 /**

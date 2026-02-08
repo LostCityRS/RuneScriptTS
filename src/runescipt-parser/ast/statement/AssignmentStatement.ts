@@ -1,7 +1,8 @@
 import { AstVisitor } from '../AstVisitor';
 import { Expression } from '../expr/Expression';
 import { VariableExpression } from '../expr/variable/VariableExpression';
-import { NodeSourceLocation } from '../NodeSourceLocation';
+import { NodeKind } from '../NodeKind';
+import type { NodeSourceLocation } from '../NodeSourceLocation';
 import { Statement } from './Statement';
 
 /**
@@ -13,23 +14,20 @@ import { Statement } from './Statement';
  * ```
  */
 export class AssignmentStatement extends Statement {
+    public readonly kind = NodeKind.AssignmentStatement;
     public readonly vars: VariableExpression[];
     public readonly expressions: Expression[];
 
-    constructor(
-        source: NodeSourceLocation,
-        vars: VariableExpression[],
-        expressions: Expression[]
-    ) {
+    public constructor(source: NodeSourceLocation, vars: VariableExpression[], expressions: Expression[]) {
         super(source);
         this.vars = vars;
         this.expressions = expressions;
 
-        this.addChildren(vars);
-        this.addChildren(expressions);
+        this.addChildren(this.vars);
+        this.addChildren(this.expressions);
     }
 
-    accept<R>(visitor: AstVisitor<R>): R {
+    public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitAssignmentStatement(this);
     }
 }

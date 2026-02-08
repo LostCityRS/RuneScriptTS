@@ -1,5 +1,6 @@
 import { AstVisitor } from "../../AstVisitor";
-import { NodeSourceLocation } from "../../NodeSourceLocation";
+import { NodeKind } from "../../NodeKind";
+import type { NodeSourceLocation } from "../../NodeSourceLocation";
 import { Identifier } from "../Identifier";
 import { VariableExpression } from "./VariableExpression";
 
@@ -12,18 +13,15 @@ import { VariableExpression } from "./VariableExpression";
  * ```
  */
 export class GameVariableExpression extends VariableExpression {
-  public readonly dot: boolean;
+    public readonly kind = NodeKind.GameVariableExpression;
+    public readonly dot: boolean;
 
-  constructor(
-    source: NodeSourceLocation,
-    dot: boolean,
-    name: Identifier
-  ) {
-    super(source, name);
-    this.dot = dot;
-  }
+    public constructor(source: NodeSourceLocation, dot: boolean, name: Identifier) {
+        super(source, name);
+        this.dot = dot;
+    }
 
-  accept<R>(visitor: AstVisitor<R>): R {
-    return visitor.visitGameVariableExpression(this);
-  }
+    public accept<R>(visitor: AstVisitor<R>): R {
+        return visitor.visitGameVariableExpression(this);
+    }
 }
