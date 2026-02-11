@@ -43,7 +43,7 @@ export class SymbolMapper implements IdProvider {
 
     putScript(id: number, name: string): void {
         if (this.scripts.has(name)) {
-            throw new Error(`Duplicate scripts: ${name}.`);
+            throw new Error(`Duplicate script: ${name}.`);
         }
         this.scripts.set(name, id);
     }
