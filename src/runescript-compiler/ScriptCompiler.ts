@@ -164,6 +164,9 @@ export class ScriptCompiler{
     public run(ext: string): void {
         this.loadSymbols();
         this.compile(ext);
+        if ('close' in this.scriptWriter) {
+            (this.scriptWriter as any).close();
+        }
     }
 
     /**
