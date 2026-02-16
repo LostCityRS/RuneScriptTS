@@ -58,7 +58,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
 
         let lookupKey = trigger.id;
 
-        if (subjectMode instanceof SubjectMode.Type && subject != null) {
+        if ('type' in subjectMode && subject != null) {
             const subjectType = subject.type;
             let subjectId: number;
 
@@ -303,6 +303,12 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
     protected override writeJump(context: BinaryScriptWriterContext, symbol: ScriptSymbol): void {
         const op = this.idProvider.get(symbol);
         const secondary: boolean = symbol.name.startsWith(".");
+        context.instructionRaw(op, secondary ? 1 : 0);
+    }
+
+    protected override writeCommand(context: BinaryScriptWriterContext, symbol: ScriptSymbol): void {
+        const op = this.idProvider.get(symbol);
+        const secondary = symbol.name.startsWith(".");
         context.instructionRaw(op, secondary ? 1 : 0);
     }
 
