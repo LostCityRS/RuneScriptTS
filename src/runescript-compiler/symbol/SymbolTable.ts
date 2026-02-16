@@ -41,18 +41,13 @@ export class SymbolTable {
     /**
      * Searches for a symbol with [name] and [type].
      */
-  find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
-      
-      console.log(this.symbols.has(type.kind));
-      console.log(`Find call, type: ${type.kind}, name: ${name}.`);
-      console.log(`Symbols size: ${this.symbols.size}`);
-      const table = this.symbols.get(type);
-      console.debug(`table fetch: ${table}`);
-      const symbol = table?.get(name) as T | undefined;
+    find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
+        const table = this.symbols.get(type);
+        const symbol = table?.get(name) as T | undefined;
   
-      if (symbol) return symbol;
-      return this.parent?.find(type, name) ?? null;
-  }
+        if (symbol) return symbol;
+        return this.parent?.find(type, name) ?? null;
+    }
 
     /**
      * Searches for all symbols with the given name,
