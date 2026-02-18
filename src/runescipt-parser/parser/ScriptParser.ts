@@ -4,11 +4,11 @@ import { CharStream, CharStreams, CommonTokenStream } from 'antlr4ts';
 import { ANTLRErrorListener } from 'antlr4ts/ANTLRErrorListener';
 import { ParserRuleContext } from 'antlr4ts/ParserRuleContext';
 import { ScriptFile } from '../ast/ScriptFile';
-import { RuneScriptLexer } from '../../antlr/out/RuneScriptLexer';
+import { RuneScriptLexer } from '../../antlr/RuneScriptLexer';
 import { Node } from '../ast/Node';
 import { Script } from '../ast/Scripts';
 import { AstBuilder } from './AstBuilder';
-import { RuneScriptParser } from '../../antlr/out/RuneScriptParser';
+import { RuneScriptParser } from '../../antlr/RuneScriptParser';
 
 export class ScriptParser {
   public static createScriptFile(

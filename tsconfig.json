@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "dist",
     "target": "es2022",
     "module": "esnext",
     "moduleResolution": "node",
@@ -8,6 +9,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
+    "typeRoots": ["node_modules", "node_modules/@types"],
     "noImplicitOverride": false
-  }
+  },
+  "include": ["src/**/*.ts", "src/**/*.js"],
+  "exclude": ["node_modules", "<node_internals>/**"]
 }

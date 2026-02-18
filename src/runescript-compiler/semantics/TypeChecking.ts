@@ -28,7 +28,7 @@ import { StringLiteral } from '../../runescipt-parser/ast/expr/literal/StringLit
 import { ParserErrorListener } from '../ParserErrorListener';
 import { ScriptParser } from '../../runescipt-parser/parser/ScriptParser';
 import { CharStreams } from 'antlr4ts';
-import { RuneScriptParser } from '../../antlr/out/RuneScriptParser';
+import { RuneScriptParser } from '../../antlr/RuneScriptParser';
 import { ClientScriptExpression } from '../../runescipt-parser/ast/expr/ClientScriptExpression';
 import { NullLiteral } from '../../runescipt-parser/ast/expr/literal/NullLiteral';
 import { CharacterLiteral } from '../../runescipt-parser/ast/expr/literal/CharacterLiteral';

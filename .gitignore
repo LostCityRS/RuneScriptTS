@@ -1,6 +1,9 @@
 .*
 !.git*
 
-src/antlr/out
+node_modules/
 
-node_modules
+src/antlr/
+!src/antlr/*.g4
+
+dist/
