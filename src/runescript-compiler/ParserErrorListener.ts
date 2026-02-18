@@ -1,6 +1,6 @@
 import { ANTLRErrorListener, RecognitionException, Recognizer } from 'antlr4ts';
 import { Diagnostics } from './diagnostics/Diagnostics';
-import type { NodeSourceLocation } from '../runescipt-parser/ast/NodeSourceLocation';
+import { NodeSourceLocation } from '../runescipt-parser/ast/NodeSourceLocation';
 import { Diagnostic } from './diagnostics/Diagnostic';
 import { DiagnosticType } from './diagnostics/DiagnosticType';
 
@@ -28,7 +28,13 @@ export class ParserErrorListener<T> implements ANTLRErrorListener<T> {
 
         const realLine = line + this.lineOffset;
         const realColumn = charPositionInLine + adjustedColumnOffset + 1;
-        const source = new NodeSourceLocation(this.sourceFile, realLine, realColumn);
+        const source: NodeSourceLocation = {
+            name: this.sourceFile,
+            line: realLine,
+            column: realColumn,
+            endLine: realLine,
+            endColumn: realColumn
+        };
 
         this.diagnostics.report(
             new Diagnostic(DiagnosticType.SYNTAX_ERROR, source, msg.replace(/%/g, "%%"), [])
