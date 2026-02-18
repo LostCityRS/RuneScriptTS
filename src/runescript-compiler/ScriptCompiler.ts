@@ -259,8 +259,7 @@ export class ScriptCompiler{
             // Recursively walk all files.
             const files = this.walkTopDown(sourcePath);
             for (const file of files) {
-                // Skip directories and non-script files.
-                if (!fs.statSync(file).isFile() || path.extname(file) !== `.${ext}`) {
+                if (!file.endsWith(`.${ext}`)) {
                     continue;
                 }
                 //this.logger.debug(`Attempting to parse: ${file}.`);
