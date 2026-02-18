@@ -1,4 +1,4 @@
-import { ANTLRErrorListener, RecognitionException, Recognizer } from 'antlr4ts';
+import { ANTLRErrorListener, RecognitionException, Recognizer, type ATNConfigSet, type BitSet, type DFA, type Parser } from 'antlr4ng';
 import { Diagnostics } from './diagnostics/Diagnostics';
 import { NodeSourceLocation } from '../runescipt-parser/ast/NodeSourceLocation';
 import { Diagnostic } from './diagnostics/Diagnostic';
@@ -7,7 +7,7 @@ import { DiagnosticType } from './diagnostics/DiagnosticType';
 /**
  * An antlr error listener that adds the error to [Diagnostics] for reporting later.
  */
-export class ParserErrorListener<T> implements ANTLRErrorListener<T> {
+export class ParserErrorListener implements ANTLRErrorListener {
     constructor(
         private sourceFile: string,
         private diagnostics: Diagnostics,
@@ -15,9 +15,9 @@ export class ParserErrorListener<T> implements ANTLRErrorListener<T> {
         private columnOffset: number = 0
     ){}
 
-    syntaxError(
-        recognizer: Recognizer<T, any>,
-        offendingSymbol: T | undefined,
+    syntaxError<T>(
+        recognizer: Recognizer<any> | undefined,
+        offendingSymbol: any,
         line: number,
         charPositionInLine: number,
         msg: string,
@@ -39,5 +39,14 @@ export class ParserErrorListener<T> implements ANTLRErrorListener<T> {
         this.diagnostics.report(
             new Diagnostic(DiagnosticType.SYNTAX_ERROR, source, msg.replace(/%/g, "%%"), [])
         );
+    }
+
+    reportAmbiguity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet): void {
+    }
+
+    reportAttemptingFullContext(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, configs: ATNConfigSet): void {
+    }
+
+    reportContextSensitivity(recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, configs: ATNConfigSet): void {
     }
 }

@@ -292,9 +292,9 @@ export class ScriptCompiler{
 
         const preTypeChecking = new PreTypeChecking(this.types, this.triggers, this.rootTable, diagnostics);
         for (const file of files) {
-            const fileStart = performance.now();
+            // const fileStart = performance.now();
             file.accept(preTypeChecking);
-            const fileTime = (performance.now() - fileStart).toFixed(2);
+            // const fileTime = (performance.now() - fileStart).toFixed(2);
             //this.logger.debug(`Pre-type checked ${file.source.name} in ${fileTime}ms.`);
         }
 
@@ -307,9 +307,9 @@ export class ScriptCompiler{
 
         const typeChecking = new TypeChecking(this.types, this.triggers, this.rootTable, this.dynamicCommandHandlers, diagnostics);
         for (const file of files) {
-            const fileStart = performance.now();
+            // const fileStart = performance.now();
             file.accept(typeChecking);
-            const fileTime = (performance.now() - fileStart).toFixed(2);
+            // const fileTime = (performance.now() - fileStart).toFixed(2);
             //this.logger.debug(`Type checked ${file.source.name} in ${fileTime}ms.`);
         }
 

@@ -1,18 +1,12 @@
-import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor.js"
-import { ParseTreeVisitor } from 'antlr4ts/tree/ParseTreeVisitor';
 import { Node } from '../ast/Node';
-import { ParserRuleContext } from 'antlr4ts';
-import { Token as AntlrToken } from 'antlr4ts';
+import { ParserRuleContext } from 'antlr4ng';
+import { Token as AntlrToken } from 'antlr4ng';
 import type { NodeSourceLocation } from '../ast/NodeSourceLocation';
-import { TerminalNode } from 'antlr4ts/tree/TerminalNode';
 import { Expression } from '../ast/expr/Expression';
-import { ErrorNode } from 'antlr4ts/tree/ErrorNode';
-import { RuleNode } from 'antlr4ts/tree/RuleNode';
 import { Token } from '../ast/Token'
 import { ScriptFile } from '../ast/ScriptFile';
 import { Script } from '../ast/Scripts';
 import { Parameter } from '../ast/Parameter';
-import { Statement } from '../ast/statement/Statement';
 import { BlockStatement } from '../ast/statement/BlockStatement';
 import { NullLiteral } from '../ast/expr/literal/NullLiteral';
 import { ReturnStatement } from '../ast/statement/ReturnStatement';
@@ -45,12 +39,13 @@ import { JoinedStringExpression } from '../ast/expr/JoinedStringExpression';
 import { BasicStringPart, ExpressionStringPart, PTagStringPart, StringPart } from '../ast/expr/StringPart';
 import { Identifier } from '../ast/expr/Identifier';
 import { AdvancedIdentifierContext, ArithmeticBinaryExpressionContext, ArithmeticNormalExpressionContext, ArithmeticParenthesizedExpressionContext, ArrayDeclarationStatementContext, AssignmentStatementContext, BlockStatementContext, BooleanLiteralContext, CalcExpressionContext, CallExpressionContext, CharacterLiteralContext, ClientScriptContext, CommandCallExpressionContext, ConditionBinaryExpressionContext, ConditionNormalExpressionContext, ConditionParenthesizedExpressionContext, ConstantVariableContext, ConstantVariableExpressionContext, CoordLiteralContext, DeclarationStatementContext, EmptyStatementContext, ExpressionListContext, ExpressionStatementContext, GameVariableContext, GameVariableExpressionContext, IdentifierContext, IdentifierExpressionContext, IfStatementContext, IntegerLiteralContext, JoinedStringContext, JoinedStringExpressionContext, JumpCallExpressionContext, LiteralExpressionContext, LocalArrayVariableContext, LocalArrayVariableExpressionContext, LocalVariableContext, LocalVariableExpressionContext, NullLiteralContext, ParameterContext, ParenthesisContext, ParenthesizedExpressionContext, ProcCallExpressionContext, ReturnStatementContext, ScriptContext, ScriptFileContext, SingleExpressionContext, StringExpressionContext, StringLiteralContentContext, StringLiteralContext, StringPTagContext, StringTagContext, SwitchCaseContext, SwitchStatementContext, WhileStatementContext } from '../../antlr/RuneScriptParser';
+import { RuneScriptParserVisitor } from '../../antlr/RuneScriptParserVisitor.js';
 
 /**
  * A visitor that converts an antlr parse tree into an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree). See
  * [Node] implementations for all possible pieces of the tree.
  */
-export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseTreeVisitor<Node> {
+export class AstBuilder extends RuneScriptParserVisitor<Node> {
     private source: string;
     private lineOffset: number;
     private columnOffset: number;
@@ -62,45 +57,37 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         this.columnOffset = columnOffset;
     }
 
-    protected defaultResult(): Node {
-        return undefined as unknown as Node;
-    }
-
-    protected aggregateResult(_aggregate: Node, nextResult: Node): Node {
-        return nextResult;
-    }
-
-    public visitScriptFile(ctx: ScriptFileContext): Node {
+    visitScriptFile = (ctx: ScriptFileContext): Node => {
         return new ScriptFile(this.location(ctx), ctx.script().map((script) => this.visitNode(script)));
     }
 
-    public visitScript(ctx: ScriptContext): Node {
+    visitScript = (ctx: ScriptContext): Node => {
         const returns = ctx.typeList()?.IDENTIFIER()?.map((node) => this.toAstToken(node.symbol));
 
         return new Script({
             source: this.location(ctx),
             trigger: this.visitNode(ctx._trigger),
             name: this.visitNode(ctx._name),
-            isStar: ctx.MUL() !== undefined,
+            isStar: ctx.MUL() !== null,
             parameters: ctx.parameterList()?.parameter().map((param) => this.visitNode(param)) ?? null,
             returnTokens: returns ?? null,
             statements: ctx.statement().map((statement) => this.visitNode(statement)),
         });
     }
 
-    public visitParameter(ctx: ParameterContext): Node {
-        return new Parameter(this.location(ctx), this.toAstToken(ctx._type), this.visitNode(ctx.advancedIdentifier()));
+    visitParameter = (ctx: ParameterContext): Node => {
+        return new Parameter(this.location(ctx), this.toAstToken(ctx._type_), this.visitNode(ctx.advancedIdentifier()));
     }
 
-    public visitBlockStatement(ctx: BlockStatementContext): Node {
+    visitBlockStatement = (ctx: BlockStatementContext): Node => {
         return new BlockStatement(this.location(ctx), ctx.statement().map((statement) => this.visitNode(statement)));
     }
 
-    public visitReturnStatement(ctx: ReturnStatementContext): Node {
+    visitReturnStatement = (ctx: ReturnStatementContext): Node => {
         return new ReturnStatement(this.location(ctx), this.collectExpressionList(ctx.expressionList()));
     }
 
-    public visitIfStatement(ctx: IfStatementContext): Node {
+    visitIfStatement = (ctx: IfStatementContext): Node => {
         const statements = ctx.statement();
         if (!statements[0]) {
             throw new Error("IfStatement missing then statement.");
@@ -113,11 +100,11 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitWhileStatement(ctx: WhileStatementContext): Node {
+    visitWhileStatement = (ctx: WhileStatementContext): Node => {
         return new WhileStatement(this.location(ctx), this.visitNode(ctx.condition()), this.visitNode(ctx.statement()));
     }
 
-    public visitSwitchStatement(ctx: SwitchStatementContext): Node {
+    visitSwitchStatement = (ctx: SwitchStatementContext): Node => {
         return new SwitchStatement(
             this.location(ctx),
             this.toAstToken(ctx.SWITCH_TYPE().symbol),
@@ -126,7 +113,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitSwitchCase(ctx: SwitchCaseContext): Node {
+    visitSwitchCase = (ctx: SwitchCaseContext): Node => {
         return new SwitchCase(
             this.location(ctx),
             this.collectExpressionList(ctx.expressionList()),
@@ -134,7 +121,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitDeclarationStatement(ctx: DeclarationStatementContext): Node {
+    visitDeclarationStatement = (ctx: DeclarationStatementContext): Node => {
         return new DeclarationStatement(
             this.location(ctx),
             this.toAstToken(ctx.DEF_TYPE().symbol),
@@ -143,7 +130,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitArrayDeclarationStatement(ctx: ArrayDeclarationStatementContext): Node {
+    visitArrayDeclarationStatement = (ctx: ArrayDeclarationStatementContext): Node => {
         return new ArrayDeclarationStatement(
             this.location(ctx),
             this.toAstToken(ctx.DEF_TYPE().symbol),
@@ -152,7 +139,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitAssignmentStatement(ctx: AssignmentStatementContext): Node {
+    visitAssignmentStatement = (ctx: AssignmentStatementContext): Node => {
         return new AssignmentStatement(
             this.location(ctx),
             ctx.assignableVariableList()
@@ -162,31 +149,31 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitExpressionStatement(ctx: ExpressionStatementContext): Node {
+    visitExpressionStatement = (ctx: ExpressionStatementContext): Node => {
         return new ExpressionStatement(this.location(ctx), this.visitNode(ctx.expression()));
     }
 
-    public visitEmptyStatement(ctx: EmptyStatementContext): Node {
+    visitEmptyStatement = (ctx: EmptyStatementContext): Node => {
         return new EmptyStatement(this.location(ctx));
     }
 
-    public visitSingleExpression(ctx: SingleExpressionContext): Node {
+    visitSingleExpression = (ctx: SingleExpressionContext): Node => {
         return this.visitNode(ctx.expression());
     }
 
-    public visitParenthesizedExpression(ctx: ParenthesizedExpressionContext): Node {
+    visitParenthesizedExpression = (ctx: ParenthesizedExpressionContext): Node => {
         return new ParenthesizedExpression(this.location(ctx), this.extractParenthesisExpression(ctx.parenthesis()));
     }
 
-    public visitConditionParenthesizedExpression(ctx: ConditionParenthesizedExpressionContext): Node {
+    visitConditionParenthesizedExpression = (ctx: ConditionParenthesizedExpressionContext): Node => {
         return new ParenthesizedExpression(this.location(ctx), this.visitNode(ctx.condition()));
     }
 
-    public visitArithmeticParenthesizedExpression(ctx: ArithmeticParenthesizedExpressionContext): Node {
+    visitArithmeticParenthesizedExpression = (ctx: ArithmeticParenthesizedExpressionContext): Node => {
         return new ParenthesizedExpression(this.location(ctx), this.visitNode(ctx.arithmetic()));
     }
 
-    public visitConditionBinaryExpression(ctx: ConditionBinaryExpressionContext): Node {
+    visitConditionBinaryExpression = (ctx: ConditionBinaryExpressionContext): Node => {
         return new ConditionExpression(
             this.location(ctx),
             this.visitNode(ctx.condition(0)),
@@ -195,7 +182,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitArithmeticBinaryExpression(ctx: ArithmeticBinaryExpressionContext): Node {
+    visitArithmeticBinaryExpression = (ctx: ArithmeticBinaryExpressionContext): Node => {
         return new ArithmeticExpression(
             this.location(ctx),
             this.visitNode(ctx.arithmetic(0)),
@@ -204,14 +191,14 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitCalcExpression(ctx: CalcExpressionContext): Node {
+    visitCalcExpression = (ctx: CalcExpressionContext): Node => {
         return new CalcExpression(this.location(ctx), this.visitNode(ctx.calc().arithmetic()));
     }
 
-    public visitCommandCallExpression(ctx: CommandCallExpressionContext): Node {
+    visitCommandCallExpression = (ctx: CommandCallExpressionContext): Node => {
         const rawLists = ctx.expressionList();
         const lists = Array.isArray(rawLists) ? rawLists : rawLists ? [rawLists] : [];
-        const args2 = ctx.MUL() !== undefined ? this.collectExpressionList(lists[1]) : null;
+        const args2 = ctx.MUL() !== null ? this.collectExpressionList(lists[1]) : null;
 
         return new CommandCallExpression(
             this.location(ctx),
@@ -221,7 +208,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitProcCallExpression(ctx: ProcCallExpressionContext): Node {
+    visitProcCallExpression = (ctx: ProcCallExpressionContext): Node => {
         const rawLists = ctx.expressionList();
         const lists = Array.isArray(rawLists) ? rawLists : rawLists ? [rawLists] : [];
         return new ProcCallExpression(
@@ -231,7 +218,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitJumpCallExpression(ctx: JumpCallExpressionContext): Node {
+    visitJumpCallExpression = (ctx: JumpCallExpressionContext): Node => {
         const rawLists = ctx.expressionList();
         const lists = Array.isArray(rawLists) ? rawLists : rawLists ? [rawLists] : [];
         return new JumpCallExpression(
@@ -241,7 +228,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitClientScript(ctx: ClientScriptContext): Node {
+    visitClientScript = (ctx: ClientScriptContext): Node => {
         return new ClientScriptExpression(
             this.location(ctx),
             this.visitNode(ctx.identifier()),
@@ -250,11 +237,11 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitLocalVariable(ctx: LocalVariableContext): Node {
+    visitLocalVariable = (ctx: LocalVariableContext): Node => {
         return new LocalVariableExpression(this.location(ctx), this.visitNode(ctx.advancedIdentifier()), null);
     }
 
-    public visitLocalArrayVariable(ctx: LocalArrayVariableContext): Node {
+    visitLocalArrayVariable = (ctx: LocalArrayVariableContext): Node => {
         return new LocalVariableExpression(
             this.location(ctx),
             this.visitNode(ctx.advancedIdentifier()),
@@ -262,25 +249,25 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         );
     }
 
-    public visitGameVariable(ctx: GameVariableContext): Node {
-        const dot = ctx.DOTMOD() !== undefined;
+    visitGameVariable = (ctx: GameVariableContext): Node => {
+        const dot = ctx.DOTMOD() !== null;
         return new GameVariableExpression(this.location(ctx), dot, this.visitNode(ctx.advancedIdentifier()));
     }
 
-    public visitConstantVariable(ctx: ConstantVariableContext): Node {
+    visitConstantVariable = (ctx: ConstantVariableContext): Node => {
         return new ConstantVariableExpression(this.location(ctx), this.visitNode(ctx.advancedIdentifier()));
     }
 
-    public visitIntegerLiteral(ctx: IntegerLiteralContext): Node {
-        const text = ctx.text;
+    visitIntegerLiteral = (ctx: IntegerLiteralContext): Node => {
+        const text = ctx.getText();
         if (text.length > 1 && text[0] === "0" && (text[1] === "x" || text[1] === "X")) {
             return new IntegerLiteral(this.location(ctx), parseInt(text.slice(2), 16));
         }
         return new IntegerLiteral(this.location(ctx), parseInt(text, 10));
     }
 
-    public visitCoordLiteral(ctx: CoordLiteralContext): Node {
-        const text = ctx.text;
+    visitCoordLiteral = (ctx: CoordLiteralContext): Node => {
+        const text = ctx.getText();
         const parts = text.split("_").map((part) => parseInt(part, 10));
 
         const x = (parts[1] << 6) | (parts[3] & 0x3fff);
@@ -291,36 +278,36 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         return new CoordLiteral(this.location(ctx), packed);
     }
 
-    public visitBooleanLiteral(ctx: BooleanLiteralContext): Node {
-        return new BooleanLiteral(this.location(ctx), ctx.text === "true");
+    visitBooleanLiteral = (ctx: BooleanLiteralContext): Node => {
+        return new BooleanLiteral(this.location(ctx), ctx.getText() === "true");
     }
 
-    public visitCharacterLiteral(ctx: CharacterLiteralContext): Node {
-        const cleaned = this.unescape(ctx.text.slice(1, -1));
+    visitCharacterLiteral = (ctx: CharacterLiteralContext): Node => {
+        const cleaned = this.unescape(ctx.getText().slice(1, -1));
         if (cleaned.length !== 1) {
-            throw new Error(`invalid character literal: text=${ctx.text}, cleaned=${cleaned}`);
+            throw new Error(`invalid character literal: text=${ctx.getText()}, cleaned=${cleaned}`);
         }
         return new CharacterLiteral(this.location(ctx), cleaned);
     }
 
-    public visitStringLiteral(ctx: StringLiteralContext): Node {
-        return new StringLiteral(this.location(ctx), this.unescape(ctx.text.slice(1, -1)));
+    visitStringLiteral = (ctx: StringLiteralContext): Node => {
+        return new StringLiteral(this.location(ctx), this.unescape(ctx.getText().slice(1, -1)));
     }
 
-    public visitNullLiteral(ctx: NullLiteralContext): Node {
+    visitNullLiteral = (ctx: NullLiteralContext): Node => {
         return new NullLiteral(this.location(ctx));
     }
 
-    public visitJoinedString(ctx: JoinedStringContext): Node {
+    visitJoinedString = (ctx: JoinedStringContext): Node => {
         const parts: StringPart[] = [];
 
         for (const child of ctx.children ?? []) {
             if (child instanceof StringLiteralContentContext) {
-                parts.push(new BasicStringPart(this.location(child), this.unescape(child.text)));
+                parts.push(new BasicStringPart(this.location(child), this.unescape(child.getText())));
             } else if (child instanceof StringTagContext) {
-                parts.push(new BasicStringPart(this.location(child), child.text));
+                parts.push(new BasicStringPart(this.location(child), child.getText()));
             } else if (child instanceof StringPTagContext) {
-                parts.push(new PTagStringPart(this.location(child), child.text));
+                parts.push(new PTagStringPart(this.location(child), child.getText()));
             } else if (child instanceof StringExpressionContext) {
                 const expression = this.visitNode<Expression>(child.expression());
                 parts.push(new ExpressionStringPart(this.location(child), expression));
@@ -330,51 +317,51 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         return new JoinedStringExpression(this.location(ctx), parts);
     }
 
-    public visitIdentifier(ctx: IdentifierContext): Node {
-        return new Identifier(this.location(ctx), ctx.text);
+    visitIdentifier = (ctx: IdentifierContext): Node => {
+        return new Identifier(this.location(ctx), ctx.getText());
     }
 
-    public visitAdvancedIdentifier(ctx: AdvancedIdentifierContext): Node {
-        return new Identifier(this.location(ctx), ctx.text);
+    visitAdvancedIdentifier = (ctx: AdvancedIdentifierContext): Node => {
+        return new Identifier(this.location(ctx), ctx.getText());
     }
 
-    public visitConditionNormalExpression(ctx: ConditionNormalExpressionContext): Node {
+    visitConditionNormalExpression = (ctx: ConditionNormalExpressionContext): Node => {
         return this.visitNode(ctx.expression());
     }
 
-    public visitArithmeticNormalExpression(ctx: ArithmeticNormalExpressionContext): Node {
+    visitArithmeticNormalExpression = (ctx: ArithmeticNormalExpressionContext): Node => {
         return this.visitNode(ctx.expression());
     }
 
-    public visitCallExpression(ctx: CallExpressionContext): Node {
+    visitCallExpression = (ctx: CallExpressionContext): Node => {
         return this.visitNode(ctx.call());
     }
 
-    public visitIdentifierExpression(ctx: IdentifierExpressionContext): Node {
+    visitIdentifierExpression = (ctx: IdentifierExpressionContext): Node => {
         return this.visitNode(ctx.identifier());
     }
 
-    public visitLiteralExpression(ctx: LiteralExpressionContext): Node {
+    visitLiteralExpression = (ctx: LiteralExpressionContext): Node => {
         return this.visitNode(ctx.literal());
     }
 
-    public visitJoinedStringExpression(ctx: JoinedStringExpressionContext): Node {
+    visitJoinedStringExpression = (ctx: JoinedStringExpressionContext): Node => {
         return this.visitNode(ctx.joinedString());
     }
   
-    public visitLocalVariableExpression(ctx: LocalVariableExpressionContext): Node {
+    visitLocalVariableExpression = (ctx: LocalVariableExpressionContext): Node => {
         return this.visitNode(ctx.localVariable());
     }
   
-    public visitLocalArrayVariableExpression(ctx: LocalArrayVariableExpressionContext): Node {
+    visitLocalArrayVariableExpression = (ctx: LocalArrayVariableExpressionContext): Node => {
         return this.visitNode(ctx.localArrayVariable());
     }
   
-    public visitGameVariableExpression(ctx: GameVariableExpressionContext): Node {
+    visitGameVariableExpression = (ctx: GameVariableExpressionContext): Node => {
         return this.visitNode(ctx.gameVariable());
     }
   
-    public visitConstantVariableExpression(ctx: ConstantVariableExpressionContext): Node {
+    visitConstantVariableExpression = (ctx: ConstantVariableExpressionContext): Node => {
         return this.visitNode(ctx.constantVariable());
     }
 
@@ -397,9 +384,9 @@ export class AstBuilder extends AbstractParseTreeVisitor<Node> implements ParseT
         return {
             name: this.source,
             line: start.line - 1 + this.lineOffset,
-            column: start.charPositionInLine + startColumnOffset,
+            column: start.column + startColumnOffset,
             endLine: stop.line - 1 + this.lineOffset,
-            endColumn: stop.charPositionInLine + endColumnOffset + textLength,
+            endColumn: stop.column + endColumnOffset + textLength,
         };
     }
 

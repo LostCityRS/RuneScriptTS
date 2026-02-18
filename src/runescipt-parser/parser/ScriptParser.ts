@@ -1,8 +1,8 @@
 import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { CharStream, CharStreams, CommonTokenStream } from 'antlr4ts';
-import { ANTLRErrorListener } from 'antlr4ts/ANTLRErrorListener';
-import { ParserRuleContext } from 'antlr4ts/ParserRuleContext';
+import { CharStream, CommonTokenStream } from 'antlr4ng';
+import { ANTLRErrorListener } from 'antlr4ng';
+import { ParserRuleContext } from 'antlr4ng';
 import { ScriptFile } from '../ast/ScriptFile';
 import { RuneScriptLexer } from '../../antlr/RuneScriptLexer';
 import { Node } from '../ast/Node';
@@ -13,11 +13,13 @@ import { RuneScriptParser } from '../../antlr/RuneScriptParser';
 export class ScriptParser {
   public static createScriptFile(
     inputPath: string,
-    errorListener?: ANTLRErrorListener<any>
+    errorListener?: ANTLRErrorListener
   ): ScriptFile | null {
     const source = readFileSync(inputPath, "utf8");
+    const stream = CharStream.fromString(source);
+    stream.name = inputPath;
     return this.invokeParser(
-      CharStreams.fromString(source, inputPath),
+      stream,
       parser => parser.scriptFile(),
       errorListener
     ) as ScriptFile | null;
@@ -25,11 +27,13 @@ export class ScriptParser {
 
   public static async createScriptFileAsync(
     inputPath: string,
-    errorListener?: ANTLRErrorListener<any>
+    errorListener?: ANTLRErrorListener
   ): Promise<ScriptFile | null> {
     const source = await readFile(inputPath, "utf8");
+    const stream = CharStream.fromString(source);
+    stream.name = inputPath;
     return this.invokeParser(
-      CharStreams.fromString(source, inputPath),
+      stream,
       (parser) => parser.scriptFile(),
       errorListener
     ) as ScriptFile | null;
@@ -37,10 +41,12 @@ export class ScriptParser {
 
   public static createScriptFileFromString(
     scriptFile: string,
-    errorListener?: ANTLRErrorListener<any>
+    errorListener?: ANTLRErrorListener
   ): ScriptFile | null {
+    const stream = CharStream.fromString(scriptFile);
+    stream.name = '<source>';
     return this.invokeParser(
-      CharStreams.fromString(scriptFile, "<source>"),
+      stream,
       parser => parser.scriptFile(),
       errorListener
     ) as ScriptFile | null;
@@ -48,10 +54,12 @@ export class ScriptParser {
 
   public static createScript(
     script: string,
-    errorListener?: ANTLRErrorListener<any>
+    errorListener?: ANTLRErrorListener
   ): Script | null {
+    const stream = CharStream.fromString(script);
+    stream.name = '<source>';
     return this.invokeParser(
-      CharStreams.fromString(script, "<source>"),
+      stream,
       parser => parser.script(),
       errorListener
     ) as Script | null;
@@ -60,7 +68,7 @@ export class ScriptParser {
   public static invokeParser(
     stream: CharStream,
     entry: (parser: RuneScriptParser) => ParserRuleContext,
-    errorListener?: ANTLRErrorListener<any>,
+    errorListener?: ANTLRErrorListener,
     lineOffset = 0,
     columnOffset = 0
   ): Node | null {
@@ -84,6 +92,6 @@ export class ScriptParser {
       return null;
     }
 
-    return new AstBuilder(stream.sourceName, lineOffset, columnOffset).visit(tree);
+    return new AstBuilder(stream.getSourceName(), lineOffset, columnOffset).visit(tree);
   }
 }

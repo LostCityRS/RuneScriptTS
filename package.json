@@ -4,19 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "antlr:lexer": "bunx antlr4ts-cli src/antlr/RuneScriptLexer.g4",
-    "antlr:parser": "bunx antlr4ts-cli -visitor -no-listener src/antlr/RuneScriptParser.g4",
-    "build": "bunx tsc",
-    "clean": "rm -rf dist",
-    "prepare": "bun run antlr:lexer && bun run antlr:parser"
+    "antlr": "antlr-ng -Dlanguage=TypeScript -o src/antlr --generate-visitor true --generate-listener false --exact-output-dir true src/antlr/RuneScriptLexer.g4 src/antlr/RuneScriptParser.g4",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
-    "antlr4ts": "^0.5.0-alpha.4"
+    "@iarna/toml": "^2.2.5",
+    "antlr4ng": "^3.0.16"
   },
   "devDependencies": {
-    "@iarna/toml": "2.2.5",
     "@types/node": "^25.2.3",
-    "antlr4ts-cli": "^0.5.0-alpha.4",
+    "antlr-ng": "^1.0.10",
     "typescript": "^5.3.0"
   }
 }

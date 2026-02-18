@@ -1,4 +1,4 @@
-import { ANTLRErrorListener } from 'antlr4ts/ANTLRErrorListener';
+import { ANTLRErrorListener, type ATNConfigSet, type BitSet, type DFA, type Parser } from 'antlr4ng';
 import { AstVisitor } from '../../runescipt-parser/ast/AstVisitor';
 import { Node } from '../../runescipt-parser/ast/Node';
 import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
@@ -9,8 +9,8 @@ import { TriggerManager } from '../trigger/TriggerManager';
 import { TriggerType } from '../trigger/TriggerType';
 import { PrimitiveType } from '../type/PrimitiveType';
 import { TypeManager } from '../type/TypeManager';
-import { Recognizer } from 'antlr4ts/Recognizer';
-import { RecognitionException } from 'antlr4ts/RecognitionException';
+import { Recognizer } from 'antlr4ng';
+import { RecognitionException } from 'antlr4ng';
 import { Token } from '../../runescipt-parser/ast/Token';
 import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
 import { ClientScriptSymbol, ScriptSymbol } from '../symbol/ScriptSymbol';
@@ -27,7 +27,7 @@ import { JoinedStringExpression } from '../../runescipt-parser/ast/expr/JoinedSt
 import { StringLiteral } from '../../runescipt-parser/ast/expr/literal/StringLiteral';
 import { ParserErrorListener } from '../ParserErrorListener';
 import { ScriptParser } from '../../runescipt-parser/parser/ScriptParser';
-import { CharStreams } from 'antlr4ts';
+import { CharStream } from 'antlr4ng';
 import { RuneScriptParser } from '../../antlr/RuneScriptParser';
 import { ClientScriptExpression } from '../../runescipt-parser/ast/expr/ClientScriptExpression';
 import { NullLiteral } from '../../runescipt-parser/ast/expr/literal/NullLiteral';
@@ -896,13 +896,15 @@ export class TypeChecking extends AstVisitor<void> {
             const graphicType = this.typeManager.findOrNull("graphic");
             const stringExpected = typeHint == PrimitiveType.STRING || graphicType != null && typeHint == graphicType;
             
+            const stream = CharStream.fromString(symbol.value);
+            stream.name = name;
             const parsedExpression: Expression | null = stringExpected
                 ? new StringLiteral(
                     { name, line: line - 1, column: column - 1, endLine: line - 1, endColumn: column },
                     symbol.value
                 )
                 : ScriptParser.invokeParser(
-                    CharStreams.fromString(symbol.value, name),
+                    stream,
                     parser => parser.singleExpression(),
                     TypeChecking.DISCARD_ERROR_LISTENER,
                     line - 1,
@@ -1001,8 +1003,10 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Invoke the parser to parse the text within the string.
         const errorListener = new ParserErrorListener(name, this.diagnostics, line - 1, column);
+        const stream = CharStream.fromString(stringLiteral.value);
+        stream.name = name;
         const clientScriptExpression = ScriptParser.invokeParser(
-            CharStreams.fromString(stringLiteral.value, name),
+            stream,
             (parser: RuneScriptParser) =>  parser.clientScript(),
             errorListener,
             line - 1,
@@ -1308,9 +1312,9 @@ export class TypeChecking extends AstVisitor<void> {
     /**
      * A parser error listener that discards any syntax errors.
      */
-    private static readonly DISCARD_ERROR_LISTENER: ANTLRErrorListener<any> = {
+    private static readonly DISCARD_ERROR_LISTENER: ANTLRErrorListener = {
         syntaxError<T>(
-            recognizer: Recognizer<T, any> | undefined,
+            recognizer: Recognizer<any> | undefined,
             offendingSymbol: any,
             line: number,
             charPositionInLine: number,
@@ -1318,6 +1322,12 @@ export class TypeChecking extends AstVisitor<void> {
             e: RecognitionException | undefined
         ): void {
             // NO-OP
+        },
+        reportAmbiguity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet): void {
+        },
+        reportAttemptingFullContext: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, configs: ATNConfigSet): void {
+        },
+        reportContextSensitivity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, configs: ATNConfigSet): void {
         }
     }
 }
