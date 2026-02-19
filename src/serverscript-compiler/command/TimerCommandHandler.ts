@@ -48,7 +48,7 @@ export class TimerCommandHandler implements DynamicCommandHandler {
          * If there are more than 2 arguments that means the queue expects additional parameters,
          * so we must build a string of the argument types to push.
          */
-        if (arguments.length > 2) {
+        if (args.length > 2) {
             const shortTypes = args.slice(2).map(arg => arg.type.code).filter((code): code is string => code != null).join("");
             context.instruction(Opcode.PushConstantString, shortTypes);
         } else {
