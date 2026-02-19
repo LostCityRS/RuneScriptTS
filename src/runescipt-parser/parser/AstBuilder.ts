@@ -383,9 +383,9 @@ export class AstBuilder extends RuneScriptParserVisitor<Node> {
         const textLength = Math.max(stop.text?.length ?? 0, 1);
         return {
             name: this.source,
-            line: start.line - 1 + this.lineOffset,
+            line: start.line + this.lineOffset,
             column: start.column + startColumnOffset,
-            endLine: stop.line - 1 + this.lineOffset,
+            endLine: stop.line + this.lineOffset,
             endColumn: stop.column + endColumnOffset + textLength,
         };
     }
