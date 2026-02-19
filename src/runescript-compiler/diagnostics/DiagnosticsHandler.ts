@@ -1,6 +1,7 @@
 import { Diagnostics } from './Diagnostics';
 import * as fs from "fs";
 import * as path from "path";
+import * as util from "util";
 
 /**
  * Allows handling diagnostics for different parts of the compiler process.
@@ -62,7 +63,7 @@ export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
             const lines = fileLines.get(filePath)!;
             const location = `${diag.sourceLocation.name}:${diag.sourceLocation.line}:${diag.sourceLocation.column}`;
 
-            console.log(`${location}: ${diag.type}: ${diag.message}`);
+            console.log(`${location}: ${diag.type}: ${util.format(diag.message, ...diag.messageArgs)}`);
 
             const lineIndex = diag.sourceLocation.line - 1;
 
