@@ -45,8 +45,8 @@ export class QueueVarArgCommandHandler implements DynamicCommandHandler {
         const args2 = context.arguments2;
         context.visitNodes(args2);
 
-        if (args2.length > 2) {
-            const shortTypes = args2.slice(2).map(arg => arg.type.code).filter((code): code is string => code != null).join("");
+        if (args2.length > 0) {
+            const shortTypes = args2.map(arg => arg.type.code).filter((code): code is string => code != null).join("");
             context.instruction(Opcode.PushConstantString, shortTypes);
         } else {
             context.instruction(Opcode.PushConstantString, "");
