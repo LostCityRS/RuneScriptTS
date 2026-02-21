@@ -9,9 +9,11 @@ import { JagFileScriptWriter } from './writer/JagFileScriptWriter';
 import { PointerHolder } from '../runescript-compiler/pointer/PointerHolder';
 import { ServerScriptCompiler } from './ServerScriptCompiler';
 import * as console from 'console';
+import { ScriptWriter } from '../runescript-compiler/writer/ScriptWriter';
+import { Js5PackScriptWriter } from './writer/Js5PackScriptWriter';
 
 
-export function CompileServerScript() {
+export function CompileServerScript(useJs5Pack?: boolean) {
     const config = loadConfig('neptune.toml');
 
     const sourcePaths = config.sourcePaths.map(p => resolve(p));
@@ -22,13 +24,23 @@ export function CompileServerScript() {
     const { binary: binaryWriterConfig} = config.writers;
     
     const mapper = new SymbolMapper();
-    let writer: JagFileScriptWriter;
+    let writer: ScriptWriter;
 
-    if (binaryWriterConfig) {
-        writer = new JagFileScriptWriter(resolve(binaryWriterConfig.output), mapper);
+    if (!useJs5Pack) {
+        if (binaryWriterConfig) {
+            writer = new JagFileScriptWriter(resolve(binaryWriterConfig.output), mapper);
+        } else {
+            console.error(`No writer configured.`);
+            exit(1);
+        }
     } else {
-        console.error(`No writer configured.`);
-        exit(1);
+        if (binaryWriterConfig) {
+            const js5PackPath = join(binaryWriterConfig.output, 'server.scripts.js5');
+            writer = new Js5PackScriptWriter(resolve(js5PackPath), mapper);
+        } else {
+            console.error(`No writer configured.`);
+            exit(1);
+        }
     }
 
     const commandPointers = new Map<string, PointerHolder>();
