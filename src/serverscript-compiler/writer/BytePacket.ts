@@ -1,7 +1,3 @@
-/**
- * Shared byte packing/unpacking utilities for JS5 archive operations.
- */
-
 const CRC_TABLE = (() => {
     const table = new Int32Array(256);
 
