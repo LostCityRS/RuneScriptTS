@@ -119,10 +119,10 @@ export class Js5PackScriptWriter extends BinaryScriptWriter {
 
         writer.p1(compression);
 
-        if (compression === 0) {
+        if (compression === CompressionType.NONE) {
             writer.p4(src.length);
             writer.pdata(src);
-        } else if (compression === 2) {
+        } else if (compression === CompressionType.GZIP) {
             const compressed = zlib.gzipSync(src);
             compressed[9] = 0;
 
@@ -141,4 +141,10 @@ export class Js5PackScriptWriter extends BinaryScriptWriter {
         buf.writeInt32BE(num, 0);
         fs.writeSync(fd, buf);
     }
+}
+
+export const enum CompressionType {
+    NONE,
+    BZIP2,
+    GZIP
 }
