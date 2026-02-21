@@ -1,8 +1,6 @@
 import { existsSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
-import { parse } from '@iarna/toml';
 import { exit } from 'process';
-import { ServerScriptCompilerConfig } from './configuration/ServerScriptCompilerconfig';
 import { PointerType } from '../runescript-compiler/pointer/PointerType';
 import { SymbolMapper } from './SymbolMapper';
 import { JagFileScriptWriter } from './writer/JagFileScriptWriter';
@@ -13,34 +11,72 @@ import { ScriptWriter } from '../runescript-compiler/writer/ScriptWriter';
 import { Js5PackScriptWriter } from './writer/Js5PackScriptWriter';
 
 
-export function CompileServerScript(useJs5Pack?: boolean) {
-    const config = loadConfig('neptune.toml');
+export function CompileServerScript(config?: {
+    sourcePaths: string[] | undefined,
+    symbolPaths: string[] | undefined,
+    excludePaths: string[] | undefined,
+    checkPointers: boolean | undefined;
+    writer: {
+        jag: {
+            output: string
+        } | undefined,
+        js5: {
+            output: string
+        } | undefined
+    }
+}) {
+    // default config
+    let sourcePaths: string[] = ['../content/scripts'];
+    let symbolPaths: string[] = ['./data/symbols'];
+    let excludePaths: string[] = [];
+    let checkPointers: boolean = true;
 
-    const sourcePaths = config.sourcePaths.map(p => resolve(p));
-    const symbolPaths = config.symbolPaths.map(p => resolve(p));
-    const excludePaths = config.excludePaths.map(p => resolve(p));
-    const checkPointers = config.checkPointers;
+    let jagWriterConfig = { output: './data/pack/server' };
+    let js5WriterConfig = null;
 
-    const { binary: binaryWriterConfig} = config.writers;
+    // override with user settings
+    if (typeof config !== 'undefined') {
+        if (typeof config.sourcePaths !== 'undefined') {
+            sourcePaths = config.sourcePaths;
+        }
+
+        if (typeof config.symbolPaths !== 'undefined') {
+            symbolPaths = config.symbolPaths;
+        }
+
+        if (typeof config.excludePaths !== 'undefined') {
+            excludePaths = config.excludePaths;
+        }
+
+        if (typeof config.checkPointers !== 'undefined') {
+            checkPointers = config.checkPointers;
+        }
+
+        if (typeof config.writer !== 'undefined') {
+            if (typeof config.writer.jag !== 'undefined') {
+                jagWriterConfig = config.writer.jag;
+                js5WriterConfig = null;
+            } else if (typeof config.writer.js5 !== 'undefined') {
+                js5WriterConfig = config.writer.js5;
+                jagWriterConfig = null;
+            }
+        }
+    }
+
+    sourcePaths.map(p => resolve(p));
+    symbolPaths.map(p => resolve(p));
+    excludePaths.map(p => resolve(p));
     
     const mapper = new SymbolMapper();
     let writer: ScriptWriter;
 
-    if (!useJs5Pack) {
-        if (binaryWriterConfig) {
-            writer = new JagFileScriptWriter(resolve(binaryWriterConfig.output), mapper);
-        } else {
-            console.error(`No writer configured.`);
-            exit(1);
-        }
+    if (jagWriterConfig) {
+        writer = new JagFileScriptWriter(resolve(jagWriterConfig.output), mapper);
+    } else if (js5WriterConfig) {
+        writer = new Js5PackScriptWriter(resolve(js5WriterConfig.output), mapper);
     } else {
-        if (binaryWriterConfig) {
-            const js5PackPath = join(binaryWriterConfig.output, 'server.scripts.js5');
-            writer = new Js5PackScriptWriter(resolve(js5PackPath), mapper);
-        } else {
-            console.error(`No writer configured.`);
-            exit(1);
-        }
+        console.error(`No writer configured.`);
+        exit(1);
     }
 
     const commandPointers = new Map<string, PointerHolder>();
@@ -50,30 +86,6 @@ export function CompileServerScript(useJs5Pack?: boolean) {
     compiler.setup();
     compiler.run('rs2');
 
-}
-
-function loadConfig(configPath: string) : ServerScriptCompilerConfig {
-    if (!existsSync(configPath)) {
-        console.error(`Unable to locate configuration file: ${configPath}.`);
-        exit(1);
-    }
-
-    const tomlText = readFileSync(configPath, 'utf-8');
-    const rawConfig = parse(tomlText) as any;
-
-    // Map fields if needed.
-    const config: ServerScriptCompilerConfig = {
-        sourcePaths: rawConfig.sources ?? [],
-        symbolPaths: rawConfig.symbols ?? [],
-        excludePaths: rawConfig.excluded ?? [],
-        checkPointers: rawConfig.check_pointers ?? false,
-        writers: {
-            binary: rawConfig.writer?.binary
-        }
-    };
-
-    // console.debug(`Loading configuration from ${configPath}.`);
-    return config;
 }
 
 function loadSpecialSymbols(symbolPaths: string[], mapper: SymbolMapper, commandPointers: Map<string, PointerHolder>, checkPointers: boolean) {
