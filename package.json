@@ -1,6 +1,6 @@
 {
   "name": "@lostcityrs/runescript",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Compiler for a community-derived RuneScript implementation, written in TypeScript",
   "license": "MIT",
   "author": "LostCityRS",
