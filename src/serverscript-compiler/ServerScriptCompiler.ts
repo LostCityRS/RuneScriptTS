@@ -2,12 +2,10 @@ import { PointerHolder } from "../runescript-compiler/pointer/PointerHolder";
 import { ScriptCompiler } from "../runescript-compiler/ScriptCompiler";
 import { ScriptWriter } from "../runescript-compiler/writer/ScriptWriter";
 import { SymbolMapper } from "./SymbolMapper";
-import * as fs from 'fs';
-import * as path from 'path';
-import { ConstantLoader } from "./ConstantLoader";
+import { CompilerTypeInfoConstantLoader } from "./CompilerTypeInfoConstantLoader";
 import { Type } from "../runescript-compiler/type/Type";
-import { TsvProtectedSymbolLoader } from "./TsvProtectedSymbolLoader";
-import { TsvSymbolLoader } from "./TsvSymbolLoader";
+import { CompilerTypeInfoProtectedLoader } from "./CompilerTypeInfoProtectedLoader";
+import { CompilerTypeInfoLoader } from "./CompilerTypeInfoLoader";
 import { ServerTriggerType } from "./trigger/ServerTriggerType";
 import { ScriptVarType } from "./type/ScriptVarType";
 import { MetaType } from "../runescript-compiler/type/MetaType";
@@ -25,9 +23,10 @@ import { DbColumnType } from "./type/DbColumnType";
 import { DbFindCommandHandler } from "./command/DbFindCommandHandler";
 import { DbGetFieldCommandHandler } from "./command/DbGetFieldCommandHandler";
 import { EnumCommandHandler } from "./command/EnumCommandHandler";
+import { CompilerTypeInfo } from "./CompilerTypeInfo.js";
 
 export class ServerScriptCompiler extends ScriptCompiler {
-    private readonly symbolPaths: string[];
+    private readonly symbols: Record<string, CompilerTypeInfo>;
     private readonly mapper: SymbolMapper;
 
     constructor(
@@ -35,11 +34,11 @@ export class ServerScriptCompiler extends ScriptCompiler {
         excludePaths: string[],
         scriptWriter: ScriptWriter,
         commandPointers: Map<string, PointerHolder>,
-        symbolPaths: string[],
+        symbols: Record<string, CompilerTypeInfo>,
         mapper: SymbolMapper,
     ) {
         super(sourcePaths, excludePaths, scriptWriter, commandPointers);
-        this.symbolPaths = symbolPaths;
+        this.symbols = symbols;
         this.mapper = mapper;
     }
 
@@ -164,11 +163,8 @@ export class ServerScriptCompiler extends ScriptCompiler {
     }
 
     private addSymConstantLoaders(): void {
-        for (const symbolPath of this.symbolPaths)  {
-            const constantsFile = path.join(symbolPath, 'constant.sym');
-            if (fs.existsSync(constantsFile)) {
-                this.addSymbolLoader(new ConstantLoader(constantsFile));
-            }
+        if (this.symbols['constant']) {
+            this.addSymbolLoader(new CompilerTypeInfoConstantLoader(this.symbols['constant']));
         }
     }
 
@@ -177,11 +173,8 @@ export class ServerScriptCompiler extends ScriptCompiler {
     }
 
     private addSymLoaderWithSupplier(name: string, typeSupplier: (subTypes: Type) => Type): void {
-        for (const symbolPath of this.symbolPaths) {
-            const typeFile = path.join(symbolPath, `${name}.sym`);
-            if (fs.existsSync(typeFile)) {
-                this.addSymbolLoader(new TsvSymbolLoader(this.mapper, typeFile, typeSupplier));
-            }
+        if (this.symbols[name]) {
+            this.addSymbolLoader(new CompilerTypeInfoLoader(this.mapper, this.symbols[name], typeSupplier));
         }
     }
 
@@ -190,11 +183,8 @@ export class ServerScriptCompiler extends ScriptCompiler {
     }
 
     private addProtectedSymLoaderWithSupplier(name: string, typeSupplier: (subTypes: Type) => Type): void {
-        for (const symbolPath of this.symbolPaths) {
-            const typeFile = path.join(symbolPath, `${name}.sym`);
-            if (fs.existsSync(typeFile)) {
-                this.addSymbolLoader(new TsvProtectedSymbolLoader(this.mapper, typeFile, typeSupplier));
-            }
+        if (this.symbols[name]) {
+            this.addSymbolLoader(new CompilerTypeInfoProtectedLoader(this.mapper, this.symbols[name], typeSupplier));
         }
     }
 }

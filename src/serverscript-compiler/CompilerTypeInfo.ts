@@ -1,22 +1,4 @@
-/* tslint:disable */
-/* eslint-disable */
-
-export declare function CompileServerScript(config?: {
-    sourcePaths?: string[];
-    symbols?: Record<string, CompilerTypeInfo>;
-    excludePaths?: string[];
-    checkPointers?: boolean;
-    writer?: {
-        jag?: {
-            output: string;
-        };
-        js5?: {
-            output: string;
-        };
-    };
-}): void;
-
-export declare type CompilerTypeInfo = {
+export type CompilerTypeInfo = {
     max: number;
     map: Record<string, string>;
 

@@ -10,28 +10,38 @@ This is a **RuneScript Compiler**, written in TypeScript. Our focus is to preser
 (or yarn, bun, pnpm...)
 
 ```ts
-import { CompileServerScript } from '@lostcityrs/runescript';
+import { CompileServerScript, CompilerTypeInfo } from '@lostcityrs/runescript';
 
-CompileServerScript();
+// opcode->command lookup + pointer info
+const commandInfo: CompilerTypeInfo = ...;
+
+// script id->name lookup
+const runescriptInfo: CompilerTypeInfo = ...;
+
+// config id->name lookup
+const npcInfo: CompilerTypeInfo = ...;
+
+CompileServerScript({
+    symbols: {
+        'command': commandInfo,
+        'runescript': runescriptInfo,
+
+        'npc': npcInfo,
+        ...
+    }
+});
 ```
 
 The compiler expects a couple things to be in place.
 
 1. A source folder that contains `.rs2` scripts.
-2. ".sym" files containing ID->name maps in tsv-format (tab-separated values):
-```tsv
-0	p11_full
-1	p12_full
-2	b12_full
-3	q8_full
-```
-There must be a sym file for every config type you reference in your scripts.
+2. Symbol information provided for the types you plan on referencing.
 
-By default it will read scripts from `../content/scripts` and symbols from `./data/symbols`.  
+By default it will read scripts from `../content/scripts`.
 After it runs, compiled output will be placed in `./data/pack/server`.  
-If that doesn't work for your use case, there is a config object you can pass to CompileServerScript. There is a .d.ts file included that describes the structure.
+If that doesn't work for your use case, please see the config object you pass to CompileServerScript.
 
-See [LostCityRS/Server](https://github.com/LostCityRS/Server) for a working example of everything if you aren't using that already.
+See [LostCityRS/Server](https://github.com/LostCityRS/Server) for a working example.
 
 ### Building RuneScriptTS
 
