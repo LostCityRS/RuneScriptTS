@@ -1,6 +1,6 @@
-import { BaseVarType } from './BaseVarType';
-import { Type } from './Type';
-import { MutableOptionsType as MutableTypeOptions, TypeOptions } from './TypeOptions';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType as MutableTypeOptions, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
 
 /**
  * The main types used in the compiler.
@@ -38,26 +38,23 @@ export class PrimitiveType extends Type {
     /**
      * Instances
      */
-    static readonly INT = new PrimitiveType("INT", "i", BaseVarType.INTEGER, 0);
-    static readonly BOOLEAN = new PrimitiveType("BOOLEAN", "1", BaseVarType.INTEGER, 0);
-    static readonly COORD = new PrimitiveType("COORD", "c", BaseVarType.INTEGER, -1);
-    static readonly STRING = new PrimitiveType("STRING", "s", BaseVarType.STRING, "", opts => { opts.allowArray = false; opts.allowSwitch = false; });
-    static readonly CHAR = new PrimitiveType("CHAR", "z", BaseVarType.INTEGER, -1);
-    static readonly LONG = new PrimitiveType("LONG", "Ï", BaseVarType.LONG, -1, opts => { opts.allowArray = false, opts.allowSwitch = false});
-    static readonly MAPZONE = new PrimitiveType("MAPZONE", "0", BaseVarType.INTEGER, -1);
+    static readonly INT = new PrimitiveType('INT', 'i', BaseVarType.INTEGER, 0);
+    static readonly BOOLEAN = new PrimitiveType('BOOLEAN', '1', BaseVarType.INTEGER, 0);
+    static readonly COORD = new PrimitiveType('COORD', 'c', BaseVarType.INTEGER, -1);
+    static readonly STRING = new PrimitiveType('STRING', 's', BaseVarType.STRING, '', opts => {
+        opts.allowArray = false;
+        opts.allowSwitch = false;
+    });
+    static readonly CHAR = new PrimitiveType('CHAR', 'z', BaseVarType.INTEGER, -1);
+    static readonly LONG = new PrimitiveType('LONG', 'Ï', BaseVarType.LONG, -1, opts => {
+        ((opts.allowArray = false), (opts.allowSwitch = false));
+    });
+    static readonly MAPZONE = new PrimitiveType('MAPZONE', '0', BaseVarType.INTEGER, -1);
 
     /**
      * Utilities
      */
-    static readonly ALL: readonly PrimitiveType[] = [
-        PrimitiveType.INT,
-        PrimitiveType.BOOLEAN,
-        PrimitiveType.COORD,
-        PrimitiveType.STRING,
-        PrimitiveType.CHAR,
-        PrimitiveType.LONG,
-        PrimitiveType.MAPZONE
-    ]
+    static readonly ALL: readonly PrimitiveType[] = [PrimitiveType.INT, PrimitiveType.BOOLEAN, PrimitiveType.COORD, PrimitiveType.STRING, PrimitiveType.CHAR, PrimitiveType.LONG, PrimitiveType.MAPZONE];
 
     static byRepresentation(rep: string): PrimitiveType | undefined {
         return PrimitiveType.ALL.find(t => t.representation === rep);

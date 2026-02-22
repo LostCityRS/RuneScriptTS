@@ -1,7 +1,7 @@
-import { BaseVarType } from './BaseVarType';
-import { Type } from './Type';
-import { MetaType } from './MetaType';
-import { MutableOptionsType, TypeOptions } from './TypeOptions';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
 
 /**
  * A single type that combines multiple other types into one while still providing access to the other types.
@@ -19,16 +19,16 @@ export class TupleType implements Type {
     public readonly options: TypeOptions = new MutableOptionsType({
         allowArray: false,
         allowSwitch: false,
-        allowDeclaration: false,
+        allowDeclaration: false
     });
 
     constructor(...children: Type[]) {
         const flattened = TupleType.flatten(children);
         if (flattened.length < 2) {
-            throw new Error("TupleType should not be used when type count is < 2");
+            throw new Error('TupleType should not be used when type count is < 2');
         }
         this.children = flattened;
-        this.representation = this.children.map((c) => c.representation).join(",");
+        this.representation = this.children.map(c => c.representation).join(',');
     }
 
     /**

@@ -1,9 +1,9 @@
-import { Diagnostic } from '../../diagnostics/Diagnostic';
-import { Diagnostics } from '../../diagnostics/Diagnostics';
-import { DiagnosticType } from '../../diagnostics/DiagnosticType';
-import { TypeCheckingContext } from './TypeCheckingContext';
-import { Node } from '../../../runescipt-parser/ast/Node';
-import { CodeGeneratorContext } from './CodeGeneratorContext';
+import { Diagnostic } from '#/runescript-compiler/diagnostics/Diagnostic.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { DiagnosticType } from '#/runescript-compiler/diagnostics/DiagnosticType.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
+import { CodeGeneratorContext } from '#/runescript-compiler/configuration/command/CodeGeneratorContext.js';
 
 /**
  * A dynamic command handler allows more complex commands to be implemented.

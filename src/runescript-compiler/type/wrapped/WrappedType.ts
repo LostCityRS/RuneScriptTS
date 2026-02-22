@@ -1,4 +1,4 @@
-import { Type } from '../Type';
+import { Type } from '#/runescript-compiler/type/Type.js';
 
 /**
  * A type that contains an inner type. This is intended for more complex types
@@ -9,7 +9,6 @@ import { Type } from '../Type';
  * @see ArrayType
  */
 export abstract class WrappedType extends Type {
-    
     /**
      * The inner type that is being wrapped.
      */

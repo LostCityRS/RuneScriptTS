@@ -1,4 +1,4 @@
-import { Instruction } from '../../Instruction';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
 
 /**
  * Represents a node in the control flow graph containing a single instruction.

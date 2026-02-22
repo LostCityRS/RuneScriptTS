@@ -1,5 +1,5 @@
-import { PointerType } from '../../../pointer/PointerType';
-import { InstructionNode } from './InstructionNode';
+import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
+import { InstructionNode } from '#/runescript-compiler/codegen/script/config/InstructionNode.js';
 
 export class PointerInstructionNode extends InstructionNode {
     public readonly set: Set<PointerType>;

@@ -1,7 +1,7 @@
-import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
-import { Type } from "../../runescript-compiler/type/Type";
-import { MutableOptionsType, TypeOptions } from "../../runescript-compiler/type/TypeOptions";
-import { WrappedType } from "../../runescript-compiler/type/wrapped/WrappedType";
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
+import { WrappedType } from '#/runescript-compiler/type/wrapped/WrappedType.js';
 
 export class ParamType implements WrappedType {
     readonly representation: string;

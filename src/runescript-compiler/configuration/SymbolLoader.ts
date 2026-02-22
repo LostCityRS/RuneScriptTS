@@ -1,8 +1,8 @@
-import { ScriptCompiler } from '../ScriptCompiler';
-import { BasicSymbol, ConstantSymbol } from '../symbol/Symbol';
-import { SymbolTable } from '../symbol/SymbolTable';
-import { SymbolType } from '../symbol/SymbolType';
-import { Type } from '../type/Type';
+import { ScriptCompiler } from '#/runescript-compiler/ScriptCompiler.js';
+import { BasicSymbol, ConstantSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { SymbolType } from '#/runescript-compiler/symbol/SymbolType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
 
 /**
  * A loader that gets ran before any compilation process happens with the compiler. This
@@ -19,7 +19,7 @@ export abstract class SymbolLoader {
 
     /**
      * Adds a [ConstantSymbol] to the table with the given [name] and [value].
-     * 
+     *
      * Returns [ConstantSymbol] that was inserted.
      */
     addConstant(symbolTable: SymbolTable, name: string, value: string): ConstantSymbol {

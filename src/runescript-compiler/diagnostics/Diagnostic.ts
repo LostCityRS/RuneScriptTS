@@ -1,6 +1,6 @@
-import type { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
-import { Node } from '../../runescipt-parser/ast/Node';
-import { DiagnosticType } from './DiagnosticType';
+import type { NodeSourceLocation } from '#/runescript-parser/ast/NodeSourceLocation.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
+import { DiagnosticType } from '#/runescript-compiler/diagnostics/DiagnosticType.js';
 
 // TODO: Further documentation.
 export class Diagnostic {
@@ -12,37 +12,22 @@ export class Diagnostic {
     /**
      * [Node] based constructor
      */
-    constructor(
-        type: DiagnosticType,
-        sourceLocation: Node,
-        message: string,
-        ...messageArgs: any[]
-    );
-    
+    constructor(type: DiagnosticType, sourceLocation: Node, message: string, ...messageArgs: any[]);
+
     /**
-     * [NodeSourceLocation] based constructor 
+     * [NodeSourceLocation] based constructor
      */
-    constructor(
-        type: DiagnosticType,
-        sourceLocation: NodeSourceLocation,
-        message: string,
-        ...messageArgs: any[]
-    );
-    
-    constructor(
-        type: DiagnosticType,
-        nodeOrSource: Node | NodeSourceLocation,
-        message: string,
-        ...messageArgs: any[]
-    ) {
+    constructor(type: DiagnosticType, sourceLocation: NodeSourceLocation, message: string, ...messageArgs: any[]);
+
+    constructor(type: DiagnosticType, nodeOrSource: Node | NodeSourceLocation, message: string, ...messageArgs: any[]) {
         this.type = type;
-      
-        if ("source" in nodeOrSource) {
+
+        if ('source' in nodeOrSource) {
             this.sourceLocation = nodeOrSource.source;
         } else {
             this.sourceLocation = nodeOrSource;
         }
-        
+
         this.messageArgs = messageArgs;
         this.message = message;
     }

@@ -1,9 +1,10 @@
-import { RuneScript } from "../../runescript-compiler/codegen/script/RuneScript";
-import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { BaseScriptWriter, BaseScriptWriterContext } from "../../runescript-compiler/writer/BaseScriptWriter";
-import { ServerScriptOpcode } from "../ServerScriptOpcode";
-import { ServerTriggerType } from "../trigger/ServerTriggerType";
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { BaseScriptWriter, BaseScriptWriterContext } from '#/runescript-compiler/writer/BaseScriptWriter.js';
+
+import { ServerScriptOpcode } from '#/serverscript-compiler/ServerScriptOpcode.js';
+import { ServerTriggerType } from '#/serverscript-compiler/trigger/ServerTriggerType.js';
 
 export class BinaryScriptWriterContext extends BaseScriptWriterContext {
     /**
@@ -143,8 +144,10 @@ export class BinaryScriptWriterContext extends BaseScriptWriterContext {
         offset += 2;
 
         for (const [pc, line] of this.lineNumberTable) {
-            buf.writeInt32BE(pc, offset); offset += 4;
-            buf.writeInt32BE(line, offset); offset += 4;
+            buf.writeInt32BE(pc, offset);
+            offset += 4;
+            buf.writeInt32BE(line, offset);
+            offset += 4;
         }
 
         this.instructionBuffer.copy(buf, offset, 0, this.instructionOffset);
@@ -154,11 +157,14 @@ export class BinaryScriptWriterContext extends BaseScriptWriterContext {
         offset += 4;
 
         const locals = this.script.locals;
-        ;
-        buf.writeUInt16BE(BaseScriptWriter.getLocalCount(locals, BaseVarType.INTEGER), offset); offset += 2;
-        buf.writeUInt16BE(BaseScriptWriter.getLocalCount(locals, BaseVarType.STRING), offset); offset += 2;
-        buf.writeUInt16BE(BaseScriptWriter.getParameterCount(locals, BaseVarType.INTEGER), offset); offset += 2;
-        buf.writeUInt16BE(BaseScriptWriter.getParameterCount(locals, BaseVarType.STRING), offset); offset += 2;
+        buf.writeUInt16BE(BaseScriptWriter.getLocalCount(locals, BaseVarType.INTEGER), offset);
+        offset += 2;
+        buf.writeUInt16BE(BaseScriptWriter.getLocalCount(locals, BaseVarType.STRING), offset);
+        offset += 2;
+        buf.writeUInt16BE(BaseScriptWriter.getParameterCount(locals, BaseVarType.INTEGER), offset);
+        offset += 2;
+        buf.writeUInt16BE(BaseScriptWriter.getParameterCount(locals, BaseVarType.STRING), offset);
+        offset += 2;
 
         buf.writeUInt8(this.script.switchTables.length, offset++);
         this.switchBuffer.copy(buf, offset, 0, this.switchOffset);
@@ -197,7 +203,7 @@ export class BinaryScriptWriterContext extends BaseScriptWriterContext {
 
     private writeString(buf: Buffer, text: string, offset: number): number {
         for (let i = 0; i < text.length; i++) {
-            buf.writeUInt8(text.charCodeAt(i) & 0xFF, offset++);
+            buf.writeUInt8(text.charCodeAt(i) & 0xff, offset++);
         }
         buf.writeUInt8(0, offset++);
         return offset;

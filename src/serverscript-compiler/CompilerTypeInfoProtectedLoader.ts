@@ -1,11 +1,12 @@
-import { SymbolLoader } from "../runescript-compiler/configuration/SymbolLoader";
-import { ScriptCompiler } from "../runescript-compiler/ScriptCompiler";
-import { SymbolTable } from "../runescript-compiler/symbol/SymbolTable";
-import { MetaType } from "../runescript-compiler/type/MetaType";
-import { TupleType } from "../runescript-compiler/type/TupleType";
-import { Type } from "../runescript-compiler/type/Type";
-import { CompilerTypeInfo } from "./CompilerTypeInfo.js";
-import { SymbolMapper } from "./SymbolMapper";
+import { SymbolLoader } from '#/runescript-compiler/configuration/SymbolLoader.js';
+import { ScriptCompiler } from '#/runescript-compiler/ScriptCompiler.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+
+import { CompilerTypeInfo } from '#/serverscript-compiler/CompilerTypeInfo.js';
+import { SymbolMapper } from '#/serverscript-compiler/SymbolMapper.js';
 
 export class CompilerTypeInfoProtectedLoader extends SymbolLoader {
     constructor(

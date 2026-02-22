@@ -1,14 +1,14 @@
-import { Instruction } from '../codegen/Instruction';
-import { Opcode } from '../codegen/Opcode';
-import { Block } from '../codegen/script/Block';
-import { Label } from '../codegen/script/Label';
-import { LocalTable, RuneScript } from '../codegen/script/RuneScript';
-import { SwitchTable } from '../codegen/script/SwitchTable';
-import { ScriptSymbol } from '../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
-import { BaseVarType } from '../type/BaseVarType';
-import { ArrayType } from '../type/wrapped/ArrayType';
-import { ScriptWriter } from './ScriptWriter';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Block } from '#/runescript-compiler/codegen/script/Block.js';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
+import { LocalTable, RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { SwitchTable } from '#/runescript-compiler/codegen/script/SwitchTable.js';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { ArrayType } from '#/runescript-compiler/type/wrapped/ArrayType.js';
+import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
 
 /**
  * A basic implementation of [ScriptWriter] with some utility functions for writing
@@ -19,7 +19,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
 
     write(script: RuneScript): void {
         const context = this.createContext(script);
-    
+
         for (const block of script.blocks) {
             this.enterBlock(context, block);
             for (const instruction of block.instructions) {
@@ -138,37 +138,73 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
                 this.writeMath(context, opcode);
                 break;
             case Opcode.LineNumber:
-                throw new Error("LineNumber opcode should not exist.");
+                throw new Error('LineNumber opcode should not exist.');
         }
     }
 
-    
-    protected enterBlock(context: T, block: Block): void { throw new Error("Not implemented"); }
-    protected writePushConstantInt(context: T, value: number): void { throw new Error("Not implemented"); }
-    protected writePushConstantString(context: T, value: string): void { throw new Error("Not implemented"); }
-    protected writePushConstantLong(context: T, value: bigint): void { throw new Error("Not implemented"); }
-    protected writePushConstantSymbol(context: T, value: RuneScriptSymbol): void { throw new Error("Not implemented"); }
-    protected writePushLocalVar(context: T, symbol: LocalVariableSymbol): void { throw new Error("Not implemented"); }
-    protected writePopLocalVar(context: T, symbol: LocalVariableSymbol): void { throw new Error("Not implemented"); }
-    protected writePushVar(context: T, symbol: BasicSymbol, dot: boolean): void { throw new Error("Not implemented"); }
-    protected writePopVar(context: T, symbol: BasicSymbol, dot: boolean): void { throw new Error("Not implemented"); }
-    protected writeDefineArray(context: T, symbol: LocalVariableSymbol): void { throw new Error("Not implemented"); }
-    protected writeSwitch(context: T, switchTable: SwitchTable): void { throw new Error("Not implemented"); }
-    protected writeBranch(context: T, opcode: Opcode<any>, label: Label): void { throw new Error("Not implemented"); }
-    protected writeJoinString(context: T, count: number): void { throw new Error("Not implemented"); }
-    protected writeDiscard(context: T, baseType: BaseVarType): void { throw new Error("Not implemented"); }
-    protected writeJump(context: T, symbol: ScriptSymbol): void { throw new Error("Not implemented"); }
-    protected writeGosub(context: T, symbol: ScriptSymbol): void { throw new Error("Not implemented"); }
-    protected writeCommand(context: T, symbol: ScriptSymbol): void { throw new Error("Not implemented"); }
-    protected writeReturn(context: T): void { throw new Error("Not implemented"); }
-    protected writeMath(context: T, opcode: Opcode<any>): void { throw new Error("Not implemented"); }
+    protected enterBlock(context: T, block: Block): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushConstantInt(context: T, value: number): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushConstantString(context: T, value: string): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushConstantLong(context: T, value: bigint): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushConstantSymbol(context: T, value: RuneScriptSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushLocalVar(context: T, symbol: LocalVariableSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writePopLocalVar(context: T, symbol: LocalVariableSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writePushVar(context: T, symbol: BasicSymbol, dot: boolean): void {
+        throw new Error('Not implemented');
+    }
+    protected writePopVar(context: T, symbol: BasicSymbol, dot: boolean): void {
+        throw new Error('Not implemented');
+    }
+    protected writeDefineArray(context: T, symbol: LocalVariableSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writeSwitch(context: T, switchTable: SwitchTable): void {
+        throw new Error('Not implemented');
+    }
+    protected writeBranch(context: T, opcode: Opcode<any>, label: Label): void {
+        throw new Error('Not implemented');
+    }
+    protected writeJoinString(context: T, count: number): void {
+        throw new Error('Not implemented');
+    }
+    protected writeDiscard(context: T, baseType: BaseVarType): void {
+        throw new Error('Not implemented');
+    }
+    protected writeJump(context: T, symbol: ScriptSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writeGosub(context: T, symbol: ScriptSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writeCommand(context: T, symbol: ScriptSymbol): void {
+        throw new Error('Not implemented');
+    }
+    protected writeReturn(context: T): void {
+        throw new Error('Not implemented');
+    }
+    protected writeMath(context: T, opcode: Opcode<any>): void {
+        throw new Error('Not implemented');
+    }
 
     /**
      * ==================
      * RuneScript helpers
      * ==================
      */
-
 
     /**
      * Returns a mapping of instruction index to line number. This modifies the
@@ -226,9 +262,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
      * Returns the total number of local variables with a base var type of [baseType].
      */
     static getLocalCount(localTable: LocalTable, baseType: BaseVarType): number {
-        return localTable.all.filter(
-            v => v.type.baseType === baseType && (!(v.type instanceof ArrayType) || localTable.parameters.includes(v))
-        ).length;
+        return localTable.all.filter(v => v.type.baseType === baseType && (!(v.type instanceof ArrayType) || localTable.parameters.includes(v))).length;
     }
 
     /**
@@ -239,9 +273,7 @@ export abstract class BaseScriptWriter<T extends BaseScriptWriterContext> implem
             return localTable.all.filter(v => v.type instanceof ArrayType).indexOf(local);
         }
 
-        return localTable.all
-            .filter(v => v.type.baseType === local.type.baseType && (!(v.type instanceof ArrayType) || localTable.parameters.includes(v)))
-            .indexOf(local);
+        return localTable.all.filter(v => v.type.baseType === local.type.baseType && (!(v.type instanceof ArrayType) || localTable.parameters.includes(v))).indexOf(local);
     }
 }
 
@@ -253,7 +285,7 @@ export class BaseScriptWriterContext {
     curIndex = 0;
     readonly lineNumberTable: Map<number, number>;
     readonly jumpTable: Map<Label, number>;
-    constructor(public readonly script: RuneScript) { 
+    constructor(public readonly script: RuneScript) {
         this.lineNumberTable = BaseScriptWriter.generateLineNumberTable(script);
         this.jumpTable = BaseScriptWriter.generateJumpTable(script);
     }

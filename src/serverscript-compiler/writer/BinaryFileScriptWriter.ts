@@ -1,8 +1,9 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { IdProvider } from "../../runescript-compiler/writer/BaseScriptWriter";
-import { BinaryScriptWriter } from "./BinaryScriptWriter";
-import { RuneScript } from '../../runescript-compiler/codegen/script/RuneScript';
+import fs from 'fs';
+import path from 'path';
+
+import { IdProvider } from '#/runescript-compiler/writer/BaseScriptWriter.js';
+import { BinaryScriptWriter } from '#/serverscript-compiler/writer/BinaryScriptWriter.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
 
 /**
  * An implementation of [BinaryScriptWriter] that writes the scripts to [output].

@@ -1,7 +1,8 @@
-import { Diagnostics } from './Diagnostics';
-import * as fs from "fs";
-import * as path from "path";
-import * as util from "util";
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
+
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
 
 /**
  * Allows handling diagnostics for different parts of the compiler process.
@@ -32,7 +33,7 @@ export interface DiagnosticsHandler {
  * A base implementation of a diagnostics handler that points to the line an error occurs on
  * and exits the process with exit code `1` if there were any errors during any steps.
  */
-export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
+export class BaseDiagnosticsHandler implements DiagnosticsHandler {
     handleParse(diagnostics: Diagnostics): void {
         this.handleShared(diagnostics);
     }
@@ -57,7 +58,7 @@ export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
 
             // Lazy load file lines
             if (!fileLines.has(filePath)) {
-                fileLines.set(filePath, fs.readFileSync(filePath, "utf-8").split(/\r?\n/));
+                fileLines.set(filePath, fs.readFileSync(filePath, 'utf-8').split(/\r?\n/));
             }
 
             const lines = fileLines.get(filePath)!;
@@ -69,16 +70,16 @@ export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
 
             if (lineIndex >= 0 && lineIndex < lines.length) {
                 const line = lines[lineIndex];
-                const lineNoTabs = line.replace(/\t/g, "    ");
+                const lineNoTabs = line.replace(/\t/g, '    ');
                 const tabCount = (line.match(/\t/g) ?? []).length;
-            
+
                 const rawColumn = diag.sourceLocation.column ?? 1;
                 const column = Math.max(1, rawColumn);
 
                 const caretOffset = Math.max(0, tabCount * 3 + (column - 1));
 
                 console.log(`    > ${lineNoTabs}`);
-                console.log(`    > ${" ".repeat(caretOffset)}^`);
+                console.log(`    > ${' '.repeat(caretOffset)}^`);
             }
         }
 
@@ -86,4 +87,4 @@ export class BaseDiagnosticsHandler  implements DiagnosticsHandler {
             process.exit(1);
         }
     }
-}    
+}

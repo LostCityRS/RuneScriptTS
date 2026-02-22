@@ -1,5 +1,5 @@
-import { Instruction } from '../Instruction';
-import { Label } from './Label';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
 
 /**
  * Represents a block of instructions.

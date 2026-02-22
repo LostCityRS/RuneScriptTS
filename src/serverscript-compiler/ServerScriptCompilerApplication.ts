@@ -1,13 +1,14 @@
 import { resolve } from 'path';
-import { PointerType } from '../runescript-compiler/pointer/PointerType';
-import { SymbolMapper } from './SymbolMapper';
-import { JagFileScriptWriter } from './writer/JagFileScriptWriter';
-import { PointerHolder } from '../runescript-compiler/pointer/PointerHolder';
-import { ServerScriptCompiler } from './ServerScriptCompiler';
-import { ScriptWriter } from '../runescript-compiler/writer/ScriptWriter';
-import { Js5PackScriptWriter } from './writer/Js5PackScriptWriter';
-import { CompilerTypeInfo } from './CompilerTypeInfo.js';
 
+import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
+import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
+
+import { CompilerTypeInfo } from '#/serverscript-compiler/CompilerTypeInfo.js';
+import { ServerScriptCompiler } from '#/serverscript-compiler/ServerScriptCompiler.js';
+import { SymbolMapper } from '#/serverscript-compiler/SymbolMapper.js';
+import { JagFileScriptWriter } from '#/serverscript-compiler/writer/JagFileScriptWriter.js';
+import { Js5PackScriptWriter } from '#/serverscript-compiler/writer/Js5PackScriptWriter.js';
 
 export function CompileServerScript(config?: {
     sourcePaths?: string[];
@@ -62,7 +63,7 @@ export function CompileServerScript(config?: {
 
     sourcePaths.map(p => resolve(p));
     excludePaths.map(p => resolve(p));
-    
+
     const mapper = new SymbolMapper();
     let writer: ScriptWriter;
 
@@ -80,7 +81,6 @@ export function CompileServerScript(config?: {
     const compiler = new ServerScriptCompiler(sourcePaths, excludePaths, writer, commandPointers, config.symbols, mapper);
     compiler.setup();
     compiler.run('rs2');
-
 }
 
 function loadSpecialSymbols(commandInfo: CompilerTypeInfo, scriptInfo: CompilerTypeInfo, mapper: SymbolMapper, commandPointers: Map<string, PointerHolder>, checkPointers: boolean) {
@@ -96,10 +96,10 @@ function loadSpecialSymbols(commandInfo: CompilerTypeInfo, scriptInfo: CompilerT
             const corrupted = parsePointerList(commandInfo.corrupt[key]);
             const corrupted2 = parsePointerList(commandInfo.corrupt2[key]);
 
-            commandPointers.set(name, { required, set: setter, conditionalSet, corrupted} as PointerHolder);
+            commandPointers.set(name, { required, set: setter, conditionalSet, corrupted } as PointerHolder);
 
             if (required2.size || setter2.size || corrupted2.size) {
-                commandPointers.set(`.${name}`, { required: required2, set: setter2, conditionalSet, corrupted: corrupted2 })
+                commandPointers.set(`.${name}`, { required: required2, set: setter2, conditionalSet, corrupted: corrupted2 });
             }
         }
 
@@ -114,7 +114,7 @@ function loadSpecialSymbols(commandInfo: CompilerTypeInfo, scriptInfo: CompilerT
 }
 
 function parsePointerList(text?: string): Set<PointerType> {
-    if (!text ||text === 'none') return new Set();
+    if (!text || text === 'none') return new Set();
     const pointers = new Set<PointerType>();
     const names = text.split(',');
     for (const name of names) {

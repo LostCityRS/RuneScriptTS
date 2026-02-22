@@ -1,6 +1,6 @@
-import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
-import { Type } from "../../runescript-compiler/type/Type";
-import { MutableOptionsType, TypeOptions } from "../../runescript-compiler/type/TypeOptions";
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
 
 export class ScriptVarType extends Type {
     static readonly ALL: ScriptVarType[] = [];
@@ -11,12 +11,7 @@ export class ScriptVarType extends Type {
     declare readonly representation: string;
     declare readonly options: TypeOptions;
 
-    private constructor(
-        code: string,
-        baseType: BaseVarType = BaseVarType.INTEGER,
-        defaultValue: any = -1,
-        representation: string
-    ) {
+    private constructor(code: string, baseType: BaseVarType = BaseVarType.INTEGER, defaultValue: any = -1, representation: string) {
         super();
         this.code = code;
         this.baseType = baseType;
@@ -48,7 +43,7 @@ export class ScriptVarType extends Type {
     static readonly ENUM = new ScriptVarType('g', BaseVarType.INTEGER, -1, 'enum');
     static readonly HUNT = new ScriptVarType('h', BaseVarType.INTEGER, -1, 'hunt'); // Unconfirmed code.
     static readonly JINGLE = new ScriptVarType('j', BaseVarType.INTEGER, -1, 'jingle');
-    static readonly LOC = new ScriptVarType('l', BaseVarType.INTEGER, -1 , 'loc');
+    static readonly LOC = new ScriptVarType('l', BaseVarType.INTEGER, -1, 'loc');
     static readonly MODEL = new ScriptVarType('m', BaseVarType.INTEGER, -1, 'model');
     static readonly NPC = new ScriptVarType('n', BaseVarType.INTEGER, -1, 'npc');
     static readonly OBJ = new ScriptVarType('o', BaseVarType.INTEGER, -1, 'obj');

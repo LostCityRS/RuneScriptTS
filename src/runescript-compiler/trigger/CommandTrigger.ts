@@ -1,5 +1,5 @@
-import { SubjectMode } from './SubjectMode';
-import { TriggerType } from './TriggerType';
+import { SubjectMode } from '#/runescript-compiler/trigger/SubjectMode.js';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
 
 export const CommandTrigger: TriggerType = {
     id: -1,
@@ -10,4 +10,4 @@ export const CommandTrigger: TriggerType = {
     allowReturns: true,
     returns: null,
     pointers: null
-}
+};

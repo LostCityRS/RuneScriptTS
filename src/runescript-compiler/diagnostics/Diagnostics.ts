@@ -1,5 +1,5 @@
-import { Diagnostic } from './Diagnostic';
-import { DiagnosticType } from './DiagnosticType';
+import { Diagnostic } from '#/runescript-compiler/diagnostics/Diagnostic.js';
+import { DiagnosticType } from '#/runescript-compiler/diagnostics/DiagnosticType.js';
 
 /**
  * Contains a list of [Diagnostics] reported during a compilation step.
@@ -36,8 +36,5 @@ export class Diagnostics {
     /**
      * All [DiagnosticType]s that count as errors during compilation.
      */
-    private static readonly ERROR_TYPES: Set<DiagnosticType> = new Set([
-        DiagnosticType.ERROR,
-        DiagnosticType.SYNTAX_ERROR,
-    ]);
+    private static readonly ERROR_TYPES: Set<DiagnosticType> = new Set([DiagnosticType.ERROR, DiagnosticType.SYNTAX_ERROR]);
 }

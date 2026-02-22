@@ -1,13 +1,13 @@
-import { Opcode } from "../../runescript-compiler/codegen/Opcode";
-import { CodeGeneratorContext } from "../../runescript-compiler/configuration/command/CodeGeneratorContext";
-import { DynamicCommandHandler } from "../../runescript-compiler/configuration/command/DynamicCommandHandler";
-import { TypeCheckingContext } from "../../runescript-compiler/configuration/command/TypeCheckingContext";
-import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { PrimitiveType } from "../../runescript-compiler/type/PrimitiveType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { Type } from "../../runescript-compiler/type/Type";
-import { DbColumnType } from "../type/DbColumnType";
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { CodeGeneratorContext } from '#/runescript-compiler/configuration/command/CodeGeneratorContext.js';
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+
+import { DbColumnType } from '#/serverscript-compiler/type/DbColumnType.js';
 
 export class DbFindCommandHandler implements DynamicCommandHandler {
     private readonly withCount: boolean;
@@ -25,7 +25,7 @@ export class DbFindCommandHandler implements DynamicCommandHandler {
         context.checkArgument(1, keyType);
 
         // Define the expected types based on what is currently known.
-        const expectedTypes= new TupleType(new DbColumnType(keyType ?? MetaType.Any), keyType ?? MetaType.Any);
+        const expectedTypes = new TupleType(new DbColumnType(keyType ?? MetaType.Any), keyType ?? MetaType.Any);
 
         // Check that the key type is not a Tuple type.
         if (keyType instanceof TupleType) {

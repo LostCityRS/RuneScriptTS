@@ -1,10 +1,13 @@
-import { Label } from './Label';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
 
 /**
  * A switch case that can contain multiple keys that point to a single label.
  */
 export class SwitchCase {
-    constructor(public readonly label: Label, public readonly keys: any[]) {}
+    constructor(
+        public readonly label: Label,
+        public readonly keys: any[]
+    ) {}
 }
 
 /**

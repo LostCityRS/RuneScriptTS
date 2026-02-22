@@ -1,5 +1,5 @@
-import { BaseVarType } from './BaseVarType';
-import { MutableOptionsType, TypeOptions } from './TypeOptions';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
 
 /**
  * Represents a type that we use in the type system to make sure everything is only assigned the correct thing.
@@ -35,9 +35,9 @@ export abstract class Type {
     readonly options!: TypeOptions;
 }
 
-export function createType(type: Omit<Type, "options"> & Partial<Pick<Type, "options">>): Type {
+export function createType(type: Omit<Type, 'options'> & Partial<Pick<Type, 'options'>>): Type {
     return {
         options: new MutableOptionsType(),
-        ...type,
+        ...type
     };
 }

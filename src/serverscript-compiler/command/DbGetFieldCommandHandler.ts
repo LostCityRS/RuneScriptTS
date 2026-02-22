@@ -1,10 +1,11 @@
-import { DynamicCommandHandler } from "../../runescript-compiler/configuration/command/DynamicCommandHandler";
-import { TypeCheckingContext } from "../../runescript-compiler/configuration/command/TypeCheckingContext";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { PrimitiveType } from "../../runescript-compiler/type/PrimitiveType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { DbColumnType } from "../type/DbColumnType";
-import { ScriptVarType } from "../type/ScriptVarType";
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+
+import { DbColumnType } from '#/serverscript-compiler/type/DbColumnType.js';
+import { ScriptVarType } from '#/serverscript-compiler/type/ScriptVarType.js';
 
 /**
  * Handles the `db_getfield` command that returns a dynamic type
@@ -30,11 +31,7 @@ export class DbGetFieldCommandHandler implements DynamicCommandHandler {
         const columntReturnType = (columnExpr?.type as DbColumnType)?.inner;
 
         // Define the expected types based on what is currently known.
-        const expectedTypes = new TupleType(
-            ScriptVarType.DBROW,
-            new DbColumnType(columntReturnType ?? MetaType.Any),
-            PrimitiveType.INT
-        );
+        const expectedTypes = new TupleType(ScriptVarType.DBROW, new DbColumnType(columntReturnType ?? MetaType.Any), PrimitiveType.INT);
 
         // Compare the expected types with the actual types.
         if (!context.checkArgumentTypes(expectedTypes)) {

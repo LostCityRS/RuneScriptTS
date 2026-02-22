@@ -1,10 +1,12 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as zlib from 'zlib';
-import { IdProvider } from "../../runescript-compiler/writer/BaseScriptWriter";
-import { BinaryScriptWriter } from "./BinaryScriptWriter";
-import { RuneScript } from '../../runescript-compiler/codegen/script/RuneScript';
-import { ByteWriter, crc32 } from './BytePacket';
+import fs from 'fs';
+import path from 'path';
+import zlib from 'zlib';
+
+import { IdProvider } from '#/runescript-compiler/writer/BaseScriptWriter.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+
+import { BinaryScriptWriter } from '#/serverscript-compiler/writer/BinaryScriptWriter.js';
+import { ByteWriter, crc32 } from '#/serverscript-compiler/writer/BytePacket.js';
 
 /**
  * A [BinaryScriptWriter] implementation that writes scripts into a complete
@@ -53,7 +55,7 @@ export class Js5PackScriptWriter extends BinaryScriptWriter {
                     groupId,
                     packedGroup,
                     checksum: crc32(packedGroup),
-                    version: Js5PackScriptWriter.GROUP_VERSION,
+                    version: Js5PackScriptWriter.GROUP_VERSION
                 };
             });
 
@@ -76,7 +78,7 @@ export class Js5PackScriptWriter extends BinaryScriptWriter {
         }
     }
 
-    private encodeIndex(groups: { groupId: number; checksum: number; version: number; }[]): Buffer {
+    private encodeIndex(groups: { groupId: number; checksum: number; version: number }[]): Buffer {
         const writer = new ByteWriter(128);
 
         writer.p1(Js5PackScriptWriter.INDEX_FORMAT);

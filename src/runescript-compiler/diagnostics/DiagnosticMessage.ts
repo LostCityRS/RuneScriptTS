@@ -3,22 +3,22 @@
  */
 export const DiagnosticMessage = {
     // Internal compiler errors
-    UNSUPPORTED_SYMBOLTYPE_TO_TYPE: "Internal compiler error: Unsupported SymbolType -> Type conversion: %s",
-    CASE_WITHOUT_SWITCH: "Internal compiler error: Case without switch statement as parent.",
-    RETURN_ORPHAN: "Internal compiler error: Orphaned `return` statement, no parent `script` node found.",
+    UNSUPPORTED_SYMBOLTYPE_TO_TYPE: 'Internal compiler error: Unsupported SymbolType -> Type conversion: %s',
+    CASE_WITHOUT_SWITCH: 'Internal compiler error: Case without switch statement as parent.',
+    RETURN_ORPHAN: 'Internal compiler error: Orphaned `return` statement, no parent `script` node found.',
     TRIGGER_TYPE_NOT_FOUND: "Internal compiler error: The trigger '%s' has no declaration.",
 
     // Custom command handler errors
-    CUSTOM_HANDLER_NOTYPE: "Internal compiler error: Custom command handler did not assign return type.",
-    CUSTOM_HANDLER_NOSYMBOL: "Internal compiler error: Custom command handler did not assign symbol.",
+    CUSTOM_HANDLER_NOTYPE: 'Internal compiler error: Custom command handler did not assign return type.',
+    CUSTOM_HANDLER_NOSYMBOL: 'Internal compiler error: Custom command handler did not assign symbol.',
 
     // Code gen internal compiler errors
-    SYMBOL_IS_NULL: "Internal compiler error: Symbol has not been defined for the node.",
-    TYPE_HAS_NO_BASETYPE: "Internal compiler error: Type has no defined base type: %s.",
+    SYMBOL_IS_NULL: 'Internal compiler error: Symbol has not been defined for the node.',
+    TYPE_HAS_NO_BASETYPE: 'Internal compiler error: Type has no defined base type: %s.',
     TYPE_HAS_NO_DEFAULT: "Internal compiler error: Return type '%s' has no defined default value.",
-    INVALID_CONDITION: "Internal compiler error: %s is not a supported expression type for conditions.",
+    INVALID_CONDITION: 'Internal compiler error: %s is not a supported expression type for conditions.',
     NULL_CONSTANT: "Internal compiler error: %s evaluated to 'null' constant value.",
-    EXPRESSION_NO_SUBEXPR: "Internal compiler error: No sub expression node.",
+    EXPRESSION_NO_SUBEXPR: 'Internal compiler error: No sub expression node.',
 
     // Node type agnostic messages
     GENERIC_INVALID_TYPE: "'%s' is not a valid type.",
@@ -27,7 +27,7 @@ export const DiagnosticMessage = {
     ARITHMETIC_INVALID_TYPE: "Type mismatch: '%s' was given but 'int' or 'long' was expected.",
 
     // Script node specific
-    SCRIPT_REDECLARATION: "[%s,%s] is already defined.",
+    SCRIPT_REDECLARATION: '[%s,%s] is already defined.',
     SCRIPT_LOCAL_REDECLARATION: "'$%s' is already defined.",
     SCRIPT_TRIGGER_INVALID: "'%s' is not a valid trigger type.",
     SCRIPT_COMMAND_ONLY: "Using a '*' is only allowed for commands.",
@@ -41,14 +41,14 @@ export const DiagnosticMessage = {
 
     // Switch statement node specific
     SWITCH_INVALID_TYPE: "'%s' is not allowed within a switch statement.",
-    SWITCH_DUPLICATE_DEFAULT: "Duplicate default label.",
-    SWITCH_CASE_NOT_CONSTANT: "Switch case value is not a constant expression.",
+    SWITCH_DUPLICATE_DEFAULT: 'Duplicate default label.',
+    SWITCH_CASE_NOT_CONSTANT: 'Switch case value is not a constant expression.',
 
     // Assignment statement node specific
-    ASSIGN_MULTI_ARRAY: "Arrays are not allowed in multi-assignment statements.",
+    ASSIGN_MULTI_ARRAY: 'Arrays are not allowed in multi-assignment statements.',
 
     // Condition expression specific
-    CONDITION_INVALID_NODE_TYPE: "Conditions are only allowed to be binary expressions.",
+    CONDITION_INVALID_NODE_TYPE: 'Conditions are only allowed to be binary expressions.',
 
     // Binary expression specific
     BINOP_INVALID_TYPES: "Operator '%s' cannot be applied to '%s', '%s'.",
@@ -63,7 +63,7 @@ export const DiagnosticMessage = {
     JUMP_NOARGS_EXPECTED: "'@%s' is expected to have no arguments but has '%s'.",
     CLIENTSCRIPT_REFERENCE_UNRESOLVED: "'%s' cannot be resolved to a clientscript.",
     CLIENTSCRIPT_NOARGS_EXPECTED: "'%s' is expected to have no arguments but has '%s'.",
-    HOOK_TRANSMIT_LIST_UNEXPECTED: "Unexpected hook transmit list.",
+    HOOK_TRANSMIT_LIST_UNEXPECTED: 'Unexpected hook transmit list.',
 
     // Local variable specific
     LOCAL_DECLARATION_INVALID_TYPE: "'%s' is not allowed to be declared as a type.",
@@ -77,14 +77,14 @@ export const DiagnosticMessage = {
 
     // Constant variable specific
     CONSTANT_REFERENCE_UNRESOLVED: "'^%s' cannot be resolved to a constant.",
-    CONSTANT_CYCLIC_REF: "Cyclic constant references are not permitted: %s.",
+    CONSTANT_CYCLIC_REF: 'Cyclic constant references are not permitted: %s.',
     CONSTANT_UNKNOWN_TYPE: "Unable to infer type for '^%s'.",
     CONSTANT_PARSE_ERROR: "Unable to parse constant value of '%s' into type '%s'.",
     CONSTANT_NONCONSTANT: "Constant value of '%s' evaluated to a non-constant expression.",
 
     // Pointer checking specific
-    POINTER_UNINITIALIZED: "Attempt to access uninitialized pointer %s.",
-    POINTER_CORRUPTED: "Attempt to access corrupted pointer %s.",
-    POINTER_CORRUPTED_LOC: "%s corrupted here.",
-    POINTER_REQUIRED_LOC: "%s required here.",
+    POINTER_UNINITIALIZED: 'Attempt to access uninitialized pointer %s.',
+    POINTER_CORRUPTED: 'Attempt to access corrupted pointer %s.',
+    POINTER_CORRUPTED_LOC: '%s corrupted here.',
+    POINTER_REQUIRED_LOC: '%s required here.'
 } as const;

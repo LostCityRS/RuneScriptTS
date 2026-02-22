@@ -1,32 +1,32 @@
-import { DynamicCommandHandler } from './configuration/command/DynamicCommandHandler';
-import { SymbolLoader } from './configuration/SymbolLoader';
-import { SymbolTable } from './symbol/SymbolTable';
-import { TriggerManager } from './trigger/TriggerManager';
-import { TypeManager } from './type/TypeManager';
-import { DiagnosticsHandler, BaseDiagnosticsHandler } from './diagnostics/DiagnosticsHandler';
-import { ScriptWriter } from './writer/ScriptWriter';
-import { PointerHolder } from './pointer/PointerHolder';
-import * as fs from 'fs';
-import * as path from 'path';
-import { PrimitiveType } from './type/PrimitiveType';
-import { CommandTrigger } from './trigger/CommandTrigger';
-import { MetaType } from './type/MetaType';
-import { TupleType } from './type/TupleType';
-import { ScriptFile } from '../runescipt-parser/ast/ScriptFile';
-import { Diagnostics } from './diagnostics/Diagnostics';
-import { ParserErrorListener } from './ParserErrorListener';
-import { ScriptParser } from '../runescipt-parser/parser/ScriptParser';
-import { PreTypeChecking } from './semantics/PreTypeChecking';
-import { TypeChecking } from './semantics/TypeChecking';
-import { RuneScript } from './codegen/script/RuneScript';
-import { CodeGenerator } from './codegen/CodeGenerator';
-import { PointerChecker } from './codegen/script/config/PointerChecker';
+import fs from 'fs';
+import path from 'path';
+
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { SymbolLoader } from '#/runescript-compiler/configuration/SymbolLoader.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { TriggerManager } from '#/runescript-compiler/trigger/TriggerManager.js';
+import { TypeManager } from '#/runescript-compiler/type/TypeManager.js';
+import { DiagnosticsHandler, BaseDiagnosticsHandler } from '#/runescript-compiler/diagnostics/DiagnosticsHandler.js';
+import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
+import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { CommandTrigger } from '#/runescript-compiler/trigger/CommandTrigger.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { ScriptFile } from '#/runescript-parser/ast/ScriptFile.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { ParserErrorListener } from '#/runescript-compiler/ParserErrorListener.js';
+import { ScriptParser } from '#/runescript-parser/parser/ScriptParser.js';
+import { PreTypeChecking } from '#/runescript-compiler/semantics/PreTypeChecking.js';
+import { TypeChecking } from '#/runescript-compiler/semantics/TypeChecking.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { CodeGenerator } from '#/runescript-compiler/codegen/CodeGenerator.js';
+import { PointerChecker } from '#/runescript-compiler/codegen/script/config/PointerChecker.js';
 
 /**
  * An entry point for compiling scripts.
  */
-export class ScriptCompiler{
-
+export class ScriptCompiler {
     /**
      * Log directly to console for now.
      */
@@ -74,7 +74,6 @@ export class ScriptCompiler{
      */
     public diagnosticsHandler: DiagnosticsHandler = ScriptCompiler.DEFAULT_DIAGNOSTICS_HANDLER;
 
-
     constructor(
         sourcePaths: string[],
         excludePaths: string[],
@@ -87,7 +86,7 @@ export class ScriptCompiler{
 
         // Register core types.
         this.types.registerAll(PrimitiveType);
-        
+
         this.setupDefaultTypeCheckers();
 
         // Register the command trigger.
@@ -111,35 +110,27 @@ export class ScriptCompiler{
         this.types.addTypeChecker((left, right) => left === right);
 
         // Checker for [MetaData.Script] that compares parameter and return types.
-        this.types.addTypeChecker((left, right) => 
-            left instanceof MetaType.Script &&
-            right instanceof MetaType.Script &&
-            left.trigger === right.trigger &&
-            this.types.check(left.parameterType, right.parameterType) &&
-            this.types.check(left.returnType, right.returnType)
+        this.types.addTypeChecker(
+            (left, right) => left instanceof MetaType.Script && right instanceof MetaType.Script && left.trigger === right.trigger && this.types.check(left.parameterType, right.parameterType) && this.types.check(left.returnType, right.returnType)
         );
 
         // Checker for [MetaType.Hook] that compares the trigger list type.
-        this.types.addTypeChecker((left, right) =>
-            left instanceof MetaType.Hook &&
-            right instanceof MetaType.Hook &&
-            this.types.check(left.transmitListType, right.transmitListType)
-        );
+        this.types.addTypeChecker((left, right) => left instanceof MetaType.Hook && right instanceof MetaType.Hook && this.types.check(left.transmitListType, right.transmitListType));
 
         // Checker for [WrappedType] that compares the inner types.
         // Check for 'inner' property since WrappedType is implemented, not extended
         this.types.addTypeChecker((left, right) => {
             const leftHasInner = 'inner' in left && left.inner != null;
             const rightHasInner = 'inner' in right && right.inner != null;
-            
+
             if (!leftHasInner || !rightHasInner) {
                 return false;
             }
-            
+
             if (left.constructor.name !== right.constructor.name) {
                 return false;
             }
-            
+
             // Type assertion: we've verified left.inner and right.inner exist
             return this.types.check((left as any).inner, (right as any).inner);
         });
@@ -168,7 +159,6 @@ export class ScriptCompiler{
         });
     }
 
-
     /**
      * Adds [loader] to the list of symbol loaders to run pre-compilation. This
      * can be used to load external symbols outside of scripts.
@@ -180,7 +170,7 @@ export class ScriptCompiler{
     /**
      * Adds a [DynamicCommandHandler] to the compiler with the given [name].
      * See [DynamicCommandHandler] for information on implementation.
-     * 
+     *
      * If a handler was registered for the [name] already an error is thrown.
      */
     public addDynamicCommandHandler(name: string, handler: DynamicCommandHandler): void {
@@ -220,7 +210,7 @@ export class ScriptCompiler{
         const [parseSuccess, fileNodes] = this.parse(ext);
         if (!parseSuccess) {
             return;
-        } 
+        }
 
         // 2) Analyze the nodes.
         const analyzeSuccess = this.analyze(fileNodes);
@@ -413,10 +403,7 @@ export class ScriptCompiler{
         return this.excludePaths.some(excluded => {
             const excludedPath = path.normalize(excluded);
 
-            return(
-                sourcePath === excludedPath ||
-                sourcePath.startsWith(excludedPath + path.sep)
-            );
+            return sourcePath === excludedPath || sourcePath.startsWith(excludedPath + path.sep);
         });
     }
 

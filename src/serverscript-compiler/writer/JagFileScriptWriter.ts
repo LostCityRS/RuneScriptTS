@@ -1,14 +1,15 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { IdProvider } from "../../runescript-compiler/writer/BaseScriptWriter";
-import { BinaryScriptWriter } from "./BinaryScriptWriter";
-import { RuneScript } from '../../runescript-compiler/codegen/script/RuneScript';
+import fs from 'fs';
+import path from 'path';
+
+import { IdProvider } from '#/runescript-compiler/writer/BaseScriptWriter.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+
+import { BinaryScriptWriter } from '#/serverscript-compiler/writer/BinaryScriptWriter.js';
 
 /**
  * A [BinaryFileScriptWriter] implementation that writes to `script.dat` and `script.idx`.
  */
 export class JagFileScriptWriter extends BinaryScriptWriter {
-    
     private readonly output: string;
     private readonly buffers = new Map<number, Buffer>();
 
@@ -19,7 +20,7 @@ export class JagFileScriptWriter extends BinaryScriptWriter {
         this.output = output;
 
         if (!fs.existsSync(output)) {
-            fs.mkdirSync(output, { recursive: true});
+            fs.mkdirSync(output, { recursive: true });
         }
 
         if (!fs.statSync(output).isDirectory()) {
@@ -37,7 +38,7 @@ export class JagFileScriptWriter extends BinaryScriptWriter {
     override close(): void {
         const datPath = path.join(this.output, 'script.dat');
         const idxPath = path.join(this.output, 'script.idx');
-        
+
         const dat = fs.openSync(datPath, 'w');
         const idx = fs.openSync(idxPath, 'w');
 

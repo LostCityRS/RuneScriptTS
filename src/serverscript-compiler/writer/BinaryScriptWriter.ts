@@ -1,20 +1,21 @@
-import { Opcode } from "../../runescript-compiler/codegen/Opcode";
-import { Block } from "../../runescript-compiler/codegen/script/Block";
-import { Label } from "../../runescript-compiler/codegen/script/Label";
-import { RuneScript } from "../../runescript-compiler/codegen/script/RuneScript";
-import { SwitchTable } from "../../runescript-compiler/codegen/script/SwitchTable";
-import { ScriptSymbol } from "../../runescript-compiler/symbol/ScriptSymbol";
-import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from "../../runescript-compiler/symbol/Symbol";
-import { SubjectMode } from "../../runescript-compiler/trigger/SubjectMode";
-import { BaseVarType } from "../../runescript-compiler/type/BaseVarType";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { PrimitiveType } from "../../runescript-compiler/type/PrimitiveType";
-import { ArrayType } from "../../runescript-compiler/type/wrapped/ArrayType";
-import { VarBitType, VarNpcType, VarPlayerType, VarSharedType } from "../../runescript-compiler/type/wrapped/GameVarType";
-import { BaseScriptWriter, IdProvider } from "../../runescript-compiler/writer/BaseScriptWriter";
-import { ServerScriptOpcode } from "../ServerScriptOpcode";
-import { ScriptVarType } from "../type/ScriptVarType";
-import { BinaryScriptWriterContext } from "./BinaryScriptWriterContext";
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Block } from '#/runescript-compiler/codegen/script/Block.js';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { SwitchTable } from '#/runescript-compiler/codegen/script/SwitchTable.js';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol, LocalVariableSymbol, RuneScriptSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { SubjectMode } from '#/runescript-compiler/trigger/SubjectMode.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { ArrayType } from '#/runescript-compiler/type/wrapped/ArrayType.js';
+import { VarBitType, VarNpcType, VarPlayerType, VarSharedType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
+import { BaseScriptWriter, IdProvider } from '#/runescript-compiler/writer/BaseScriptWriter.js';
+
+import { ServerScriptOpcode } from '#/serverscript-compiler/ServerScriptOpcode.js';
+import { ScriptVarType } from '#/serverscript-compiler/type/ScriptVarType.js';
+import { BinaryScriptWriterContext } from '#/serverscript-compiler/writer/BinaryScriptWriterContext.js';
 
 /**
  * A `ScriptWriter` implementation that writes to a [ByteBuf]. Implementations
@@ -24,7 +25,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
     constructor(idProvider: IdProvider) {
         super(idProvider);
     }
-    
+
     /**
      * Handles the binary output of [script] where [data] is the script in a binary format.
      *
@@ -88,7 +89,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
     }
 
     protected override writePushConstantLong(context: BinaryScriptWriterContext, value: bigint): void {
-        throw new Error("Not supported.");
+        throw new Error('Not supported.');
     }
 
     protected override writePushConstantSymbol(context: BinaryScriptWriterContext, value: RuneScriptSymbol): void {
@@ -228,14 +229,14 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
     }
 
     private findCaseKeyValue(key: number | RuneScriptSymbol): number {
-        if (typeof key === "number") {
+        if (typeof key === 'number') {
             return key;
         }
 
         /**
          * All non-number keys in switch tables should be RuneScript symbols
          * that can be resolved through the IdProvider.
-         */ 
+         */
         return this.idProvider.get(key as RuneScriptSymbol);
     }
 
@@ -309,7 +310,7 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
 
     protected override writeCommand(context: BinaryScriptWriterContext, symbol: ScriptSymbol): void {
         const op = this.idProvider.get(symbol);
-        const secondary = symbol.name.startsWith(".");
+        const secondary = symbol.name.startsWith('.');
         context.instructionRaw(op, secondary ? 1 : 0);
     }
 

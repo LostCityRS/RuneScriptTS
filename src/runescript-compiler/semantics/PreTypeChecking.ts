@@ -1,26 +1,26 @@
-import { AstVisitor } from '../../runescipt-parser/ast/AstVisitor';
-import { Node } from '../../runescipt-parser/ast/Node';
-import { Parameter } from '../../runescipt-parser/ast/Parameter';
-import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
-import { Script } from '../../runescipt-parser/ast/Scripts';
-import { BlockStatement } from '../../runescipt-parser/ast/statement/BlockStatement';
-import { SwitchCase } from '../../runescipt-parser/ast/statement/SwitchCase';
-import { SwitchStatement } from '../../runescipt-parser/ast/statement/SwitchStatement';
-import { DiagnosticMessage } from '../diagnostics/DiagnosticMessage';
-import { Diagnostics } from '../diagnostics/Diagnostics';
-import { ServerScriptSymbol } from '../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol } from '../symbol/Symbol';
-import { SymbolTable } from '../symbol/SymbolTable';
-import { SymbolType } from '../symbol/SymbolType';
-import { CommandTrigger } from '../trigger/CommandTrigger';
-import { SubjectMode } from '../trigger/SubjectMode';
-import { TriggerManager } from '../trigger/TriggerManager';
-import { TriggerType } from '../trigger/TriggerType';
-import { MetaType } from '../type/MetaType';
-import { PrimitiveType } from '../type/PrimitiveType';
-import { TupleType } from '../type/TupleType';
-import { Type } from '../type/Type';
-import { TypeManager } from '../type/TypeManager';
+import { AstVisitor } from '#/runescript-parser/ast/AstVisitor.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
+import { Parameter } from '#/runescript-parser/ast/Parameter.js';
+import { ScriptFile } from '#/runescript-parser/ast/ScriptFile.js';
+import { Script } from '#/runescript-parser/ast/Scripts.js';
+import { BlockStatement } from '#/runescript-parser/ast/statement/BlockStatement.js';
+import { SwitchCase } from '#/runescript-parser/ast/statement/SwitchCase.js';
+import { SwitchStatement } from '#/runescript-parser/ast/statement/SwitchStatement.js';
+import { DiagnosticMessage } from '#/runescript-compiler/diagnostics/DiagnosticMessage.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { ServerScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol, LocalVariableSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { SymbolType } from '#/runescript-compiler/symbol/SymbolType.js';
+import { CommandTrigger } from '#/runescript-compiler/trigger/CommandTrigger.js';
+import { SubjectMode } from '#/runescript-compiler/trigger/SubjectMode.js';
+import { TriggerManager } from '#/runescript-compiler/trigger/TriggerManager.js';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { TypeManager } from '#/runescript-compiler/type/TypeManager.js';
 
 /**
  * An [AstVisitor] implementation that handles the following.
@@ -55,14 +55,14 @@ export class PreTypeChecking extends AstVisitor<void> {
         private readonly diagnostics: Diagnostics
     ) {
         super();
-        this.categoryType = this.typeManager.findOrNull("category");
+        this.categoryType = this.typeManager.findOrNull('category');
 
         // Add a base table for the file
         this.tables.unshift(this.rootTable.createSubTable());
     }
 
     private isTypeMode(mode: SubjectMode): mode is { type: Type; category: boolean; global: boolean } {
-       return 'type' in mode;
+        return 'type' in mode;
     }
 
     /**
@@ -82,7 +82,7 @@ export class PreTypeChecking extends AstVisitor<void> {
         for (const script of scriptFile.scripts) {
             this.createScopedTable(() => {
                 script.accept(this);
-            })
+            });
         }
     }
 
@@ -131,11 +131,7 @@ export class PreTypeChecking extends AstVisitor<void> {
             script.returnType = TupleType.fromList(returns.map(t => t ?? MetaType.Error));
         } else {
             // Default return based on trigger
-            script.returnType = !trigger
-                ? MetaType.Error
-                : trigger.allowReturns
-                ? MetaType.Unit
-                : MetaType.Nothing;
+            script.returnType = !trigger ? MetaType.Error : trigger.allowReturns ? MetaType.Unit : MetaType.Nothing;
         }
 
         // Verify returns match what the trigger type allows
@@ -177,13 +173,13 @@ export class PreTypeChecking extends AstVisitor<void> {
         }
 
         // Check for global subject
-        if (subject === "_") {
+        if (subject === '_') {
             this.checkGlobalScriptSubject(trigger, script);
             return;
         }
 
         // Check for category reference subject
-        if (subject.startsWith("_")) {
+        if (subject.startsWith('_')) {
             this.checkCategoryScriptSubject(trigger, script, subject.substring(1));
             return;
         }
@@ -267,9 +263,9 @@ export class PreTypeChecking extends AstVisitor<void> {
 
     private tryParseMapZone(script: Script, coord: string): number {
         // Format: 'level_mx_mz'
-        const parts = coord.split("_");
+        const parts = coord.split('_');
         if (parts.length !== 3) {
-            script.name.reportError(this.diagnostics, "Mapzone subject must be of the form: 'level_mx_mz'.")
+            script.name.reportError(this.diagnostics, "Mapzone subject must be of the form: 'level_mx_mz'.");
             return -1;
         }
 
@@ -279,7 +275,7 @@ export class PreTypeChecking extends AstVisitor<void> {
         const mzInt = parseInt(mz, 10);
 
         if (mxInt < 0 || mxInt > 255 || mzInt < 0 || mzInt > 255) {
-            script.name.reportError(this.diagnostics, "Invalid mapzone coord.");
+            script.name.reportError(this.diagnostics, 'Invalid mapzone coord.');
         }
 
         if (levelInt !== 0) {
@@ -290,14 +286,14 @@ export class PreTypeChecking extends AstVisitor<void> {
         const x = mxInt << 6;
         const z = mzInt << 6;
 
-        return (z & 0x3fff) | ((x & 0x3fff) << 14)
+        return (z & 0x3fff) | ((x & 0x3fff) << 14);
     }
 
     private tryParseZone(script: Script, coord: string): number {
         // Format: 'level_mx_mz_lx_lz'
-        const parts = coord.split("_");
+        const parts = coord.split('_');
         if (parts.length !== 5) {
-            script.name.reportError(this.diagnostics, "Zone subject must be of the form: 'level_mx_mz_lx_lz'.")
+            script.name.reportError(this.diagnostics, "Zone subject must be of the form: 'level_mx_mz_lx_lz'.");
             return -1;
         }
 
@@ -308,23 +304,17 @@ export class PreTypeChecking extends AstVisitor<void> {
         const lxInt = parseInt(lx, 10);
         const lzInt = parseInt(lz, 10);
 
-        if (
-            levelInt < 0 || levelInt > 3 ||
-            mxInt < 0 || mxInt > 255 ||
-            mzInt < 0 || mzInt > 255 ||
-            lxInt < 0 || lxInt > 63 ||
-            lzInt < 0 || lzInt > 63 
-        ) {
-            script.name.reportError(this.diagnostics, "Invalid zone coord.");
+        if (levelInt < 0 || levelInt > 3 || mxInt < 0 || mxInt > 255 || mzInt < 0 || mzInt > 255 || lxInt < 0 || lxInt > 63 || lzInt < 0 || lzInt > 63) {
+            script.name.reportError(this.diagnostics, 'Invalid zone coord.');
         }
 
         if (lxInt % 8 !== 0 || lzInt % 8 !== 0) {
-            script.name.reportError(this.diagnostics, "Local zone coord must be a multiple of 8");
+            script.name.reportError(this.diagnostics, 'Local zone coord must be a multiple of 8');
             return -1;
         }
 
-        const x = ((mxInt << 6) | lxInt) >> 3 << 3;
-        const z = ((mzInt << 6) | lzInt) >> 3 << 3;
+        const x = (((mxInt << 6) | lxInt) >> 3) << 3;
+        const z = (((mzInt << 6) | lzInt) >> 3) << 3;
 
         return (z & 0x3fff) | ((x & 0x3fff) << 14) | ((levelInt & 0x3) << 28);
     }
@@ -421,13 +411,13 @@ export class PreTypeChecking extends AstVisitor<void> {
     }
 
     override visitSwitchStatement(switchStatement: SwitchStatement): void {
-        const typeName = switchStatement.typeToken.text.replace(/^switch_/, "");
+        const typeName = switchStatement.typeToken.text.replace(/^switch_/, '');
         const type = this.typeManager.findOrNull(typeName);
 
         // Notify invalid type.
         if (!type) {
             switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
-        } else if (!type?.options?.allowSwitch){
+        } else if (!type?.options?.allowSwitch) {
             switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.SWITCH_INVALID_TYPE, type.representation);
         }
 
@@ -452,11 +442,10 @@ export class PreTypeChecking extends AstVisitor<void> {
             // Set the symbol table for the block
             switchCase.scope = this.table;
         });
-        
     }
 
     override visitNode(node: Node): void {
-        this.visit(node.children)
+        this.visit(node.children);
     }
 
     /**

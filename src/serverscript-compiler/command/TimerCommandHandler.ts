@@ -1,15 +1,15 @@
-import { Opcode } from "../../runescript-compiler/codegen/Opcode";
-import { CodeGeneratorContext } from "../../runescript-compiler/configuration/command/CodeGeneratorContext";
-import { DynamicCommandHandler } from "../../runescript-compiler/configuration/command/DynamicCommandHandler";
-import { TypeCheckingContext } from "../../runescript-compiler/configuration/command/TypeCheckingContext";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { PrimitiveType } from "../../runescript-compiler/type/PrimitiveType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { Type } from "../../runescript-compiler/type/Type";
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { CodeGeneratorContext } from '#/runescript-compiler/configuration/command/CodeGeneratorContext.js';
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
 
 export class TimerCommandHandler implements DynamicCommandHandler {
     private readonly timerType: InstanceType<typeof MetaType.Script>;
-        
+
     constructor(queueType: Type) {
         this.timerType = queueType as InstanceType<typeof MetaType.Script>;
     }
@@ -19,19 +19,10 @@ export class TimerCommandHandler implements DynamicCommandHandler {
         context.checkArgument(1, PrimitiveType.INT); // Interval
 
         const timerExpressionType = timer?.type;
-        const expectedTypesList: Type[] = [
-            this.timerType,
-            PrimitiveType.INT,
-        ];
+        const expectedTypesList: Type[] = [this.timerType, PrimitiveType.INT];
 
-        if (
-            timerExpressionType instanceof MetaType.Script &&
-            timerExpressionType.trigger == this.timerType.trigger &&
-            timerExpressionType.parameterType != MetaType.Unit
-        ) {
-            expectedTypesList.push(
-                ...TupleType.toList(timerExpressionType.parameterType)
-            )
+        if (timerExpressionType instanceof MetaType.Script && timerExpressionType.trigger == this.timerType.trigger && timerExpressionType.parameterType != MetaType.Unit) {
+            expectedTypesList.push(...TupleType.toList(timerExpressionType.parameterType));
         }
 
         context.checkArgumentTypes(TupleType.fromList(expectedTypesList));
@@ -49,10 +40,14 @@ export class TimerCommandHandler implements DynamicCommandHandler {
          * so we must build a string of the argument types to push.
          */
         if (args.length > 2) {
-            const shortTypes = args.slice(2).map(arg => arg.type.code).filter((code): code is string => code != null).join("");
+            const shortTypes = args
+                .slice(2)
+                .map(arg => arg.type.code)
+                .filter((code): code is string => code != null)
+                .join('');
             context.instruction(Opcode.PushConstantString, shortTypes);
         } else {
-            context.instruction(Opcode.PushConstantString, "");
+            context.instruction(Opcode.PushConstantString, '');
         }
 
         context.command();

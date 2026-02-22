@@ -1,4 +1,4 @@
-import { Type } from '../type/Type';
+import { Type } from '#/runescript-compiler/type/Type.js';
 
 /**
  * A basic representation of a symbol for RuneScript. A symbol can represent
@@ -14,7 +14,10 @@ export interface RuneScriptSymbol {
  * Script local variables
  */
 export class LocalVariableSymbol implements RuneScriptSymbol {
-    constructor(public readonly name: string, public readonly type: Type) {}
+    constructor(
+        public readonly name: string,
+        public readonly type: Type
+    ) {}
 }
 
 /**
@@ -29,5 +32,8 @@ export class BasicSymbol implements RuneScriptSymbol {
 }
 
 export class ConstantSymbol implements RuneScriptSymbol {
-    constructor(public readonly name: string, public readonly value: string) {}
+    constructor(
+        public readonly name: string,
+        public readonly value: string
+    ) {}
 }

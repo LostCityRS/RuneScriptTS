@@ -6,7 +6,7 @@ const CRC_TABLE = (() => {
 
         for (let bit = 0; bit < 8; bit++) {
             if ((remainder & 1) === 1) {
-                remainder = (remainder >>> 1) ^ 0xEDB88320;
+                remainder = (remainder >>> 1) ^ 0xedb88320;
             } else {
                 remainder >>>= 1;
             }
@@ -21,9 +21,9 @@ const CRC_TABLE = (() => {
 export function crc32(data: Buffer): number {
     let crc = 0xffffffff;
     for (let i = 0; i < data.length; i++) {
-        crc = (crc >>> 8) ^ (CRC_TABLE[(crc ^ data[i]) & 0xff]);
+        crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ data[i]) & 0xff];
     }
-    return (~crc) | 0;
+    return ~crc | 0;
 }
 
 export class ByteWriter {

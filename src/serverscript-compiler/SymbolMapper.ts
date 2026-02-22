@@ -1,7 +1,7 @@
-import { ScriptSymbol } from "../runescript-compiler/symbol/ScriptSymbol";
-import { RuneScriptSymbol } from "../runescript-compiler/symbol/Symbol";
-import { CommandTrigger } from "../runescript-compiler/trigger/CommandTrigger";
-import { IdProvider } from "../runescript-compiler/writer/BaseScriptWriter";
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { RuneScriptSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { CommandTrigger } from '#/runescript-compiler/trigger/CommandTrigger.js';
+import { IdProvider } from '#/runescript-compiler/writer/BaseScriptWriter.js';
 
 /**
  * A [BaseScriptWriter.IdProvider] that allows looking up an id by [Symbol].

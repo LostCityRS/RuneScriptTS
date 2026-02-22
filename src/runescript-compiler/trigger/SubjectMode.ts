@@ -1,4 +1,4 @@
-import { Type as ScriptType } from "../type/Type";
+import { Type as ScriptType } from '#/runescript-compiler/type/Type.js';
 
 /**
  * Determines how a script subject is validated.
@@ -21,10 +21,10 @@ export abstract class SubjectMode {
      * A subject mode that specifies the subject is a `Type` of some sort.
      */
     public static Type(type: ScriptType, category = true, global = true) {
-        return new class extends SubjectMode {
-        public readonly type = type;
-        public readonly category = category;
-        public readonly global = global;
-        }();
+        return new (class extends SubjectMode {
+            public readonly type = type;
+            public readonly category = category;
+            public readonly global = global;
+        })();
     }
 }

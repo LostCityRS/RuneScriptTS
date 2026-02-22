@@ -24,7 +24,6 @@ export interface TypeOptions {
     readonly allowDeclaration: boolean;
 }
 
-
 /**
  * Implementation of [TypeOptions] with the properties mutable.
  */

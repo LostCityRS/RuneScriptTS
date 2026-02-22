@@ -1,7 +1,7 @@
-import { BaseVarType } from './BaseVarType';
-import { Type } from './Type';
-import { MutableOptionsType } from './TypeOptions';
-import { ArrayType } from './wrapped/ArrayType';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType } from '#/runescript-compiler/type/TypeOptions.js';
+import { ArrayType } from '#/runescript-compiler/type/wrapped/ArrayType.js';
 
 export type TypeChecker = (left: Type, right: Type) => boolean;
 export type TypeBuilder = (options: MutableOptionsType) => void;
@@ -46,13 +46,7 @@ export class TypeManager {
     /**
      * Creates and registers a new type.
      */
-    registerNew(
-        name: string,
-        code?: string,
-        baseType: BaseVarType = BaseVarType.INTEGER,
-        defaultValue: any = -1,
-        builder?: TypeBuilder
-    ): Type {
+    registerNew(name: string, code?: string, baseType: BaseVarType = BaseVarType.INTEGER, defaultValue: any = -1, builder?: TypeBuilder): Type {
         const options = new MutableOptionsType();
         if (builder) builder(options);
 
@@ -105,7 +99,7 @@ export class TypeManager {
      *
      * If the type doesn't exist, `null` is returned.
      */
-    findOrNull(name:string, allowArray: boolean = false): Type | null {
+    findOrNull(name: string, allowArray: boolean = false): Type | null {
         if (allowArray && name.endsWith('array')) {
             const baseName = name.substring(0, name.length - 5);
             const baseType = this.findOrNull(baseName);
@@ -134,6 +128,6 @@ export class TypeManager {
      * Checks to see if [right] is assignable to [left].
      */
     check(left: Type, right: Type): boolean {
-        return this.checkers.some((checker) => checker(left, right));
+        return this.checkers.some(checker => checker(left, right));
     }
 }

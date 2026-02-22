@@ -1,4 +1,4 @@
-import { TriggerType } from './TriggerType';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
 
 /**
  * Handles mapping from name to [TriggerType].
@@ -11,7 +11,7 @@ export class TriggerManager {
 
     /**
      * Registers [trigger] using [name] for lookup.
-     */    
+     */
     register(name: string, trigger: TriggerType): void {
         if (this.nameToTrigger.has(name)) {
             throw new Error(`Trigger '${name}' is already registered.`);

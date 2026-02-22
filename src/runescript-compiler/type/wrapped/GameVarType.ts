@@ -1,7 +1,7 @@
-import { BaseVarType } from '../BaseVarType';
-import { Type } from '../Type';
-import { MutableOptionsType, TypeOptions } from '../TypeOptions';
-import { WrappedType } from './WrappedType';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
+import { WrappedType } from '#/runescript-compiler/type/wrapped/WrappedType.js';
 
 /**
  * Base game variable type
@@ -17,7 +17,7 @@ export abstract class GameVarType implements WrappedType {
     readonly options: TypeOptions = new MutableOptionsType({
         allowArray: false,
         allowDeclaration: false,
-        allowSwitch: false,
+        allowSwitch: false
     });
 }
 
@@ -26,7 +26,7 @@ export abstract class GameVarType implements WrappedType {
  */
 export class VarPlayerType extends GameVarType {
     readonly representation: string;
-    
+
     constructor(public readonly inner: Type) {
         super();
         this.representation = `varp<${inner.representation}>`;

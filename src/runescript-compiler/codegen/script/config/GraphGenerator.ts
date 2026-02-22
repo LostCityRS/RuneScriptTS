@@ -1,12 +1,12 @@
-import { PointerHolder } from '../../../pointer/PointerHolder';
-import { ScriptSymbol } from '../../../symbol/ScriptSymbol';
-import { Instruction } from '../../Instruction';
-import { Opcode } from '../../Opcode';
-import { Block } from '../Block';
-import { Label } from '../Label';
-import { SwitchTable } from '../SwitchTable';
-import { InstructionNode } from './InstructionNode';
-import { PointerInstructionNode } from './PointerInstructionNode';
+import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Block } from '#/runescript-compiler/codegen/script/Block.js';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
+import { SwitchTable } from '#/runescript-compiler/codegen/script/SwitchTable.js';
+import { InstructionNode } from '#/runescript-compiler/codegen/script/config/InstructionNode.js';
+import { PointerInstructionNode } from '#/runescript-compiler/codegen/script/config/PointerInstructionNode.js';
 
 export class GraphGenerator {
     private readonly commandPointers: Map<string, PointerHolder>;
@@ -38,11 +38,7 @@ export class GraphGenerator {
                 const node = this.getOrCreate(nodeCache, instruction);
                 nodes.push(node);
 
-                if (
-                    potentialConditionalPointer &&
-                    instruction.opcode === Opcode.BranchEquals &&
-                    this.checkInvertedConditional(block.instructions, instructionIdx)
-                ) {
+                if (potentialConditionalPointer && instruction.opcode === Opcode.BranchEquals && this.checkInvertedConditional(block.instructions, instructionIdx)) {
                     /**
                      * CONVERT:
                      *              branch_equals
@@ -56,19 +52,19 @@ export class GraphGenerator {
                      * branch if_end
                      */
                     if (instructionIdx + 1 >= block.instructions.length) {
-                        throw new Error("Invalid inverted conditional layout");
+                        throw new Error('Invalid inverted conditional layout');
                     }
 
                     const next = block.instructions[instructionIdx + 1];
                     const nextNode = this.getOrCreate(nodeCache, next);
 
                     if (next.opcode !== Opcode.Branch) {
-                        throw new Error("Expected Branch opcode");
+                        throw new Error('Expected Branch opcode');
                     }
 
                     const commandInst = block.instructions[instructionIdx - 2];
                     if (commandInst.opcode !== Opcode.Command) {
-                        throw new Error("Expected command before conditional");
+                        throw new Error('Expected command before conditional');
                     }
 
                     const commandName = (commandInst.operand as ScriptSymbol).name;
@@ -89,26 +85,22 @@ export class GraphGenerator {
                     } else if (blockIdx + 1 < blocks.length) {
                         next = blocks[blockIdx + 1].instructions[0];
                     } else {
-                        throw new Error("No next instruction");
+                        throw new Error('No next instruction');
                     }
 
                     node.addNext(this.getOrCreate(nodeCache, next));
                 }
 
-                if (
-                    potentialConditionalPointer &&
-                    instruction.opcode === Opcode.BranchEquals &&
-                    this.checkConditional(block.instructions, instructionIdx)
-                ) {
+                if (potentialConditionalPointer && instruction.opcode === Opcode.BranchEquals && this.checkConditional(block.instructions, instructionIdx)) {
                     const label = instruction.operand as Label;
                     const jumpBlock = blocks.find(b => b.label === label);
                     if (!jumpBlock) {
-                        throw new Error("Unable to find block.");
+                        throw new Error('Unable to find block.');
                     }
 
                     const commandInst = block.instructions[instructionIdx - 2];
                     if (commandInst.opcode !== Opcode.Command) {
-                        throw new Error("Expected command before conditional.");
+                        throw new Error('Expected command before conditional.');
                     }
 
                     const commandName = (commandInst.operand as ScriptSymbol).name;
@@ -125,7 +117,7 @@ export class GraphGenerator {
                     const label = instruction.operand as Label;
                     const jumpBlock = blocks.find(b => b.label === label);
                     if (!jumpBlock) {
-                        throw new Error("Unable to find block.");
+                        throw new Error('Unable to find block.');
                     }
 
                     node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks));
@@ -139,7 +131,7 @@ export class GraphGenerator {
 
                         const jumpBlock = blocks.find(b => b.label === c.label);
                         if (!jumpBlock) {
-                            throw new Error("Unable to find block.");
+                            throw new Error('Unable to find block.');
                         }
 
                         node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks));
@@ -176,18 +168,14 @@ export class GraphGenerator {
     }
 
     private isConditionalPointerSetter(instruction: Instruction<any>): boolean {
-        if (instruction.opcode == Opcode.Command && (instruction.operand instanceof ScriptSymbol)) {
+        if (instruction.opcode == Opcode.Command && instruction.operand instanceof ScriptSymbol) {
             const holder = this.commandPointers.get(instruction.operand.name);
             return holder !== undefined && holder.conditionalSet;
         }
         return false;
     }
 
-    private firstInstruction(
-        block: Block,
-        cache: Map<Instruction<any>, InstructionNode>,
-        blocks: Block[]
-    ): InstructionNode {
+    private firstInstruction(block: Block, cache: Map<Instruction<any>, InstructionNode>, blocks: Block[]): InstructionNode {
         const first = this.firstValid(block.instructions);
         if (first) {
             return this.getOrCreate(cache, first);
@@ -201,7 +189,7 @@ export class GraphGenerator {
             }
         }
 
-        throw new Error("No instructions remaining.");
+        throw new Error('No instructions remaining.');
     }
 
     private firstValid(instructions: Instruction<any>[]): Instruction<any> | null {
@@ -213,10 +201,7 @@ export class GraphGenerator {
         return null;
     }
 
-    private getOrCreate(
-        cache: Map<Instruction<any>, InstructionNode>,
-        instruction: Instruction<any>
-    ): InstructionNode {
+    private getOrCreate(cache: Map<Instruction<any>, InstructionNode>, instruction: Instruction<any>): InstructionNode {
         let node = cache.get(instruction);
         if (!node) {
             node = new InstructionNode(instruction);
@@ -226,11 +211,7 @@ export class GraphGenerator {
     }
 }
 
-const TERMINAL_OPCODES = new Set([
-    Opcode.Branch,
-    Opcode.Jump,
-    Opcode.Return,
-]);
+const TERMINAL_OPCODES = new Set([Opcode.Branch, Opcode.Jump, Opcode.Return]);
 
 const BRANCH_OPCODES = new Set([
     Opcode.Branch,

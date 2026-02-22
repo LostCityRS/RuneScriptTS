@@ -8,6 +8,7 @@
         "@types/node": "^25.2.3",
         "antlr-ng": "^1.0.10",
         "antlr4ng": "^3.0.16",
+        "prettier": "3.8.1",
         "typescript": "^5.3.0",
       },
     },
@@ -30,6 +31,8 @@
     "luxon": ["luxon@3.5.0", "", {}, "sha512-rh+Zjr6DNfUYR3bPwJEnuwDdqMbxZW7LOQfUN4B54+Cl+0o5zaU9RJ6bcidfDtC1cWCZXQ+nvX8bf6bAji37QQ=="],
 
     "pako": ["pako@0.2.9", "", {}, "sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA=="],
+
+    "prettier": ["prettier@3.8.1", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg=="],
 
     "stringtemplate4ts": ["stringtemplate4ts@1.0.9", "", { "dependencies": { "antlr4ng": "3.0.15", "fast-printf": "1.6.10", "he": "1.2.0", "luxon": "3.5.0" } }, "sha512-KYZm2bJlSjynG5Y+L46fkaKBQG6mhV6hb2RBA8dpx3/Vj6G4u7gwXNKYvaN9+QD5sj68/1srtSNDvqEso7MwsQ=="],
 

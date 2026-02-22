@@ -93,6 +93,6 @@ export class ServerScriptOpcode {
         ServerScriptOpcode.DIVIDE,
         ServerScriptOpcode.MODULO,
         ServerScriptOpcode.AND,
-        ServerScriptOpcode.OR,
+        ServerScriptOpcode.OR
     ];
 }

@@ -1,4 +1,4 @@
-import { PointerType } from './PointerType';
+import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
 
 /**
  * Contains sets of [PointerType]s used to mark which pointers are required, set,

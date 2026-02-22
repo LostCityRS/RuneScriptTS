@@ -1,42 +1,36 @@
-import { PointerHolder } from "../runescript-compiler/pointer/PointerHolder";
-import { ScriptCompiler } from "../runescript-compiler/ScriptCompiler";
-import { ScriptWriter } from "../runescript-compiler/writer/ScriptWriter";
-import { SymbolMapper } from "./SymbolMapper";
-import { CompilerTypeInfoConstantLoader } from "./CompilerTypeInfoConstantLoader";
-import { Type } from "../runescript-compiler/type/Type";
-import { CompilerTypeInfoProtectedLoader } from "./CompilerTypeInfoProtectedLoader";
-import { CompilerTypeInfoLoader } from "./CompilerTypeInfoLoader";
-import { ServerTriggerType } from "./trigger/ServerTriggerType";
-import { ScriptVarType } from "./type/ScriptVarType";
-import { MetaType } from "../runescript-compiler/type/MetaType";
-import { QueueCommandHandler } from "./command/QueueCommandHandler";
-import { QueueVarArgCommandHandler } from "./command/QueueVarArgCommandHandler";
-import { LongQueueCommandHandler } from "./command/LongQueueCommandHandler";
-import { LongQueueVarArgCommandHandler } from "./command/LongQueueVarArgCommandHandler";
-import { TimerCommandHandler } from "./command/TimerCommandHandler";
-import { ParamCommandHandler } from "./command/ParamCommandHandler";
-import { ParamType } from "./type/ParamType";
-import { VarBitType, VarNpcType, VarPlayerType, VarSharedType } from "../runescript-compiler/type/wrapped/GameVarType";
-import { DumpCommandHandler } from "./command/debug/DumpCommandHandler ";
-import { ScriptCommandHandler } from "./command/debug/ScriptCommandHandler ";
-import { DbColumnType } from "./type/DbColumnType";
-import { DbFindCommandHandler } from "./command/DbFindCommandHandler";
-import { DbGetFieldCommandHandler } from "./command/DbGetFieldCommandHandler";
-import { EnumCommandHandler } from "./command/EnumCommandHandler";
-import { CompilerTypeInfo } from "./CompilerTypeInfo.js";
+import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+import { ScriptCompiler } from '#/runescript-compiler/ScriptCompiler.js';
+import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { VarBitType, VarNpcType, VarPlayerType, VarSharedType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
+
+import { CompilerTypeInfo } from '#/serverscript-compiler/CompilerTypeInfo.js';
+import { CompilerTypeInfoLoader } from '#/serverscript-compiler/CompilerTypeInfoLoader.js';
+import { CompilerTypeInfoConstantLoader } from '#/serverscript-compiler/CompilerTypeInfoConstantLoader.js';
+import { CompilerTypeInfoProtectedLoader } from '#/serverscript-compiler/CompilerTypeInfoProtectedLoader.js';
+import { SymbolMapper } from '#/serverscript-compiler/SymbolMapper.js';
+import { DumpCommandHandler } from '#/serverscript-compiler/command/debug/DumpCommandHandler.js';
+import { LongQueueCommandHandler } from '#/serverscript-compiler/command/LongQueueCommandHandler.js';
+import { LongQueueVarArgCommandHandler } from '#/serverscript-compiler/command/LongQueueVarArgCommandHandler.js';
+import { QueueCommandHandler } from '#/serverscript-compiler/command/QueueCommandHandler.js';
+import { QueueVarArgCommandHandler } from '#/serverscript-compiler/command/QueueVarArgCommandHandler.js';
+import { ScriptCommandHandler } from '#/serverscript-compiler/command/debug/ScriptCommandHandler.js';
+import { TimerCommandHandler } from '#/serverscript-compiler/command/TimerCommandHandler.js';
+import { ParamCommandHandler } from '#/serverscript-compiler/command/ParamCommandHandler.js';
+import { ServerTriggerType } from '#/serverscript-compiler/trigger/ServerTriggerType.js';
+import { ParamType } from '#/serverscript-compiler/type/ParamType.js';
+import { ScriptVarType } from '#/serverscript-compiler/type/ScriptVarType.js';
+import { DbColumnType } from '#/serverscript-compiler/type/DbColumnType.js';
+import { DbFindCommandHandler } from '#/serverscript-compiler/command/DbFindCommandHandler.js';
+import { DbGetFieldCommandHandler } from '#/serverscript-compiler/command/DbGetFieldCommandHandler.js';
+import { EnumCommandHandler } from '#/serverscript-compiler/command/EnumCommandHandler.js';
 
 export class ServerScriptCompiler extends ScriptCompiler {
     private readonly symbols: Record<string, CompilerTypeInfo>;
     private readonly mapper: SymbolMapper;
 
-    constructor(
-        sourcePaths: string[],
-        excludePaths: string[],
-        scriptWriter: ScriptWriter,
-        commandPointers: Map<string, PointerHolder>,
-        symbols: Record<string, CompilerTypeInfo>,
-        mapper: SymbolMapper,
-    ) {
+    constructor(sourcePaths: string[], excludePaths: string[], scriptWriter: ScriptWriter, commandPointers: Map<string, PointerHolder>, symbols: Record<string, CompilerTypeInfo>, mapper: SymbolMapper) {
         super(sourcePaths, excludePaths, scriptWriter, commandPointers);
         this.symbols = symbols;
         this.mapper = mapper;
@@ -48,7 +42,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
 
         this.types.changeOptions('long', opts => {
             opts.allowDeclaration = false;
-        })
+        });
 
         this.types.register('proc', new MetaType.Script(ServerTriggerType.PROC, MetaType.Unit, MetaType.Unit));
         this.types.register('label', new MetaType.Script(ServerTriggerType.LABEL, MetaType.Unit, MetaType.Nothing));
@@ -86,7 +80,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
 
         this.addDynamicCommandHandler('oc_param', new ParamCommandHandler(ScriptVarType.OBJ));
         this.addDynamicCommandHandler('obj_param', new ParamCommandHandler(null));
-        this.addSymLoader('obj', ScriptVarType.NAMEDOBJ)
+        this.addSymLoader('obj', ScriptVarType.NAMEDOBJ);
 
         this.addSymLoader('component', ScriptVarType.COMPONENT);
         this.addSymLoader('interface', ScriptVarType.INTERFACE);
@@ -139,12 +133,11 @@ export class ServerScriptCompiler extends ScriptCompiler {
         // TODO: 'runclientscipt' command handler.
 
         // 2009
-        this.addDynamicCommandHandler('struct_param', new ParamCommandHandler(ScriptVarType.STRUCT))
+        this.addDynamicCommandHandler('struct_param', new ParamCommandHandler(ScriptVarType.STRUCT));
         this.addSymLoader('struct', ScriptVarType.STRUCT);
         this.types.register('softtimer', new MetaType.Script(ServerTriggerType.SOFTTIMER, MetaType.Any, MetaType.Nothing));
         this.addDynamicCommandHandler('softtimer', new TimerCommandHandler(this.types.find('softtimer')));
         this.addDynamicCommandHandler('.softtimer', new TimerCommandHandler(this.types.find('softtimer')));
-
 
         // 2013 RS / 2018 OSRS
         this.types.register('dbcolumn', new DbColumnType(MetaType.Any));

@@ -1,18 +1,18 @@
-import { Diagnostic } from '../../../diagnostics/Diagnostic';
-import { DiagnosticMessage } from '../../../diagnostics/DiagnosticMessage';
-import { Diagnostics } from '../../../diagnostics/Diagnostics';
-import { DiagnosticType } from '../../../diagnostics/DiagnosticType';
-import { PointerHolder } from '../../../pointer/PointerHolder';
-import { PointerType } from '../../../pointer/PointerType';
-import { ScriptSymbol } from '../../../symbol/ScriptSymbol';
-import { BasicSymbol } from '../../../symbol/Symbol';
-import { TriggerType } from '../../../trigger/TriggerType';
-import { VarBitType, VarNpcType, VarPlayerType } from '../../../type/wrapped/GameVarType';
-import { Opcode } from '../../Opcode';
-import { RuneScript } from '../RuneScript';
-import { GraphGenerator } from './GraphGenerator';
-import { InstructionNode } from './InstructionNode';
-import { PointerInstructionNode } from './PointerInstructionNode';
+import { Diagnostic } from '#/runescript-compiler/diagnostics/Diagnostic.js';
+import { DiagnosticMessage } from '#/runescript-compiler/diagnostics/DiagnosticMessage.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { DiagnosticType } from '#/runescript-compiler/diagnostics/DiagnosticType.js';
+import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
+import { VarBitType, VarNpcType, VarPlayerType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { GraphGenerator } from '#/runescript-compiler/codegen/script/config/GraphGenerator.js';
+import { InstructionNode } from '#/runescript-compiler/codegen/script/config/InstructionNode.js';
+import { PointerInstructionNode } from '#/runescript-compiler/codegen/script/config/PointerInstructionNode.js';
 
 export class PointerChecker {
     /**
@@ -141,7 +141,7 @@ export class PointerChecker {
             /**
              * If the trigger doesn't implicitly define the pointer we need to specify the starting
              * node as corrupting it so that there is a path found, resulting in an error.
-             */ 
+             */
             if (graph.length > 0) corrupted.push(graph[0]);
         }
 
@@ -162,38 +162,25 @@ export class PointerChecker {
             const errorNode = path[0];
             const errorLocation =
                 errorNode.instruction?.source ??
-                (() => { throw new Error("Unknown instruction source."); })();
+                (() => {
+                    throw new Error('Unknown instruction source.');
+                })();
 
-            const corruptedNode = path[path.length -1];
-            const isCorrupted =
-                corruptedNode !== graph[0] && corruptedNode !== errorNode;
+            const corruptedNode = path[path.length - 1];
+            const isCorrupted = corruptedNode !== graph[0] && corruptedNode !== errorNode;
 
-            const message = isCorrupted
-                ? DiagnosticMessage.POINTER_CORRUPTED
-                : DiagnosticMessage.POINTER_UNINITIALIZED;
+            const message = isCorrupted ? DiagnosticMessage.POINTER_CORRUPTED : DiagnosticMessage.POINTER_UNINITIALIZED;
 
-            this.diagnostics.report(
-                new Diagnostic(
-                    DiagnosticType.ERROR,
-                    errorLocation,
-                    message,
-                    [pointer.representation]
-                )
-            );
+            this.diagnostics.report(new Diagnostic(DiagnosticType.ERROR, errorLocation, message, [pointer.representation]));
 
             if (isCorrupted) {
                 const corruptedLocation =
                     corruptedNode.instruction?.source ??
-                    (() => { throw new Error("Unknown instruction source."); })();
+                    (() => {
+                        throw new Error('Unknown instruction source.');
+                    })();
 
-                this.diagnostics.report(
-                    new Diagnostic(
-                        DiagnosticType.HINT,
-                        corruptedLocation,
-                        DiagnosticMessage.POINTER_CORRUPTED_LOC,
-                        [pointer.representation]
-                    )
-                );
+                this.diagnostics.report(new Diagnostic(DiagnosticType.HINT, corruptedLocation, DiagnosticMessage.POINTER_CORRUPTED_LOC, [pointer.representation]));
             }
 
             const logProcRequirement = (node: InstructionNode): void => {
@@ -205,27 +192,22 @@ export class PointerChecker {
                 const symbol = node.instruction!.operand as ScriptSymbol;
                 const calledScript = this.scripts.find(s => s.symbol === symbol);
                 if (!calledScript) {
-                    throw new Error("Unable to find script.");
+                    throw new Error('Unable to find script.');
                 }
 
                 const scriptPath = this.requiresPointerPathScript(calledScript, pointer);
                 if (!scriptPath) {
-                    throw new Error("Unable to find requirement path?");
+                    throw new Error('Unable to find requirement path?');
                 }
 
                 const requiredNode = scriptPath[0];
-                const requireLocation = 
+                const requireLocation =
                     requiredNode.instruction?.source ??
-                    (() => { throw new Error("Invalid instruction/source."); })();
+                    (() => {
+                        throw new Error('Invalid instruction/source.');
+                    })();
 
-                this.diagnostics.report(
-                    new Diagnostic(
-                        DiagnosticType.HINT,
-                        requireLocation,
-                        DiagnosticMessage.POINTER_REQUIRED_LOC,
-                        [pointer.representation]
-                    )
-                );
+                this.diagnostics.report(new Diagnostic(DiagnosticType.HINT, requireLocation, DiagnosticMessage.POINTER_REQUIRED_LOC, [pointer.representation]));
 
                 logProcRequirement(requiredNode);
             };
@@ -237,10 +219,7 @@ export class PointerChecker {
     /**
      * Checks if the [TriggerType] sets [pointer] by default.
      */
-    private setsPointerTrigger(
-        trigger: TriggerType,
-        pointer: PointerType
-    ): boolean {
+    private setsPointerTrigger(trigger: TriggerType, pointer: PointerType): boolean {
         const pointers = trigger.pointers;
         return pointers != null && pointers.has(pointer);
     }
@@ -248,10 +227,7 @@ export class PointerChecker {
     /**
      * Checks if [RuneScript] requires the [pointer] to be called.
      */
-    private requiresPointerScript(
-        script: RuneScript,
-        pointer: PointerType
-    ): boolean {
+    private requiresPointerScript(script: RuneScript, pointer: PointerType): boolean {
         return this.requiresPointerPathScript(script, pointer) !== null;
     }
 
@@ -259,44 +235,31 @@ export class PointerChecker {
      * Finds a path from instructions that require [pointer] to the first node without passing through
      * an instruction that sets the pointer.
      */
-    private requiresPointerPathScript(
-        script: RuneScript,
-        pointer: PointerType
-    ): InstructionNode[] |null {
+    private requiresPointerPathScript(script: RuneScript, pointer: PointerType): InstructionNode[] | null {
         const graph = this.getGraph(script);
-        const usages = graph.filter(node =>
-            this.requiresPointerNode(node, pointer)
-        );
+        const usages = graph.filter(node => this.requiresPointerNode(node, pointer));
 
         return this.findEdgePath(
             usages,
             node => node === graph[0],
-            node =>
-                node.previous.filter(
-                    prev => !this.setsPointerNode(prev, pointer)
-                )
+            node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
         );
     }
 
     /**
      * Checks if [RuneScript] sets the [pointer] after being called.
      */
-    private setsPointerScript(
-        script: RuneScript,
-        pointer: PointerType
-    ): boolean {
+    private setsPointerScript(script: RuneScript, pointer: PointerType): boolean {
         const graph = this.getGraph(script);
-        const returns = graph.filter(
-            n => n.instruction?.opcode === Opcode.Return
-        );
+        const returns = graph.filter(n => n.instruction?.opcode === Opcode.Return);
 
-        return this.findEdgePath(
-            returns,
-            node => node === graph[0] || this.corruptsPointerNode(node, pointer),
-            node => node.previous.filter(
-                prev => !this.setsPointerNode(prev, pointer)
-            )
-        ) === null;
+        return (
+            this.findEdgePath(
+                returns,
+                node => node === graph[0] || this.corruptsPointerNode(node, pointer),
+                node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
+            ) === null
+        );
     }
 
     /**
@@ -305,15 +268,15 @@ export class PointerChecker {
     private corruptsPointerScript(script: RuneScript, pointer: PointerType): boolean {
         const graph = this.getGraph(script);
 
-        const returns = graph.filter(
-            node => node.instruction?.opcode === Opcode.Return
-        );
+        const returns = graph.filter(node => node.instruction?.opcode === Opcode.Return);
 
-        return this.findEdgePath(
-            returns,
-            node => this.corruptsPointerNode(node, pointer),
-            node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
-        ) !== null;
+        return (
+            this.findEdgePath(
+                returns,
+                node => this.corruptsPointerNode(node, pointer),
+                node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
+            ) !== null
+        );
     }
 
     /**
@@ -352,9 +315,7 @@ export class PointerChecker {
                 const type = symbol.type;
 
                 if (type instanceof VarPlayerType || type instanceof VarBitType) {
-                    return symbol.isProtected
-                        ? pointer === PointerType.P_ACTIVE_PLAYER
-                        : pointer === PointerType.ACTIVE_PLAYER
+                    return symbol.isProtected ? pointer === PointerType.P_ACTIVE_PLAYER : pointer === PointerType.ACTIVE_PLAYER;
                 }
 
                 if (type instanceof VarNpcType) {
@@ -379,9 +340,7 @@ export class PointerChecker {
                 const type = symbol.type;
 
                 if (type instanceof VarPlayerType || type instanceof VarBitType) {
-                    return symbol.isProtected
-                        ? pointer === PointerType.P_ACTIVE_PLAYER2
-                        : pointer === PointerType.ACTIVE_PLAYER2
+                    return symbol.isProtected ? pointer === PointerType.P_ACTIVE_PLAYER2 : pointer === PointerType.ACTIVE_PLAYER2;
                 }
 
                 if (type instanceof VarNpcType) {
@@ -451,12 +410,8 @@ export class PointerChecker {
 
     /**
      * Attempts to find a path starting from any neighbors of any nodes within [starts].
-     */ 
-    findEdgePath(
-        starts: InstructionNode[],
-        end: (node: InstructionNode) => boolean,
-        getNeighbors: (node: InstructionNode) => InstructionNode[]
-    ): InstructionNode[] | null {
+     */
+    findEdgePath(starts: InstructionNode[], end: (node: InstructionNode) => boolean, getNeighbors: (node: InstructionNode) => InstructionNode[]): InstructionNode[] | null {
         if (!starts.length) return null;
 
         const sources = new Map<InstructionNode, InstructionNode | null>();

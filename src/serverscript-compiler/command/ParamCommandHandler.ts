@@ -1,9 +1,10 @@
-import { DynamicCommandHandler } from "../../runescript-compiler/configuration/command/DynamicCommandHandler";
-import { TypeCheckingContext } from "../../runescript-compiler/configuration/command/TypeCheckingContext";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { Type } from "../../runescript-compiler/type/Type";
-import { ParamType } from "../type/ParamType";
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+
+import { ParamType } from '#/serverscript-compiler/type/ParamType.js';
 
 export class ParamCommandHandler implements DynamicCommandHandler {
     private readonly type: Type | null;

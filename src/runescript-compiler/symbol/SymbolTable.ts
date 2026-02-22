@@ -1,5 +1,5 @@
-import { RuneScriptSymbol } from './Symbol';
-import { SymbolType } from './SymbolType';
+import { RuneScriptSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { SymbolType } from '#/runescript-compiler/symbol/SymbolType.js';
 
 /**
  * A table that contains [Symbol]s. The table provides helper functions for inserting and looking up symbols.
@@ -18,25 +18,25 @@ export class SymbolTable {
      * Inserts [symbol] into the table and indicates if the insertion was successful.
      */
     insert<T extends RuneScriptSymbol>(type: SymbolType<T>, symbol: T): boolean {
-      let current: SymbolTable | null = this;
+        let current: SymbolTable | null = this;
 
-      while (current) {
-          const table = current.symbols.get(type);
-          if (table?.has(symbol.name)) {
-              return false;
-          }
-          current = current.parent;
-      }
+        while (current) {
+            const table = current.symbols.get(type);
+            if (table?.has(symbol.name)) {
+                return false;
+            }
+            current = current.parent;
+        }
 
-      let table = this.symbols.get(type);
-      if (!table) {
-          table = new Map();
-          this.symbols.set(type, table);
-      }
+        let table = this.symbols.get(type);
+        if (!table) {
+            table = new Map();
+            this.symbols.set(type, table);
+        }
 
-      table.set(symbol.name, symbol);
-      return true;
-  }
+        table.set(symbol.name, symbol);
+        return true;
+    }
 
     /**
      * Searches for a symbol with [name] and [type].
@@ -44,7 +44,7 @@ export class SymbolTable {
     find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
         const table = this.symbols.get(type);
         const symbol = table?.get(name) as T | undefined;
-  
+
         if (symbol) return symbol;
         return this.parent?.find(type, name) ?? null;
     }
@@ -56,15 +56,15 @@ export class SymbolTable {
     findAll<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): T[] {
         const results: T[] = [];
         for (const table of this.symbols.values()) {
-          const symbol = table.get(name);
-          if (symbol && (!type || symbol instanceof type)) {
-            results.push(symbol as T);
-          }
+            const symbol = table.get(name);
+            if (symbol && (!type || symbol instanceof type)) {
+                results.push(symbol as T);
+            }
         }
         if (this.parent) {
-          results.push(...this.parent.findAll(name, type));
+            results.push(...this.parent.findAll(name, type));
         }
-      return results;
+        return results;
     }
 
     /**
@@ -73,4 +73,4 @@ export class SymbolTable {
     createSubTable(): SymbolTable {
         return new SymbolTable(this);
     }
-} 
+}

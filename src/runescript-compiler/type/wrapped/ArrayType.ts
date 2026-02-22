@@ -1,7 +1,7 @@
-import { BaseVarType } from '../BaseVarType';
-import { Type } from '../Type';
-import { MutableOptionsType } from '../TypeOptions';
-import { WrappedType } from './WrappedType';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType } from '#/runescript-compiler/type/TypeOptions.js';
+import { WrappedType } from '#/runescript-compiler/type/wrapped/WrappedType.js';
 
 /**
  * A [Type] that represents an array of another type.
@@ -12,12 +12,12 @@ export class ArrayType implements WrappedType {
     readonly options = new MutableOptionsType({
         allowArray: false,
         allowDeclaration: true,
-        allowSwitch: true,
+        allowSwitch: true
     });
 
     constructor(inner: Type) {
         if (inner instanceof ArrayType) {
-            throw new Error("ArrayType cannot wrap another ArrayType.");
+            throw new Error('ArrayType cannot wrap another ArrayType.');
         }
         this.inner = inner;
     }
@@ -27,7 +27,7 @@ export class ArrayType implements WrappedType {
     }
 
     get code(): never {
-        throw new Error("ArrayType has no character representation.");
+        throw new Error('ArrayType has no character representation.');
     }
 
     get baseType(): BaseVarType {
@@ -35,10 +35,10 @@ export class ArrayType implements WrappedType {
     }
 
     get defaultValue(): never {
-        throw new Error("ArrayType hass no default value.");
+        throw new Error('ArrayType hass no default value.');
     }
 
     toString(): string {
-        return `ArrayType{inner=${this.inner}}`
+        return `ArrayType{inner=${this.inner}}`;
     }
 }

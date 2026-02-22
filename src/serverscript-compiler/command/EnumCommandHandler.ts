@@ -1,8 +1,9 @@
-import { DynamicCommandHandler } from "../../runescript-compiler/configuration/command/DynamicCommandHandler";
-import { TypeCheckingContext } from "../../runescript-compiler/configuration/command/TypeCheckingContext";
-import { MetaType } from "../../runescript-compiler/type/MetaType";
-import { TupleType } from "../../runescript-compiler/type/TupleType";
-import { ScriptVarType } from "../type/ScriptVarType";
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+
+import { ScriptVarType } from '#/serverscript-compiler/type/ScriptVarType.js';
 
 /**
  * An implementation of [DynamicCommandHandler] that adds support for type checking
@@ -28,12 +29,7 @@ export class EnumCommandHandler implements DynamicCommandHandler {
         context.checkArgument(3, inputType);
 
         // Create the expected type of 'type,type,enum,any'.
-        const expectedTypes = new TupleType(
-            new MetaType.Type(inputType ?? MetaType.Any),
-            new MetaType.Type(outputType ?? MetaType.Any),
-            ScriptVarType.ENUM,
-            inputType ?? MetaType.Any
-        );
+        const expectedTypes = new TupleType(new MetaType.Type(inputType ?? MetaType.Any), new MetaType.Type(outputType ?? MetaType.Any), ScriptVarType.ENUM, inputType ?? MetaType.Any);
 
         // Compare the expected types with the actual types.
         context.checkArgumentTypes(expectedTypes);

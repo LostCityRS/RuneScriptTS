@@ -1,61 +1,61 @@
-import { AstVisitor } from '../../runescipt-parser/ast/AstVisitor';
-import { ArithmeticExpression } from '../../runescipt-parser/ast/expr/ArithmeticExpression';
-import { BinaryExpression } from '../../runescipt-parser/ast/expr/BinaryExpression';
-import { CalcExpression } from '../../runescipt-parser/ast/expr/CalcExpression';
-import { CommandCallExpression } from '../../runescipt-parser/ast/expr/call/CommandCallExpression';
-import { JumpCallExpression } from '../../runescipt-parser/ast/expr/call/JumpCallExpression';
-import { ProcCallExpression } from '../../runescipt-parser/ast/expr/call/ProcCallExpression';
-import { ClientScriptExpression } from '../../runescipt-parser/ast/expr/ClientScriptExpression';
-import { ConditionExpression } from '../../runescipt-parser/ast/expr/ConditionExpression';
-import { Expression } from '../../runescipt-parser/ast/expr/Expression';
-import { Identifier } from '../../runescipt-parser/ast/expr/Identifier';
-import { JoinedStringExpression } from '../../runescipt-parser/ast/expr/JoinedStringExpression';
-import { BooleanLiteral } from '../../runescipt-parser/ast/expr/literal/BooleanLiteral';
-import { CharacterLiteral } from '../../runescipt-parser/ast/expr/literal/CharacterLiteral';
-import { CoordLiteral } from '../../runescipt-parser/ast/expr/literal/CoordLiteral';
-import { IntegerLiteral } from '../../runescipt-parser/ast/expr/literal/IntegerLiteral';
-import { Literal } from '../../runescipt-parser/ast/expr/literal/Literal';
-import { NullLiteral } from '../../runescipt-parser/ast/expr/literal/NullLiteral';
-import { StringLiteral } from '../../runescipt-parser/ast/expr/literal/StringLiteral';
-import { ParenthesizedExpression } from '../../runescipt-parser/ast/expr/ParenthesizedExpression';
-import { BasicStringPart, ExpressionStringPart, StringPart } from '../../runescipt-parser/ast/expr/StringPart';
-import { ConstantVariableExpression } from '../../runescipt-parser/ast/expr/variable/ConstantVariableExpression';
-import { GameVariableExpression } from '../../runescipt-parser/ast/expr/variable/GameVariableExpression';
-import { LocalVariableExpression } from '../../runescipt-parser/ast/expr/variable/LocalVariableExpression';
-import { Node } from '../../runescipt-parser/ast/Node';
-import type { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
-import { Parameter } from '../../runescipt-parser/ast/Parameter';
-import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
-import { Script } from '../../runescipt-parser/ast/Scripts';
-import { ArrayDeclarationStatement } from '../../runescipt-parser/ast/statement/ArrayDeclarationStatement';
-import { AssignmentStatement } from '../../runescipt-parser/ast/statement/AssignmentStatement';
-import { BlockStatement } from '../../runescipt-parser/ast/statement/BlockStatement';
-import { DeclarationStatement } from '../../runescipt-parser/ast/statement/DeclarationStatement ';
-import { EmptyStatement } from '../../runescipt-parser/ast/statement/EmptyStatement';
-import { ExpressionStatement } from '../../runescipt-parser/ast/statement/ExpressionStatement';
-import { IfStatement } from '../../runescipt-parser/ast/statement/IfStatement';
-import { ReturnStatement } from '../../runescipt-parser/ast/statement/ReturnStatement';
-import { SwitchStatement } from '../../runescipt-parser/ast/statement/SwitchStatement';
-import { WhileStatement } from '../../runescipt-parser/ast/statement/WhileStatement';
-import { CodeGeneratorContext } from '../configuration/command/CodeGeneratorContext';
-import { DynamicCommandHandler } from '../configuration/command/DynamicCommandHandler';
-import { DiagnosticMessage } from '../diagnostics/DiagnosticMessage';
-import { Diagnostics } from '../diagnostics/Diagnostics';
-import { ServerScriptSymbol } from '../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol } from '../symbol/Symbol';
-import { SymbolTable } from '../symbol/SymbolTable';
-import { CommandTrigger } from '../trigger/CommandTrigger';
-import { BaseVarType } from '../type/BaseVarType';
-import { MetaType } from '../type/MetaType';
-import { PrimitiveType } from '../type/PrimitiveType';
-import { TupleType } from '../type/TupleType';
-import { Instruction } from './Instruction';
-import { Opcode } from './Opcode';
-import { Block } from './script/Block';
-import { Label } from './script/Label';
-import { LabelGenerator } from './script/LabelGenerator';
-import { RuneScript } from './script/RuneScript';
-import { SwitchCase } from './script/SwitchTable';
+import { AstVisitor } from '#/runescript-parser/ast/AstVisitor.js';
+import { ArithmeticExpression } from '#/runescript-parser/ast/expr/ArithmeticExpression.js';
+import { BinaryExpression } from '#/runescript-parser/ast/expr/BinaryExpression.js';
+import { CalcExpression } from '#/runescript-parser/ast/expr/CalcExpression.js';
+import { CommandCallExpression } from '#/runescript-parser/ast/expr/call/CommandCallExpression.js';
+import { JumpCallExpression } from '#/runescript-parser/ast/expr/call/JumpCallExpression.js';
+import { ProcCallExpression } from '#/runescript-parser/ast/expr/call/ProcCallExpression.js';
+import { ClientScriptExpression } from '#/runescript-parser/ast/expr/ClientScriptExpression.js';
+import { ConditionExpression } from '#/runescript-parser/ast/expr/ConditionExpression.js';
+import { Expression } from '#/runescript-parser/ast/expr/Expression.js';
+import { Identifier } from '#/runescript-parser/ast/expr/Identifier.js';
+import { JoinedStringExpression } from '#/runescript-parser/ast/expr/JoinedStringExpression.js';
+import { BooleanLiteral } from '#/runescript-parser/ast/expr/literal/BooleanLiteral.js';
+import { CharacterLiteral } from '#/runescript-parser/ast/expr/literal/CharacterLiteral.js';
+import { CoordLiteral } from '#/runescript-parser/ast/expr/literal/CoordLiteral.js';
+import { IntegerLiteral } from '#/runescript-parser/ast/expr/literal/IntegerLiteral.js';
+import { Literal } from '#/runescript-parser/ast/expr/literal/Literal.js';
+import { NullLiteral } from '#/runescript-parser/ast/expr/literal/NullLiteral.js';
+import { StringLiteral } from '#/runescript-parser/ast/expr/literal/StringLiteral.js';
+import { ParenthesizedExpression } from '#/runescript-parser/ast/expr/ParenthesizedExpression.js';
+import { BasicStringPart, ExpressionStringPart, StringPart } from '#/runescript-parser/ast/expr/StringPart.js';
+import { ConstantVariableExpression } from '#/runescript-parser/ast/expr/variable/ConstantVariableExpression.js';
+import { GameVariableExpression } from '#/runescript-parser/ast/expr/variable/GameVariableExpression.js';
+import { LocalVariableExpression } from '#/runescript-parser/ast/expr/variable/LocalVariableExpression.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
+import type { NodeSourceLocation } from '#/runescript-parser/ast/NodeSourceLocation.js';
+import { Parameter } from '#/runescript-parser/ast/Parameter.js';
+import { ScriptFile } from '#/runescript-parser/ast/ScriptFile.js';
+import { Script } from '#/runescript-parser/ast/Scripts.js';
+import { ArrayDeclarationStatement } from '#/runescript-parser/ast/statement/ArrayDeclarationStatement.js';
+import { AssignmentStatement } from '#/runescript-parser/ast/statement/AssignmentStatement.js';
+import { BlockStatement } from '#/runescript-parser/ast/statement/BlockStatement.js';
+import { DeclarationStatement } from '#/runescript-parser/ast/statement/DeclarationStatement.js';
+import { EmptyStatement } from '#/runescript-parser/ast/statement/EmptyStatement.js';
+import { ExpressionStatement } from '#/runescript-parser/ast/statement/ExpressionStatement.js';
+import { IfStatement } from '#/runescript-parser/ast/statement/IfStatement.js';
+import { ReturnStatement } from '#/runescript-parser/ast/statement/ReturnStatement.js';
+import { SwitchStatement } from '#/runescript-parser/ast/statement/SwitchStatement.js';
+import { WhileStatement } from '#/runescript-parser/ast/statement/WhileStatement.js';
+import { CodeGeneratorContext } from '#/runescript-compiler/configuration/command/CodeGeneratorContext.js';
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { DiagnosticMessage } from '#/runescript-compiler/diagnostics/DiagnosticMessage.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { ServerScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol, LocalVariableSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { CommandTrigger } from '#/runescript-compiler/trigger/CommandTrigger.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Block } from '#/runescript-compiler/codegen/script/Block.js';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
+import { LabelGenerator } from '#/runescript-compiler/codegen/script/LabelGenerator.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+import { SwitchCase } from '#/runescript-compiler/codegen/script/SwitchTable.js';
 
 export class CodeGenerator extends AstVisitor<void> {
     /**
@@ -113,9 +113,7 @@ export class CodeGenerator extends AstVisitor<void> {
      * Creates a new [Block] with the given name.
      */
     private generateBlock(name: string, generateUniqueName = true): Block {
-        const label = generateUniqueName
-            ? this.labelGenerator.generate(name)
-            : new Label(name);
+        const label = generateUniqueName ? this.labelGenerator.generate(name) : new Label(name);
         const block = new Block(label);
         this.script.blocks.push(block);
         return block;
@@ -172,7 +170,7 @@ export class CodeGenerator extends AstVisitor<void> {
         this.visitNodes(script.parameters);
 
         // Generate and bind an entry point block
-        this.bind(this.generateBlock("entry", false));
+        this.bind(this.generateBlock('entry', false));
 
         // Insert source line number
         this.lineInstruction(script);
@@ -210,7 +208,7 @@ export class CodeGenerator extends AstVisitor<void> {
             } else if (type.baseType == BaseVarType.INTEGER) {
                 this.instruction(Opcode.PushConstantInt, -1);
             } else if (type.baseType == BaseVarType.STRING) {
-                this.instruction(Opcode.PushConstantString, "");
+                this.instruction(Opcode.PushConstantString, '');
             } else if (type.baseType == BaseVarType.LONG) {
                 this.instruction(Opcode.PushConstantLong, BigInt(-1));
             } else {
@@ -231,9 +229,9 @@ export class CodeGenerator extends AstVisitor<void> {
     }
 
     override visitIfStatement(ifStatement: IfStatement): void {
-        const ifTrue = this.labelGenerator.generate("if_true");
-        const ifElse = ifStatement.elseStatement ? this.labelGenerator.generate("if_else") : null;
-        const ifEnd = this.labelGenerator.generate("if_end");
+        const ifTrue = this.labelGenerator.generate('if_true');
+        const ifElse = ifStatement.elseStatement ? this.labelGenerator.generate('if_else') : null;
+        const ifEnd = this.labelGenerator.generate('if_end');
 
         // Generate condition
         this.generateCondition(ifStatement.condition, this.block, ifTrue, ifElse ?? ifEnd);
@@ -258,9 +256,9 @@ export class CodeGenerator extends AstVisitor<void> {
     }
 
     override visitWhileStatement(whileStatement: WhileStatement): void {
-        const whileStart = this.labelGenerator.generate("while_start");
-        const whileBody = this.labelGenerator.generate("while_body");
-        const whileEnd = this.labelGenerator.generate("while_end");
+        const whileStart = this.labelGenerator.generate('while_start');
+        const whileBody = this.labelGenerator.generate('while_body');
+        const whileEnd = this.labelGenerator.generate('while_end');
 
         // Bind the start block and generate the condition in it.
         const startBlock = this.bind(this.generateBlockLabel(whileStart));
@@ -301,10 +299,7 @@ export class CodeGenerator extends AstVisitor<void> {
                 this.instruction(Opcode.Branch, branchFalse, undefined, block);
             } else {
                 // Generate the label for the next block.
-                const nextBlockLabel = 
-                    condition.operator.text === CodeGenerator.LOGICAL_OR
-                        ? this.labelGenerator.generate("condition_or")
-                        : this.labelGenerator.generate("condition_and");
+                const nextBlockLabel = condition.operator.text === CodeGenerator.LOGICAL_OR ? this.labelGenerator.generate('condition_or') : this.labelGenerator.generate('condition_and');
 
                 // Figure out which labels should be true and false labels.
                 const trueLabel = condition.operator.text === CodeGenerator.LOGICAL_OR ? branchTrue : nextBlockLabel;
@@ -324,10 +319,8 @@ export class CodeGenerator extends AstVisitor<void> {
     override visitSwitchStatement(switchStatement: SwitchStatement): void {
         const table = this.script.generateSwitchTable();
         const hasDefault = switchStatement.defaultCase != null;
-        const switchDefault = hasDefault
-            ? this.labelGenerator.generate("switch_default_case")
-            : null;
-        const switchEnd = this.labelGenerator.generate("switch_end");
+        const switchDefault = hasDefault ? this.labelGenerator.generate('switch_default_case') : null;
+        const switchEnd = this.labelGenerator.generate('switch_end');
 
         // Visit the main expression that contains the value.
         this.visitNodeOrNull(switchStatement.condition);
@@ -345,8 +338,11 @@ export class CodeGenerator extends AstVisitor<void> {
             // Generate a label if the case isn't a default case.
             const caseLabel = !caseEntry.isDefault
                 ? this.labelGenerator.generate(`switch_${table.id}_case`)
-                : (switchDefault ?? (() => { throw new Error("switchDefault null while having a default case"); }));
-            
+                : (switchDefault ??
+                  (() => {
+                      throw new Error('switchDefault null while having a default case');
+                  }));
+
             // Loop over the case keys and resolve them to constants.
             const keys: any[] = [];
 
@@ -379,11 +375,9 @@ export class CodeGenerator extends AstVisitor<void> {
     /**
      * Attempts to resolve [expression] to a constant value.
      */
-    private resolveConstantValue(expression: Expression): any |null {
+    private resolveConstantValue(expression: Expression): any | null {
         if (expression instanceof ConstantVariableExpression) {
-            return expression.subExpression
-                ? this.resolveConstantValue(expression.subExpression)
-                : null;
+            return expression.subExpression ? this.resolveConstantValue(expression.subExpression) : null;
         }
 
         if (expression instanceof Identifier) {
@@ -415,16 +409,14 @@ export class CodeGenerator extends AstVisitor<void> {
             // Handle default based on the type information.
             const def = symbol.type.defaultValue;
 
-            if (typeof def === "number") {
+            if (typeof def === 'number') {
                 this.instruction(Opcode.PushConstantInt, def);
-            } else if (typeof def === "string") {
+            } else if (typeof def === 'string') {
                 this.instruction(Opcode.PushConstantString, def);
-            } else if (typeof def === "bigint") {
+            } else if (typeof def === 'bigint') {
                 this.instruction(Opcode.PushConstantLong, def);
             } else {
-                throw new Error(
-                    `Unsupported default type: ${def?.constructor?.name}`
-                );
+                throw new Error(`Unsupported default type: ${def?.constructor?.name}`);
             }
         }
         this.instruction(Opcode.PopLocalVar, symbol, declarationStatement.source);
@@ -473,11 +465,7 @@ export class CodeGenerator extends AstVisitor<void> {
                     throw new Error("Expected 'GameVariableExpression'.");
                 }
 
-                this.instruction(
-                    !variable.dot ? Opcode.PopVar : Opcode.PopVar2,
-                    reference,
-                    variable.source
-                );
+                this.instruction(!variable.dot ? Opcode.PopVar : Opcode.PopVar2, reference, variable.source);
             } else {
                 throw new Error(`Unsupported reference type: ${reference}`);
             }
@@ -525,11 +513,7 @@ export class CodeGenerator extends AstVisitor<void> {
         }
 
         this.lineInstruction(gameVariableExpression);
-        this.instruction(
-            !gameVariableExpression.dot ? Opcode.PushVar : Opcode.PushVar2,
-            reference,
-            gameVariableExpression.source
-        );
+        this.instruction(!gameVariableExpression.dot ? Opcode.PushVar : Opcode.PushVar2, reference, gameVariableExpression.source);
     }
 
     override visitConstantVariableExpression(constantVariableExpression: ConstantVariableExpression): void {
@@ -648,11 +632,14 @@ export class CodeGenerator extends AstVisitor<void> {
 
         // Convert the parameter type to a list and generate a string with all the type char codes combined.
         const argumentTypes = TupleType.toList(symbol.parameters);
-        let argumentTypesShort = argumentTypes.map(t => t.code).filter(Boolean).join("");
+        let argumentTypesShort = argumentTypes
+            .map(t => t.code)
+            .filter(Boolean)
+            .join('');
 
         // Safety check in case there was a type with no char code defined.
         if (argumentTypes.length !== argumentTypesShort.length) {
-            throw new Error("Mismatch between argument types and their codes.");
+            throw new Error('Mismatch between argument types and their codes.');
         }
 
         // Write the script reference and arguments.
@@ -664,7 +651,7 @@ export class CodeGenerator extends AstVisitor<void> {
             this.visitNodes(clientScriptExpression.transmitList);
 
             // Write the 'type' char that signifies to read the transmit list.
-            argumentTypesShort += "Y";
+            argumentTypesShort += 'Y';
 
             // Write the number of things in the transmit list.
             this.instruction(Opcode.PushConstantInt, clientScriptExpression.transmitList.length);
@@ -699,8 +686,8 @@ export class CodeGenerator extends AstVisitor<void> {
 
         const baseType = nullLiteral.type.baseType;
         if (baseType == BaseVarType.STRING) {
-            this.instruction(Opcode.PushConstantString, "null");
-            return
+            this.instruction(Opcode.PushConstantString, 'null');
+            return;
         } else if (baseType == BaseVarType.LONG) {
             this.instruction(Opcode.PushConstantLong, BigInt(-1));
             return;
@@ -713,7 +700,7 @@ export class CodeGenerator extends AstVisitor<void> {
              * TODO: Figure out better way to handle this.
              * Hack to make null clientscript references work properly.
              */
-            this.instruction(Opcode.PushConstantString, "");
+            this.instruction(Opcode.PushConstantString, '');
         }
     }
 
@@ -803,51 +790,48 @@ export class CodeGenerator extends AstVisitor<void> {
     /**
      * The operator for logical and.
      */
-    private static readonly LOGICAL_AND = "&";
+    private static readonly LOGICAL_AND = '&';
 
     /**
      * The operator for logical or.
      */
-    private static readonly LOGICAL_OR = "|";
+    private static readonly LOGICAL_OR = '|';
 
     /**
      * Array of possible logical operators.
      */
-    private static readonly LOGICAL_OPERATORS = [
-        CodeGenerator.LOGICAL_AND,
-        CodeGenerator.LOGICAL_OR
-    ] as const;
+    private static readonly LOGICAL_OPERATORS = [CodeGenerator.LOGICAL_AND, CodeGenerator.LOGICAL_OR] as const;
 
     /**
      * Mapping of operators to their branch opcode for int based types.
      */
     private static readonly INT_BRANCHES = new Map<string, Opcode<any>>([
-        ["=", Opcode.BranchEquals],
-        ["!", Opcode.BranchNot],
-        ["<", Opcode.BranchLessThan],
-        [">", Opcode.BranchGreaterThan],
-        ["<=", Opcode.BranchLessThanOrEquals],
-        [">=", Opcode.BranchGreaterThanOrEquals],
+        ['=', Opcode.BranchEquals],
+        ['!', Opcode.BranchNot],
+        ['<', Opcode.BranchLessThan],
+        ['>', Opcode.BranchGreaterThan],
+        ['<=', Opcode.BranchLessThanOrEquals],
+        ['>=', Opcode.BranchGreaterThanOrEquals]
     ]);
 
     /**
      * Mapping of operators to their branch opcode for object based types.
      */
     private static readonly OBJ_BRANCHES = new Map<string, Opcode<any>>([
-        ["=", Opcode.ObjBranchEquals],
-        ["!", Opcode.ObjBranchNot],
+        ['=', Opcode.ObjBranchEquals],
+        ['!', Opcode.ObjBranchNot]
     ]);
 
     /**
      * Mapping of operators to their branch opcode for long based types.
      */
     private static readonly LONG_BRANCHES = new Map<string, Opcode<any>>([
-        ["=", Opcode.LongBranchEquals],
-        ["!", Opcode.LongBranchNot],
-        ["<", Opcode.LongBranchLessThan],
-        [">", Opcode.LongBranchGreaterThan],
-        ["<=", Opcode.LongBranchLessThanOrEquals],
-        [">=", Opcode.LongBranchGreaterThanOrEquals],
+        ['=', Opcode.LongBranchEquals],
+        ['!', Opcode.LongBranchNot],
+        ['<', Opcode.LongBranchLessThan],
+        ['>', Opcode.LongBranchGreaterThan],
+        ['<=', Opcode.LongBranchLessThanOrEquals],
+        ['>=', Opcode.LongBranchGreaterThanOrEquals]
     ]);
 
     /**
@@ -856,32 +840,32 @@ export class CodeGenerator extends AstVisitor<void> {
     private static readonly BRANCH_MAPPINGS = new Map<BaseVarType, Map<string, Opcode<any>>>([
         [BaseVarType.INTEGER, CodeGenerator.INT_BRANCHES],
         [BaseVarType.STRING, CodeGenerator.OBJ_BRANCHES],
-        [BaseVarType.LONG, CodeGenerator.LONG_BRANCHES],
+        [BaseVarType.LONG, CodeGenerator.LONG_BRANCHES]
     ]);
 
     /**
      * Mapping of operators to their math opcode for int based types.
      */
     private static readonly INT_OPERATIONS = new Map<string, Opcode<any>>([
-        ["+", Opcode.Add],
-        ["-", Opcode.Sub],
-        ["*", Opcode.Multiply],
-        ["/", Opcode.Divide],
-        ["%", Opcode.Modulo],
-        ["&", Opcode.And],
-        ["|", Opcode.Or],
+        ['+', Opcode.Add],
+        ['-', Opcode.Sub],
+        ['*', Opcode.Multiply],
+        ['/', Opcode.Divide],
+        ['%', Opcode.Modulo],
+        ['&', Opcode.And],
+        ['|', Opcode.Or]
     ]);
 
     /**
      * Mapping of operators to their math opcode for long based types.
      */
     private static readonly LONG_OPERATIONS = new Map<string, Opcode<any>>([
-        ["+", Opcode.LongAdd],
-        ["-", Opcode.LongSub],
-        ["*", Opcode.LongMultiply],
-        ["/", Opcode.LongDivide],
-        ["%", Opcode.LongModulo],
-        ["&", Opcode.LongAnd],
-        ["|", Opcode.LongOr],
+        ['+', Opcode.LongAdd],
+        ['-', Opcode.LongSub],
+        ['*', Opcode.LongMultiply],
+        ['/', Opcode.LongDivide],
+        ['%', Opcode.LongModulo],
+        ['&', Opcode.LongAnd],
+        ['|', Opcode.LongOr]
     ]);
 }

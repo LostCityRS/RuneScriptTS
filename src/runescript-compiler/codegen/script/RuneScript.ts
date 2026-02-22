@@ -1,9 +1,8 @@
-
-import { ScriptSymbol } from '../../symbol/ScriptSymbol';
-import { BasicSymbol, LocalVariableSymbol } from '../../symbol/Symbol';
-import { TriggerType } from '../../trigger/TriggerType';
-import { Block } from './Block';
-import { SwitchTable } from './SwitchTable';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { BasicSymbol, LocalVariableSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
+import { Block } from '#/runescript-compiler/codegen/script/Block.js';
+import { SwitchTable } from '#/runescript-compiler/codegen/script/SwitchTable.js';
 
 /**
  * A representation of a script containing the blocks of instructions and switch tables.
@@ -72,4 +71,4 @@ export class LocalTable {
      * A list of all variables. This will include all the variables in [parameters] as well.
      */
     public readonly all: LocalVariableSymbol[] = [];
-};
+}

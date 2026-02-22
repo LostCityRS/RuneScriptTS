@@ -1,68 +1,65 @@
-import { ANTLRErrorListener, type ATNConfigSet, type BitSet, type DFA, type Parser } from 'antlr4ng';
-import { AstVisitor } from '../../runescipt-parser/ast/AstVisitor';
-import { Node } from '../../runescipt-parser/ast/Node';
-import { ScriptFile } from '../../runescipt-parser/ast/ScriptFile';
-import { DynamicCommandHandler } from '../configuration/command/DynamicCommandHandler';
-import { Diagnostics } from '../diagnostics/Diagnostics';
-import { SymbolTable } from '../symbol/SymbolTable';
-import { TriggerManager } from '../trigger/TriggerManager';
-import { TriggerType } from '../trigger/TriggerType';
-import { PrimitiveType } from '../type/PrimitiveType';
-import { TypeManager } from '../type/TypeManager';
-import { Recognizer } from 'antlr4ng';
-import { RecognitionException } from 'antlr4ng';
-import { Token } from '../../runescipt-parser/ast/Token';
-import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, RuneScriptSymbol } from '../symbol/Symbol';
-import { ClientScriptSymbol, ScriptSymbol } from '../symbol/ScriptSymbol';
-import { Type } from '../type/Type';
-import { CommandTrigger } from '../trigger/CommandTrigger';
-import { MetaType } from '../type/MetaType';
-import { ArrayType } from '../type/wrapped/ArrayType';
-import { Expression } from '../../runescipt-parser/ast/expr/Expression';
-import { TupleType } from '../type/TupleType';
-import { DiagnosticMessage } from '../diagnostics/DiagnosticMessage';
-import { Identifier } from '../../runescipt-parser/ast/expr/Identifier';
-import { ExpressionStringPart, StringPart } from '../../runescipt-parser/ast/expr/StringPart';
-import { JoinedStringExpression } from '../../runescipt-parser/ast/expr/JoinedStringExpression';
-import { StringLiteral } from '../../runescipt-parser/ast/expr/literal/StringLiteral';
-import { ParserErrorListener } from '../ParserErrorListener';
-import { ScriptParser } from '../../runescipt-parser/parser/ScriptParser';
-import { CharStream } from 'antlr4ng';
-import { RuneScriptParser } from '../../antlr/RuneScriptParser';
-import { ClientScriptExpression } from '../../runescipt-parser/ast/expr/ClientScriptExpression';
-import { NullLiteral } from '../../runescipt-parser/ast/expr/literal/NullLiteral';
-import { CharacterLiteral } from '../../runescipt-parser/ast/expr/literal/CharacterLiteral';
-import { BooleanLiteral } from '../../runescipt-parser/ast/expr/literal/BooleanLiteral';
-import { CoordLiteral } from '../../runescipt-parser/ast/expr/literal/CoordLiteral';
-import { IntegerLiteral } from '../../runescipt-parser/ast/expr/literal/IntegerLiteral';
-import { ConstantVariableExpression } from '../../runescipt-parser/ast/expr/variable/ConstantVariableExpression';
-import { SymbolType } from '../symbol/SymbolType';
-import { NodeSourceLocation } from '../../runescipt-parser/ast/NodeSourceLocation';
-import { GameVariableExpression } from '../../runescipt-parser/ast/expr/variable/GameVariableExpression';
-import { GameVarType } from '../type/wrapped/GameVarType';
-import { CallExpression } from '../../runescipt-parser/ast/expr/call/CallExpression';
-import { LocalVariableExpression } from '../../runescipt-parser/ast/expr/variable/LocalVariableExpression';
-import { CommandCallExpression } from '../../runescipt-parser/ast/expr/call/CommandCallExpression';
-import { JumpCallExpression } from '../../runescipt-parser/ast/expr/call/JumpCallExpression';
-import { ProcCallExpression } from '../../runescipt-parser/ast/expr/call/ProcCallExpression';
-import { TypeCheckingContext } from '../configuration/command/TypeCheckingContext';
-import { Script } from '../../runescipt-parser/ast/Scripts';
-import { CalcExpression } from '../../runescipt-parser/ast/expr/CalcExpression';
-import { ArithmeticExpression } from '../../runescipt-parser/ast/expr/ArithmeticExpression';
-import { ConditionExpression } from '../../runescipt-parser/ast/expr/ConditionExpression';
-import { ParenthesizedExpression } from '../../runescipt-parser/ast/expr/ParenthesizedExpression';
-import { EmptyStatement } from '../../runescipt-parser/ast/statement/EmptyStatement';
-import { ExpressionStatement } from '../../runescipt-parser/ast/statement/ExpressionStatement';
-import { AssignmentStatement } from '../../runescipt-parser/ast/statement/AssignmentStatement';
-import { ArrayDeclarationStatement } from '../../runescipt-parser/ast/statement/ArrayDeclarationStatement';
-import { DeclarationStatement } from '../../runescipt-parser/ast/statement/DeclarationStatement ';
-import { Literal } from '../../runescipt-parser/ast/expr/literal/Literal';
-import { SwitchCase } from '../../runescipt-parser/ast/statement/SwitchCase';
-import { SwitchStatement } from '../../runescipt-parser/ast/statement/SwitchStatement';
-import { WhileStatement } from '../../runescipt-parser/ast/statement/WhileStatement';
-import { IfStatement } from '../../runescipt-parser/ast/statement/IfStatement';
-import { ReturnStatement } from '../../runescipt-parser/ast/statement/ReturnStatement';
-import { BlockStatement } from '../../runescipt-parser/ast/statement/BlockStatement';
+import { ANTLRErrorListener, type ATNConfigSet, type BitSet, type DFA, type Parser, CharStream, RecognitionException, Recognizer } from 'antlr4ng';
+
+import { AstVisitor } from '#/runescript-parser/ast/AstVisitor.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
+import { ScriptFile } from '#/runescript-parser/ast/ScriptFile.js';
+import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { TriggerManager } from '#/runescript-compiler/trigger/TriggerManager.js';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
+import { TypeManager } from '#/runescript-compiler/type/TypeManager.js';
+import { Token } from '#/runescript-parser/ast/Token.js';
+import { BasicSymbol, ConstantSymbol, LocalVariableSymbol, RuneScriptSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { ClientScriptSymbol, ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
+import { CommandTrigger } from '#/runescript-compiler/trigger/CommandTrigger.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { ArrayType } from '#/runescript-compiler/type/wrapped/ArrayType.js';
+import { Expression } from '#/runescript-parser/ast/expr/Expression.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { DiagnosticMessage } from '#/runescript-compiler/diagnostics/DiagnosticMessage.js';
+import { Identifier } from '#/runescript-parser/ast/expr/Identifier.js';
+import { ExpressionStringPart, StringPart } from '#/runescript-parser/ast/expr/StringPart.js';
+import { JoinedStringExpression } from '#/runescript-parser/ast/expr/JoinedStringExpression.js';
+import { StringLiteral } from '#/runescript-parser/ast/expr/literal/StringLiteral.js';
+import { ParserErrorListener } from '#/runescript-compiler/ParserErrorListener.js';
+import { ScriptParser } from '#/runescript-parser/parser/ScriptParser.js';
+import { RuneScriptParser } from '#/runescript-compiler/../antlr/RuneScriptParser.js';
+import { ClientScriptExpression } from '#/runescript-parser/ast/expr/ClientScriptExpression.js';
+import { NullLiteral } from '#/runescript-parser/ast/expr/literal/NullLiteral.js';
+import { CharacterLiteral } from '#/runescript-parser/ast/expr/literal/CharacterLiteral.js';
+import { BooleanLiteral } from '#/runescript-parser/ast/expr/literal/BooleanLiteral.js';
+import { CoordLiteral } from '#/runescript-parser/ast/expr/literal/CoordLiteral.js';
+import { IntegerLiteral } from '#/runescript-parser/ast/expr/literal/IntegerLiteral.js';
+import { ConstantVariableExpression } from '#/runescript-parser/ast/expr/variable/ConstantVariableExpression.js';
+import { SymbolType } from '#/runescript-compiler/symbol/SymbolType.js';
+import { GameVariableExpression } from '#/runescript-parser/ast/expr/variable/GameVariableExpression.js';
+import { GameVarType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
+import { CallExpression } from '#/runescript-parser/ast/expr/call/CallExpression.js';
+import { LocalVariableExpression } from '#/runescript-parser/ast/expr/variable/LocalVariableExpression.js';
+import { CommandCallExpression } from '#/runescript-parser/ast/expr/call/CommandCallExpression.js';
+import { JumpCallExpression } from '#/runescript-parser/ast/expr/call/JumpCallExpression.js';
+import { ProcCallExpression } from '#/runescript-parser/ast/expr/call/ProcCallExpression.js';
+import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
+import { Script } from '#/runescript-parser/ast/Scripts.js';
+import { CalcExpression } from '#/runescript-parser/ast/expr/CalcExpression.js';
+import { ArithmeticExpression } from '#/runescript-parser/ast/expr/ArithmeticExpression.js';
+import { ConditionExpression } from '#/runescript-parser/ast/expr/ConditionExpression.js';
+import { ParenthesizedExpression } from '#/runescript-parser/ast/expr/ParenthesizedExpression.js';
+import { EmptyStatement } from '#/runescript-parser/ast/statement/EmptyStatement.js';
+import { ExpressionStatement } from '#/runescript-parser/ast/statement/ExpressionStatement.js';
+import { AssignmentStatement } from '#/runescript-parser/ast/statement/AssignmentStatement.js';
+import { ArrayDeclarationStatement } from '#/runescript-parser/ast/statement/ArrayDeclarationStatement.js';
+import { DeclarationStatement } from '#/runescript-parser/ast/statement/DeclarationStatement.js';
+import { Literal } from '#/runescript-parser/ast/expr/literal/Literal.js';
+import { SwitchCase } from '#/runescript-parser/ast/statement/SwitchCase.js';
+import { SwitchStatement } from '#/runescript-parser/ast/statement/SwitchStatement.js';
+import { WhileStatement } from '#/runescript-parser/ast/statement/WhileStatement.js';
+import { IfStatement } from '#/runescript-parser/ast/statement/IfStatement.js';
+import { ReturnStatement } from '#/runescript-parser/ast/statement/ReturnStatement.js';
+import { BlockStatement } from '#/runescript-parser/ast/statement/BlockStatement.js';
 
 /**
  * An implementation of [AstVisitor] that implements all remaining semantic/type
@@ -109,10 +106,10 @@ export class TypeChecking extends AstVisitor<void> {
         protected readonly diagnostics: Diagnostics
     ) {
         super();
-        this.commandTrigger = this.triggerManager.find("command");
-        this.procTrigger = this.triggerManager.find("proc");
-        this.clientscriptTrigger = this.triggerManager.findOrNull("clientscript");
-        this.labelTrigger = this.triggerManager.findOrNull("label");
+        this.commandTrigger = this.triggerManager.find('command');
+        this.procTrigger = this.triggerManager.find('proc');
+        this.clientscriptTrigger = this.triggerManager.findOrNull('clientscript');
+        this.labelTrigger = this.triggerManager.findOrNull('label');
 
         this.table = this.rootTable;
 
@@ -141,14 +138,14 @@ export class TypeChecking extends AstVisitor<void> {
              * script since all the other stuff is handled in pre-type checking.
              */
             this.visitNodes(script.statements);
-        })
+        });
     }
 
     override visitBlockStatement(blockStatement: BlockStatement): void {
         this.scoped(blockStatement.scope, () => {
             // Visit all statements.
             this.visitNodes(blockStatement.statements);
-        })
+        });
     }
 
     override visitReturnStatement(returnStatement: ReturnStatement): void {
@@ -214,17 +211,14 @@ export class TypeChecking extends AstVisitor<void> {
      * is all valid conditional expressions.
      */
     private findInvalidConditionExpression(expression: Expression): Node | null {
-        if (expression instanceof ConditionExpression){
+        if (expression instanceof ConditionExpression) {
             const op = expression.operator.text;
-            if (op === "|" || op === "&") {
+            if (op === '|' || op === '&') {
                 /**
-                 * Check the left side and return it if it isn't null, otherwise 
+                 * Check the left side and return it if it isn't null, otherwise
                  * return the value of the right side.
                  */
-                return (
-                    this.findInvalidConditionExpression(expression.left) ??
-                    this.findInvalidConditionExpression(expression.right)
-                );
+                return this.findInvalidConditionExpression(expression.left) ?? this.findInvalidConditionExpression(expression.right);
             } else {
                 // All other operators are valid.
                 return null;
@@ -288,7 +282,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         this.scoped(switchCase.scope, () => {
             // Visit the statements.
-            this.visitNodes(switchCase.statements)
+            this.visitNodes(switchCase.statements);
         });
     }
 
@@ -329,14 +323,14 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitDeclarationStatement(declarationStatement: DeclarationStatement): void {
-        const typeName = declarationStatement.typeToken.text.replace(/^def_/, "");
+        const typeName = declarationStatement.typeToken.text.replace(/^def_/, '');
         const name = declarationStatement.name.text;
         const type = this.typeManager.findOrNull(typeName);
 
         // Notify invalid type.
         if (!type) {
             declarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
-        } else if(type.options && !type.options.allowDeclaration) {
+        } else if (type.options && !type.options.allowDeclaration) {
             declarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_DECLARATION_INVALID_TYPE, type.representation);
         }
 
@@ -359,7 +353,7 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitArrayDeclarationStatement(arrayDeclarationStatement: ArrayDeclarationStatement): void {
-        const typeName = arrayDeclarationStatement.typeToken.text.replace(/^def_/, "");
+        const typeName = arrayDeclarationStatement.typeToken.text.replace(/^def_/, '');
         const name = arrayDeclarationStatement.name.text;
         let type = this.typeManager.findOrNull(typeName);
 
@@ -421,7 +415,7 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitExpressionStatement(expressionStatement: ExpressionStatement): void {
         // Just visit the inside expression.
-        this.visitNodeOrNull(expressionStatement.expression)
+        this.visitNodeOrNull(expressionStatement.expression);
     }
 
     override visitEmptyStatement(emptyStatement: EmptyStatement): void {
@@ -458,21 +452,21 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     /**
-     * Verified the binary expression is a valid condition operation. 
+     * Verified the binary expression is a valid condition operation.
      */
     private checkBinaryConditionOperation(left: Expression, operator: Token, right: Expression): boolean {
         // Some operators expect a specific type on both sides, specify those type(s) here.
         let allowedTypes: Type[] | null;
 
         switch (operator.text) {
-            case "&":
-            case "|":
+            case '&':
+            case '|':
                 allowedTypes = TypeChecking.ALLOWED_LOGICAL_TYPES;
                 break;
-            case "<":
-            case ">":
-            case "<=":
-            case ">=":
+            case '<':
+            case '>':
+            case '<=':
+            case '>=':
                 allowedTypes = TypeChecking.ALLOWED_RELATIONAL_TYPES;
                 break;
             default:
@@ -488,8 +482,8 @@ export class TypeChecking extends AstVisitor<void> {
             right.typeHint = allowedTypes[0];
         } else {
             // Assign the type hints using the opposite side if it isn't already assigned.
-            left.typeHint = left.typeHint ?? (right.type ?? null);
-            right.typeHint = right.typeHint ?? (left.type ?? null);
+            left.typeHint = left.typeHint ?? right.type ?? null;
+            right.typeHint = right.typeHint ?? left.type ?? null;
         }
 
         /**
@@ -504,23 +498,17 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Ensure both types are set, otherwise report error and return false.
         if (left.type == null || right.type == null) {
-            operator.reportError(
-                this.diagnostics,
-                DiagnosticMessage.BINOP_INVALID_TYPES,
-                operator.text,
-                left.type ? left.type.representation : "<null>",
-                right.type ? right.type.representation : "<null>"
-            );
+            operator.reportError(this.diagnostics, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type ? left.type.representation : '<null>', right.type ? right.type.representation : '<null>');
             return false;
         }
 
         // Verify the left and right type only return 1 type that is not 'unit'.
         if (left.type instanceof TupleType || right.type instanceof TupleType) {
             if (left.type instanceof TupleType) {
-                left.reportError(this.diagnostics, DiagnosticMessage.BINOP_TUPLE_TYPE, "Left", left.type.representation);
+                left.reportError(this.diagnostics, DiagnosticMessage.BINOP_TUPLE_TYPE, 'Left', left.type.representation);
             }
             if (right.type instanceof TupleType) {
-                right.reportError(this.diagnostics, DiagnosticMessage.BINOP_TUPLE_TYPE, "Right", right.type.representation);
+                right.reportError(this.diagnostics, DiagnosticMessage.BINOP_TUPLE_TYPE, 'Right', right.type.representation);
             }
             return false;
         } else if (left.type == MetaType.Unit || right.type == MetaType.Unit) {
@@ -567,19 +555,14 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Verify if both sides are 'int' or 'long' and are of the same type.
         if (
-            left.type == null || right.type == null ||
+            left.type == null ||
+            right.type == null ||
             !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, left.type ?? MetaType.Error) ||
             !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, right.type ?? MetaType.Error) ||
             !this.checkTypeMatch(left, expectedType, left.type ?? MetaType.Error, false) ||
             !this.checkTypeMatch(right, expectedType, right.type ?? MetaType.Error, false)
         ) {
-            operator.reportError(
-                this.diagnostics,
-                DiagnosticMessage.BINOP_INVALID_TYPES,
-                operator.text,
-                left.type ? left.type.representation : "<null>",
-                right.type ? right.type.representation : "<null>"
-            );
+            operator.reportError(this.diagnostics, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type ? left.type.representation : '<null>', right.type ? right.type.representation : '<null>');
             arithmeticExpression.type = MetaType.Error;
             return;
         }
@@ -597,7 +580,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Verify type is an 'int'.
         if (innerExpression.type == null || !this.checkTypeMatchAny(innerExpression, TypeChecking.ALLOWED_ARITHMETIC_TYPES, innerExpression.type ?? MetaType.Error)) {
-            innerExpression.reportError(this.diagnostics, DiagnosticMessage.ARITHMETIC_INVALID_TYPE, innerExpression.type ? innerExpression.type.representation : "<null>");
+            innerExpression.reportError(this.diagnostics, DiagnosticMessage.ARITHMETIC_INVALID_TYPE, innerExpression.type ? innerExpression.type.representation : '<null>');
             calcExpression.type = MetaType.Error;
         } else {
             calcExpression.type = innerExpression.type;
@@ -623,15 +606,15 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitJumpCallExpression(jumpCallExpression: JumpCallExpression): void {
         if (!this.labelTrigger) {
-            jumpCallExpression.reportError(this.diagnostics, "Jump expression not allowed.");
+            jumpCallExpression.reportError(this.diagnostics, 'Jump expression not allowed.');
             return;
         }
 
         const currentScript = jumpCallExpression.findParentByType(Script);
-        if (!currentScript) throw new Error("Parent script not found.");
+        if (!currentScript) throw new Error('Parent script not found.');
 
         if (currentScript.triggerType === this.procTrigger) {
-            jumpCallExpression.reportError(this.diagnostics, "Unable to jump to labels from within a proc.");
+            jumpCallExpression.reportError(this.diagnostics, 'Unable to jump to labels from within a proc.');
             return;
         }
 
@@ -657,9 +640,7 @@ export class TypeChecking extends AstVisitor<void> {
             }
 
             // If the symbol was not manually specified, attempt to look up a predefined one.
-            const needsSymbol = 
-                (expression instanceof Identifier && !expression.reference) ||
-                (expression instanceof CallExpression && !expression.symbol);
+            const needsSymbol = (expression instanceof Identifier && !expression.reference) || (expression instanceof CallExpression && !expression.symbol);
 
             if (needsSymbol) {
                 const symbol = this.rootTable.find(SymbolType.serverScript(this.commandTrigger), name);
@@ -679,7 +660,7 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     /**
-     * Handles looking up and type checking all call expressions. 
+     * Handles looking up and type checking all call expressions.
      */
     private checkCallExpression(call: CallExpression, trigger: TriggerType, unresolvedSymbolMessage: string): void {
         // Lookup the symbol using the symbol type and name.
@@ -701,13 +682,13 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitClientScriptExpression(clientScriptExpression: ClientScriptExpression): void {
         if (!this.clientscriptTrigger) {
-            clientScriptExpression.reportError(this.diagnostics, DiagnosticMessage.TRIGGER_TYPE_NOT_FOUND, "clientscript");
+            clientScriptExpression.reportError(this.diagnostics, DiagnosticMessage.TRIGGER_TYPE_NOT_FOUND, 'clientscript');
             return;
         }
 
         const typeHint = clientScriptExpression.typeHint;
         if (!(typeHint instanceof MetaType.Hook)) {
-            throw new Error("Expected MetaType Hook");
+            throw new Error('Expected MetaType Hook');
         }
 
         // Lookup the symbol by name.
@@ -729,7 +710,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Disallow transmit list when not expected.
         const transmitListType = typeHint.transmitListType;
-        if (transmitListType == MetaType.Unit && clientScriptExpression.transmitList.length > 0){
+        if (transmitListType == MetaType.Unit && clientScriptExpression.transmitList.length > 0) {
             clientScriptExpression.transmitList[0].reportError(this.diagnostics, DiagnosticMessage.HOOK_TRANSMIT_LIST_UNEXPECTED);
             clientScriptExpression.type = MetaType.Error;
             return;
@@ -750,15 +731,13 @@ export class TypeChecking extends AstVisitor<void> {
          * Type check the parameters, use `unit` if there are no parameters.
          * We will display a special message if the parameter ends up having `unit`
          * as the type but arguments are supplied.
-         * 
+         *
          * If the symbol is null then that means we failed to look up the symbol,
          * therefore we should specify the parameter types as error, so we can continue
          * analysis on all the arguments without worrying about a type mismatch.
          */
         const parameterTypes = symbol?.parameters ?? MetaType.Error;
-        const expectedTypes = parameterTypes instanceof TupleType
-            ? [...parameterTypes.children]
-            : [parameterTypes];
+        const expectedTypes = parameterTypes instanceof TupleType ? [...parameterTypes.children] : [parameterTypes];
 
         const actualTypes = this.typeHintExpressionList(expectedTypes, callExpression.arguments);
 
@@ -788,7 +767,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Do the actual type checking.
         this.checkTypeMatch(callExpression, expectedType, actualType);
-    }   
+    }
 
     /**
      * Type check the index value of expression if it is defined.
@@ -803,7 +782,7 @@ export class TypeChecking extends AstVisitor<void> {
             return;
         }
 
-        const symbolIsArray = (symbol.type instanceof ArrayType);
+        const symbolIsArray = symbol.type instanceof ArrayType;
         if (!symbolIsArray && localVariableExpression.isArray) {
             // Trying to reference non-array local variable and specifying an index.
             localVariableExpression.reportError(this.diagnostics, DiagnosticMessage.LOCAL_REFERENCE_NOT_ARRAY, name);
@@ -819,7 +798,7 @@ export class TypeChecking extends AstVisitor<void> {
         }
 
         const indexExpression = localVariableExpression.index;
-        if ((symbol.type instanceof ArrayType) && indexExpression != null) {
+        if (symbol.type instanceof ArrayType && indexExpression != null) {
             // Visit the index to set the type of any references.
             this.visitNodeOrNull(indexExpression);
             this.checkTypeMatch(indexExpression, PrimitiveType.INT, indexExpression.type ?? MetaType.Error);
@@ -831,11 +810,9 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitGameVariableExpression(gameVariableExpression: GameVariableExpression): void {
         const name = gameVariableExpression.name.text;
-        const symbol = this.rootTable
-            .findAll<BasicSymbol>(name)
-            .find(sym => sym.type instanceof GameVarType);
+        const symbol = this.rootTable.findAll<BasicSymbol>(name).find(sym => sym.type instanceof GameVarType);
 
-        if (!symbol ||!(symbol.type instanceof GameVarType)) {
+        if (!symbol || !(symbol.type instanceof GameVarType)) {
             gameVariableExpression.type = MetaType.Error;
             gameVariableExpression.reportError(this.diagnostics, DiagnosticMessage.GAME_REFERENCE_UNRESOLVED, name);
             return;
@@ -877,8 +854,8 @@ export class TypeChecking extends AstVisitor<void> {
             // Create a stack string and append the symbol that was the start of the loop to it.
             let stack = Array.from(this.constantsBeingEvaluated)
                 .map(it => `^${it.name}`)
-                .join(" -> ");
-            
+                .join(' -> ');
+
             stack += ` -> ^${symbol.name}`;
             constantVariableExpression.reportError(this.diagnostics, DiagnosticMessage.CONSTANT_CYCLIC_REF, stack);
             constantVariableExpression.type = MetaType.Error;
@@ -893,24 +870,15 @@ export class TypeChecking extends AstVisitor<void> {
             const { name, line, column } = constantVariableExpression.source;
 
             // Check if the expected type is a string type.
-            const graphicType = this.typeManager.findOrNull("graphic");
-            const stringExpected = typeHint == PrimitiveType.STRING || graphicType != null && typeHint == graphicType;
-            
+            const graphicType = this.typeManager.findOrNull('graphic');
+            const stringExpected = typeHint == PrimitiveType.STRING || (graphicType != null && typeHint == graphicType);
+
             const stream = CharStream.fromString(symbol.value);
             stream.name = name;
             const parsedExpression: Expression | null = stringExpected
-                ? new StringLiteral(
-                    { name, line: line - 1, column: column - 1, endLine: line - 1, endColumn: column },
-                    symbol.value
-                )
-                : ScriptParser.invokeParser(
-                    stream,
-                    parser => parser.singleExpression(),
-                    TypeChecking.DISCARD_ERROR_LISTENER,
-                    line - 1,
-                    column - 1
-                ) as Expression | null;
-            
+                ? new StringLiteral({ name, line: line - 1, column: column - 1, endLine: line - 1, endColumn: column }, symbol.value)
+                : (ScriptParser.invokeParser(stream, parser => parser.singleExpression(), TypeChecking.DISCARD_ERROR_LISTENER, line - 1, column - 1) as Expression | null);
+
             // Verify that the expression is parsed properly.
             if (!parsedExpression) {
                 constantVariableExpression.reportError(this.diagnostics, DiagnosticMessage.CONSTANT_PARSE_ERROR, symbol.value, typeHint.representation);
@@ -982,12 +950,12 @@ export class TypeChecking extends AstVisitor<void> {
              * treat it as a string.
              */
             stringLiteral.type = PrimitiveType.STRING;
-        } else if(hint instanceof MetaType.Hook) {
+        } else if (hint instanceof MetaType.Hook) {
             this.handleClientScriptExpression(stringLiteral, hint);
         } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
             stringLiteral.symbol = this.resolveSymbol(stringLiteral, stringLiteral.value, hint);
         } else {
-            stringLiteral.type = PrimitiveType.STRING
+            stringLiteral.type = PrimitiveType.STRING;
         }
     }
 
@@ -1005,13 +973,7 @@ export class TypeChecking extends AstVisitor<void> {
         const errorListener = new ParserErrorListener(name, this.diagnostics, line - 1, column);
         const stream = CharStream.fromString(stringLiteral.value);
         stream.name = name;
-        const clientScriptExpression = ScriptParser.invokeParser(
-            stream,
-            (parser: RuneScriptParser) =>  parser.clientScript(),
-            errorListener,
-            line - 1,
-            column
-        ) as ClientScriptExpression | null;
+        const clientScriptExpression = ScriptParser.invokeParser(stream, (parser: RuneScriptParser) => parser.clientScript(), errorListener, line - 1, column) as ClientScriptExpression | null;
 
         // Parser returns null if there was a parse error.
         if (!clientScriptExpression) {
@@ -1031,7 +993,7 @@ export class TypeChecking extends AstVisitor<void> {
     override visitJoinedStringExpression(joinedStringExpression: JoinedStringExpression): void {
         // Visit all parts.
         joinedStringExpression.parts.forEach(part => part.accept(this));
-        
+
         // Set the resulting type.
         joinedStringExpression.type = PrimitiveType.STRING;
     }
@@ -1064,7 +1026,7 @@ export class TypeChecking extends AstVisitor<void> {
         if (!symbol) return;
 
         if (symbol instanceof ScriptSymbol && symbol.trigger === this.commandTrigger && symbol.parameters !== MetaType.Unit) {
-            identifier.reportError(this.diagnostics, DiagnosticMessage.GENERIC_TYPE_MISMATCH, "<unit>", symbol.parameters.representation);
+            identifier.reportError(this.diagnostics, DiagnosticMessage.GENERIC_TYPE_MISMATCH, '<unit>', symbol.parameters.representation);
         }
 
         identifier.reference = symbol;
@@ -1077,7 +1039,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         for (const temp of this.table.findAll<RuneScriptSymbol>(name)) {
             const tempType = this.symbolToType(temp);
-            if(!tempType) continue;
+            if (!tempType) continue;
 
             if (!hint && tempType instanceof MetaType.Script) {
                 // If the hint is unknown it means we're somewhere that probably shouldn't
@@ -1085,7 +1047,7 @@ export class TypeChecking extends AstVisitor<void> {
                 // "scripts" since the symbolToType for commands returns the return value of
                 // the command instead of being wrapped in MetaType.Script.
                 continue;
-            } else if (!hint ||this.typeManager.check(hint, tempType)) {
+            } else if (!hint || this.typeManager.check(hint, tempType)) {
                 // Hint type matches (or is undefined), so we can stop looking.
                 symbol = temp;
                 type = tempType;
@@ -1130,7 +1092,6 @@ export class TypeChecking extends AstVisitor<void> {
                 // All other triggers get wrapped in a script type.
                 return new MetaType.Script(symbol.trigger, symbol.parameters, symbol.returns);
             }
-            
         } else if (symbol instanceof LocalVariableSymbol) {
             if (symbol.type instanceof ArrayType) {
                 // Only local array variables are accessible by only their identifier.
@@ -1172,7 +1133,7 @@ export class TypeChecking extends AstVisitor<void> {
 
         for (const expr of expressions) {
             // Set the type hint if we haven't exhausted the expected types.
-            expr.typeHint = typeCounter < expectedTypes.length ? expectedTypes[typeCounter]: null;
+            expr.typeHint = typeCounter < expectedTypes.length ? expectedTypes[typeCounter] : null;
 
             // Visit the expression (evaluates its type).
             expr.accept(this);
@@ -1198,12 +1159,7 @@ export class TypeChecking extends AstVisitor<void> {
      *
      * @see TypeManager.check
      */
-    checkTypeMatch(
-        node: Node,
-        expected: Type,
-        actual: Type,
-        reportErrors = true
-    ): boolean {
+    checkTypeMatch(node: Node, expected: Type, actual: Type, reportErrors = true): boolean {
         const expectedFlattened = expected instanceof TupleType ? expected.children : [expected];
         const actualFlattened = actual instanceof TupleType ? actual.children : [actual];
 
@@ -1221,7 +1177,7 @@ export class TypeChecking extends AstVisitor<void> {
         }
 
         if (!match && reportErrors) {
-            const actualRepresentation = actual === MetaType.Unit ? "<unit>" : actual.representation;
+            const actualRepresentation = actual === MetaType.Unit ? '<unit>' : actual.representation;
             node.reportError(this.diagnostics, DiagnosticMessage.GENERIC_TYPE_MISMATCH, actualRepresentation, expected.representation);
         }
 
@@ -1235,11 +1191,7 @@ export class TypeChecking extends AstVisitor<void> {
      *
      * @see TypeManager.check
      */
-    private checkTypeMatchAny(
-        node: Node,
-        expected: Type[],
-        actual: Type
-    ): boolean {
+    private checkTypeMatchAny(node: Node, expected: Type[], actual: Type): boolean {
         for (const type of expected) {
             if (this.checkTypeMatch(node, type, actual, false)) {
                 return true;
@@ -1271,63 +1223,38 @@ export class TypeChecking extends AstVisitor<void> {
      * Matches Kotlin's getTypeOrError().
      */
     private getSafeType(expr: Expression | null | undefined): Type {
-        return (expr && expr.type) ? expr.type : MetaType.Error;
+        return expr && expr.type ? expr.type : MetaType.Error;
     }
 
     /**
      * Array of valid types allowed in logical conditional expressions.
      */
-    private static readonly ALLOWED_LOGICAL_TYPES = [
-        PrimitiveType.BOOLEAN
-    ];
+    private static readonly ALLOWED_LOGICAL_TYPES = [PrimitiveType.BOOLEAN];
 
     /**
      * Array of valid types allowed in relational conditional expressions.
      */
-    private static readonly ALLOWED_RELATIONAL_TYPES = [
-        PrimitiveType.INT,
-        PrimitiveType.LONG
-    ];
+    private static readonly ALLOWED_RELATIONAL_TYPES = [PrimitiveType.INT, PrimitiveType.LONG];
 
     /**
      * Array of valid types allowed in arithmetic expressions.
      */
-    private static readonly ALLOWED_ARITHMETIC_TYPES = [
-        PrimitiveType.INT,
-        PrimitiveType.LONG
-    ];
+    private static readonly ALLOWED_ARITHMETIC_TYPES = [PrimitiveType.INT, PrimitiveType.LONG];
 
     /**
      * Set of types that have a literal representation.
      */
-    private static readonly LITERAL_TYPES: ReadonlySet<Type> = new Set<Type>([
-        PrimitiveType.INT,
-        PrimitiveType.BOOLEAN,
-        PrimitiveType.COORD,
-        PrimitiveType.STRING,
-        PrimitiveType.CHAR,
-        PrimitiveType.LONG
-    ]);
-    
+    private static readonly LITERAL_TYPES: ReadonlySet<Type> = new Set<Type>([PrimitiveType.INT, PrimitiveType.BOOLEAN, PrimitiveType.COORD, PrimitiveType.STRING, PrimitiveType.CHAR, PrimitiveType.LONG]);
+
     /**
      * A parser error listener that discards any syntax errors.
      */
     private static readonly DISCARD_ERROR_LISTENER: ANTLRErrorListener = {
-        syntaxError<T>(
-            recognizer: Recognizer<any> | undefined,
-            offendingSymbol: any,
-            line: number,
-            charPositionInLine: number,
-            msg: string,
-            e: RecognitionException | undefined
-        ): void {
+        syntaxError<T>(recognizer: Recognizer<any> | undefined, offendingSymbol: any, line: number, charPositionInLine: number, msg: string, e: RecognitionException | undefined): void {
             // NO-OP
         },
-        reportAmbiguity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet): void {
-        },
-        reportAttemptingFullContext: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, configs: ATNConfigSet): void {
-        },
-        reportContextSensitivity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, configs: ATNConfigSet): void {
-        }
-    }
+        reportAmbiguity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, exact: boolean, ambigAlts: BitSet | undefined, configs: ATNConfigSet): void {},
+        reportAttemptingFullContext: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, conflictingAlts: BitSet | undefined, configs: ATNConfigSet): void {},
+        reportContextSensitivity: function (recognizer: Parser, dfa: DFA, startIndex: number, stopIndex: number, prediction: number, configs: ATNConfigSet): void {}
+    };
 }

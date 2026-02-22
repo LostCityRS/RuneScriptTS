@@ -1,14 +1,14 @@
-import { CallExpression } from '../../../runescipt-parser/ast/expr/call/CallExpression';
-import { CommandCallExpression } from '../../../runescipt-parser/ast/expr/call/CommandCallExpression';
-import { Expression } from '../../../runescipt-parser/ast/expr/Expression';
-import { Identifier } from '../../../runescipt-parser/ast/expr/Identifier';
-import type { NodeSourceLocation } from '../../../runescipt-parser/ast/NodeSourceLocation';
-import { CodeGenerator } from '../../codegen/CodeGenerator';
-import { Opcode } from '../../codegen/Opcode';
-import { Diagnostics } from '../../diagnostics/Diagnostics';
-import { ScriptSymbol } from '../../symbol/ScriptSymbol';
-import { SymbolTable } from '../../symbol/SymbolTable';
-import { Node } from '../../../runescipt-parser/ast/Node';
+import { CallExpression } from '#/runescript-parser/ast/expr/call/CallExpression.js';
+import { CommandCallExpression } from '#/runescript-parser/ast/expr/call/CommandCallExpression.js';
+import { Expression } from '#/runescript-parser/ast/expr/Expression.js';
+import { Identifier } from '#/runescript-parser/ast/expr/Identifier.js';
+import type { NodeSourceLocation } from '#/runescript-parser/ast/NodeSourceLocation.js';
+import { CodeGenerator } from '#/runescript-compiler/codegen/CodeGenerator.js';
+import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
+import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
+import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
+import { Node } from '#/runescript-parser/ast/Node.js';
 
 /**
  * Contains the context of the [CodeGenerator] and supplies useful functions when
@@ -40,11 +40,7 @@ export class CodeGeneratorContext {
      * otherwise an empty list.
      */
     get arguments2(): Expression[] {
-        if (
-            this.expression instanceof CommandCallExpression &&
-            this.expression.isStar &&
-            this.expression.arguments2
-        ) {
+        if (this.expression instanceof CommandCallExpression && this.expression.isStar && this.expression.arguments2) {
             return this.expression.arguments2;
         }
         return [];
@@ -81,7 +77,7 @@ export class CodeGeneratorContext {
 
         this.lineInstruction(this.expression);
         if (!symbol) {
-            throw new Error("Symbol cannot be null for command generation.");
+            throw new Error('Symbol cannot be null for command generation.');
         }
         this.instruction(Opcode.Command, symbol, this.expression.source);
     }
@@ -115,4 +111,5 @@ export class CodeGeneratorContext {
     visitNodes(nodes: Node[] | null | undefined): void {
         if (!nodes) return;
         this.codeGenerator.visitNodes(nodes);
-    }}
+    }
+}

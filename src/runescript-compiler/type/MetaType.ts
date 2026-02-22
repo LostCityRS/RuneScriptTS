@@ -1,8 +1,8 @@
-import { TriggerType } from '../trigger/TriggerType';
-import { BaseVarType } from './BaseVarType';
-import { Type as MainType } from './Type';
-import { MutableOptionsType, TypeOptions } from './TypeOptions';
-import { WrappedType } from './wrapped/WrappedType';
+import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
+import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { Type as MainType } from '#/runescript-compiler/type/Type.js';
+import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
+import { WrappedType } from '#/runescript-compiler/type/wrapped/WrappedType.js';
 
 /**
  * A class of types used internally in the compiler.
@@ -11,14 +11,14 @@ export class MetaType implements MainType {
     readonly representation: string;
     readonly baseType: BaseVarType = BaseVarType.INTEGER;
     readonly defaultValue: unknown = -1;
-    readonly options: TypeOptions = new MutableOptionsType({ allowSwitch: false, allowArray: false, allowDeclaration: false});
+    readonly options: TypeOptions = new MutableOptionsType({ allowSwitch: false, allowArray: false, allowDeclaration: false });
 
     private constructor(private readonly name: string) {
         this.representation = name.toLowerCase();
     }
 
     public get code(): string {
-        throw new Error("MetaType has no character representation.");
+        throw new Error('MetaType has no character representation.');
     }
 
     /**
@@ -29,7 +29,7 @@ export class MetaType implements MainType {
      *
      * Example: `MetaType.Type(MetaType.Any)`
      */
-    static readonly Any = new MetaType("any");
+    static readonly Any = new MetaType('any');
 
     /**
      * A type that says that nothing is returned. This is intended to be used
@@ -39,18 +39,18 @@ export class MetaType implements MainType {
      *
      * See Also: [Bottom type](https://en.wikipedia.org/wiki/Bottom_type)
      */
-    static readonly Nothing = new MetaType("nothing");
+    static readonly Nothing = new MetaType('nothing');
 
     /**
      * A type used to specify the type resolution resulted into an error. This
      * type is comparable to **all** other types to prevent error propagation.
      */
-    static readonly Error = new MetaType("error");
+    static readonly Error = new MetaType('error');
 
     /**
      * A type that signifies that nothing is returned.
      */
-    static readonly Unit = new MetaType("unit");
+    static readonly Unit = new MetaType('unit');
 
     /**
      * A special type used when referencing other types.
@@ -60,7 +60,7 @@ export class MetaType implements MainType {
         declare readonly representation: string;
 
         constructor(inner: MainType) {
-            super("type");
+            super('type');
             this.inner = inner;
             this.representation = `type<${inner.representation}>`;
         }
@@ -77,7 +77,7 @@ export class MetaType implements MainType {
         readonly returnType: MainType;
 
         constructor(trigger: TriggerType, parameterType: MainType, returnType: MainType) {
-            super("script");
+            super('script');
             this.trigger = trigger;
             this.parameterType = parameterType;
             this.returnType = returnType;
@@ -90,14 +90,14 @@ export class MetaType implements MainType {
      * The [transmitListType] is the type allowed in the transmit list, if transmit list isn't expected,
      * use [Unit].
      */
-    static Hook = class extends MetaType{
+    static Hook = class extends MetaType {
         readonly transmitListType: MainType;
         declare readonly representation: string;
 
         constructor(transmitListType: MainType) {
-            super("hook");
+            super('hook');
             this.transmitListType = transmitListType;
             this.representation = `hook<${transmitListType.representation}>`;
         }
-    }
+    };
 }

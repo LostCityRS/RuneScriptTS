@@ -1,4 +1,4 @@
-import { Label } from './Label';
+import { Label } from '#/runescript-compiler/codegen/script/Label.js';
 
 /**
  * A class used to generate unique label names by appending a number to the end
