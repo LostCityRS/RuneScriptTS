@@ -679,6 +679,11 @@ export class CodeGenerator extends AstVisitor<void> {
             return;
         }
 
+        if (integerLiteral.type == PrimitiveType.STRING) {
+            this.instruction(Opcode.PushConstantString, integerLiteral.value.toString(), integerLiteral.source);
+            return;
+        }
+
         this.instruction(Opcode.PushConstantInt, integerLiteral.value, integerLiteral.source);
     }
 
@@ -689,6 +694,12 @@ export class CodeGenerator extends AstVisitor<void> {
 
     override visitBooleanLiteral(booleanLiteral: BooleanLiteral): void {
         this.lineInstruction(booleanLiteral);
+
+        if (booleanLiteral.type == PrimitiveType.STRING) {
+            this.instruction(Opcode.PushConstantString, booleanLiteral.value.toString(), booleanLiteral.source);
+            return;
+        }
+
         this.instruction(Opcode.PushConstantInt, booleanLiteral.value ? 1 : 0, booleanLiteral.source);
     }
 

@@ -940,6 +940,8 @@ export class TypeChecking extends AstVisitor<void> {
             integerLiteral.reference = this.resolveSymbol(integerLiteral, integerLiteral.value.toString(), hint);
         } else if (hint == PrimitiveType.BOOLEAN && (integerLiteral.value == 0 || integerLiteral.value == 1)) {
             integerLiteral.type = PrimitiveType.BOOLEAN;
+        } else if (hint == PrimitiveType.STRING) {
+            integerLiteral.type = PrimitiveType.STRING;
         } else {
             integerLiteral.type = PrimitiveType.INT;
         }
@@ -950,7 +952,13 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitBooleanLiteral(booleanLiteral: BooleanLiteral): void {
-        booleanLiteral.type = PrimitiveType.BOOLEAN;
+        const hint = booleanLiteral.type;
+
+        if (hint == PrimitiveType.STRING) {
+            booleanLiteral.type = PrimitiveType.STRING;
+        } else {
+            booleanLiteral.type = PrimitiveType.BOOLEAN;
+        }
     }
 
     override visitCharacterLiteral(characterLiteral: CharacterLiteral): void {
