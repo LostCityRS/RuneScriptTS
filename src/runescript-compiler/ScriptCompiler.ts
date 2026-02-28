@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+import { CharStream } from 'antlr4ng';
+
 import { ParserErrorListener } from '#/runescript-compiler/ParserErrorListener.js';
 
 import { CodeGenerator } from '#/runescript-compiler/codegen/CodeGenerator.js';
@@ -17,6 +19,8 @@ import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
 import { BaseDiagnosticsHandler, DiagnosticsHandler } from '#/runescript-compiler/diagnostics/DiagnosticsHandler.js';
 
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
+
+import { MacroProcessor, MacroRegistry, MacroExpansionSpan } from '#/runescript-compiler/preprocess/MacroProcessor.js';
 
 import { ScriptRegistration } from '#/runescript-compiler/semantics/ScriptRegistration.js';
 import { TypeChecking } from '#/runescript-compiler/semantics/TypeChecking.js';
@@ -259,22 +263,47 @@ export class ScriptCompiler {
         let fileCount = 0;
         // const start = performance.now();
 
+        const macroRegistry = new MacroRegistry();
+        const macroExpansionMap = new Map<string, MacroExpansionSpan[]>();
+        this.attachMacroLookup(macroExpansionMap, macroRegistry);
+
+        for (const sourcePath of this.sourcePaths) {
+            const files = this.walkTopDown(sourcePath);
+            for (const file of files) {
+                if (!file.endsWith('.macro')) {
+                    continue;
+                }
+                MacroProcessor.parseMacroFile(file, macroRegistry, diagnostics);
+            }
+        }
+
         for (const sourcePath of this.sourcePaths) {
             // this.logger.debug(`Parsing files in '${sourcePath}'.`);
 
             // Recursively walk all files.
             const files = this.walkTopDown(sourcePath);
+
             for (const file of files) {
                 if (!file.endsWith(`.${ext}`)) {
                     continue;
                 }
+
                 //this.logger.debug(`Attempting to parse: ${file}.`);
 
                 const errorListener = new ParserErrorListener(file, diagnostics);
-                const node: ScriptFile | null = ScriptParser.createScriptFile(file, errorListener);
+                const rawSource = fs.readFileSync(file, 'utf8');
+                const expandedResult = MacroProcessor.expandSourceWithMap(rawSource, macroRegistry, diagnostics, file);
+                const expanded = expandedResult.text;
+                macroExpansionMap.set(path.resolve(file), expandedResult.spans);
+
+                const stream = CharStream.fromString(expanded);
+                stream.name = file;
+
+                const node: ScriptFile | null = ScriptParser.invokeParser(stream, parser => parser.scriptFile(), errorListener) as ScriptFile | null;
                 if (node) {
                     fileNodes.push(node);
                 }
+
                 fileCount++;
             }
         }
@@ -428,6 +457,73 @@ export class ScriptCompiler {
      */
     normalizePath(p: string): string {
         return path.normalize(path.resolve(p));
+    }
+
+    private attachMacroLookup(macroExpansionMap: Map<string, MacroExpansionSpan[]>, macroRegistry: MacroRegistry): void {
+        const handler = this.diagnosticsHandler;
+        if (!(handler instanceof BaseDiagnosticsHandler)) {
+            return;
+        }
+
+        handler.setMacroLookup((sourceName, line, column) => {
+            const resolved = path.resolve(sourceName);
+            const spans = macroExpansionMap.get(resolved) ?? macroExpansionMap.get(sourceName);
+            if (!spans || spans.length === 0) {
+                return null;
+            }
+
+            let best: MacroExpansionSpan | null = null;
+            for (const span of spans) {
+                if (line < span.startLine || line > span.endLine) {
+                    continue;
+                }
+                if (line === span.startLine && column < span.startColumn) {
+                    continue;
+                }
+                if (line === span.endLine && column > span.endColumn) {
+                    continue;
+                }
+
+                if (!best) {
+                    best = span;
+                    continue;
+                }
+
+                const bestSize = (best.endLine - best.startLine) * 100000 + (best.endColumn - best.startColumn);
+                const spanSize = (span.endLine - span.startLine) * 100000 + (span.endColumn - span.startColumn);
+                if (spanSize < bestSize) {
+                    best = span;
+                }
+            }
+
+            if (!best) {
+                return null;
+            }
+
+            let originLine = best.macroLine;
+            let originColumn = 1;
+            const macro = macroRegistry.macros.get(best.macroName);
+            if (macro && line === best.startLine) {
+                const offset = Math.max(0, column - best.startColumn);
+                const substituted = MacroProcessor.applyArgs(macro.body, macro.args, best.argValues);
+                const mapped = MacroProcessor.mapFlatIndexToLineCol(substituted, offset);
+                if (mapped) {
+                    originLine = macro.line + mapped.line;
+                    originColumn = mapped.column;
+                }
+            }
+
+            return {
+                callSiteLine: best.callSiteLine,
+                callSiteColumn: best.callSiteColumn,
+                origin: {
+                    name: best.macroName,
+                    file: best.macroFile,
+                    line: originLine,
+                    column: originColumn
+                }
+            };
+        });
     }
 
     /**
