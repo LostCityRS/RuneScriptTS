@@ -100,6 +100,8 @@ export class ScriptCompiler {
 
         // Register core types.
         this.types.registerAll(PrimitiveType);
+        this.types.register(MetaType.Any);
+        this.types.register('type', MetaType.Any);
 
         this.setupDefaultTypeCheckers();
 
