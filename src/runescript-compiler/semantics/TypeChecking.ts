@@ -1046,7 +1046,7 @@ export class TypeChecking extends AstVisitor<void> {
         }
 
         // Error is reported inside 'resolveSymbol'.
-        const symbol = this.resolveSymbol(identifier, name, hint ?? undefined);
+        const symbol = this.resolveSymbol(identifier, name, hint ?? undefined, true);
         if (!symbol) return;
 
         if (symbol instanceof ScriptSymbol && symbol.trigger === this.commandTrigger && symbol.parameters !== MetaType.Unit) {
@@ -1056,7 +1056,7 @@ export class TypeChecking extends AstVisitor<void> {
         identifier.reference = symbol;
     }
 
-    private resolveSymbol(node: Expression, name: string, hint?: Type): RuneScriptSymbol | null {
+    private resolveSymbol(node: Expression, name: string, hint?: Type, allowToString: boolean = false): RuneScriptSymbol | null {
         // Look through the current scopes table for a symbol with the given name and type.
         let symbol: RuneScriptSymbol | null = null;
         let type: Type | null = null;
@@ -1084,8 +1084,12 @@ export class TypeChecking extends AstVisitor<void> {
             }
         }
 
-        // Unable to resolve the symbol.
-        if (!symbol) {
+        if (allowToString && hint == PrimitiveType.STRING && this.allowStringConversion(symbol)) {
+            // Treat the identifier as just a string.
+            node.type = PrimitiveType.STRING;
+            return null;
+        } else if (!symbol) {
+            // Unable to resolve the symbol.
             node.type = MetaType.Error;
             node.reportError(this.diagnostics, DiagnosticMessage.GENERIC_UNRESOLVED_SYMBOL, name);
             return null;
@@ -1100,6 +1104,10 @@ export class TypeChecking extends AstVisitor<void> {
 
         node.type = type;
         return symbol;
+    }
+
+    private allowStringConversion(symbol?: RuneScriptSymbol): boolean {
+        return !(symbol instanceof ScriptSymbol && symbol.trigger == CommandTrigger);
     }
 
     /**

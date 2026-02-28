@@ -758,13 +758,17 @@ export class CodeGenerator extends AstVisitor<void> {
     }
 
     override visitIdentifier(identifier: Identifier): void {
+        this.lineInstruction(identifier);
+
         const reference = identifier.reference;
-        if (reference == null) {
+        if (reference == null && identifier.type == PrimitiveType.STRING) {
+            // This is for when the identifier is just being treated as a string literal.
+            this.instruction(Opcode.PushConstantString, identifier.text, identifier.source);
+            return;
+        } else if (reference == null) {
             identifier.reportError(this.diagnostics, DiagnosticMessage.SYMBOL_IS_NULL);
             return;
         }
-
-        this.lineInstruction(identifier);
 
         // Add the instruction based on reference type.
         if (reference instanceof ServerScriptSymbol && reference.trigger == CommandTrigger) {
