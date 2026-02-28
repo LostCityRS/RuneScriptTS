@@ -931,7 +931,16 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitIntegerLiteral(integerLiteral: IntegerLiteral): void {
-        integerLiteral.type = PrimitiveType.INT;
+        const hint = integerLiteral.typeHint;
+
+        // This logic is a simplified version from string literals.
+        if (hint == null || hint == MetaType.Unit || this.typeManager.check(hint, PrimitiveType.INT)) {
+            integerLiteral.type = PrimitiveType.INT;
+        } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
+            integerLiteral.reference = this.resolveSymbol(integerLiteral, integerLiteral.value.toString(), hint);
+        } else {
+            integerLiteral.type = PrimitiveType.INT;
+        }
     }
 
     override visitCoordLiteral(coordLiteral: CoordLiteral): void {
@@ -977,7 +986,7 @@ export class TypeChecking extends AstVisitor<void> {
         } else if (hint instanceof MetaType.Hook) {
             this.handleClientScriptExpression(stringLiteral, hint);
         } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
-            stringLiteral.symbol = this.resolveSymbol(stringLiteral, stringLiteral.value, hint);
+            stringLiteral.reference = this.resolveSymbol(stringLiteral, stringLiteral.value, hint);
         } else {
             stringLiteral.type = PrimitiveType.STRING;
         }
@@ -1059,7 +1068,7 @@ export class TypeChecking extends AstVisitor<void> {
     private resolveSymbol(node: Expression, name: string, hint?: Type, allowToString: boolean = false): RuneScriptSymbol | null {
         // Look through the current scopes table for a symbol with the given name and type.
         let symbol: RuneScriptSymbol | null = null;
-        let type: Type | null = null;
+        let symbolType: Type | null = null;
 
         for (const temp of this.table.findAll<RuneScriptSymbol>(name)) {
             const tempType = this.symbolToType(temp);
@@ -1074,13 +1083,13 @@ export class TypeChecking extends AstVisitor<void> {
             } else if (!hint || this.typeManager.check(hint, tempType)) {
                 // Hint type matches (or is undefined), so we can stop looking.
                 symbol = temp;
-                type = tempType;
+                symbolType = tempType;
                 break;
             } else if (!symbol) {
                 // Default the symbol to the first thing found just in case
                 // no exact matches exist.
                 symbol = temp;
-                type = tempType;
+                symbolType = tempType;
             }
         }
 
@@ -1096,13 +1105,13 @@ export class TypeChecking extends AstVisitor<void> {
         }
 
         // Compiler error if the symbol type isn't defined here.
-        if (!type) {
+        if (!symbolType) {
             node.type = MetaType.Error;
             node.reportError(this.diagnostics, DiagnosticMessage.UNSUPPORTED_SYMBOLTYPE_TO_TYPE, symbol.constructor.name);
             return null;
         }
 
-        node.type = type;
+        node.type = symbolType;
         return symbol;
     }
 

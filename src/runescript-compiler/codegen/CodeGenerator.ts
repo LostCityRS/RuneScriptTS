@@ -396,12 +396,8 @@ export class CodeGenerator extends AstVisitor<void> {
             return expression.reference;
         }
 
-        if (expression instanceof StringLiteral) {
-            return expression.symbol ?? expression.value;
-        }
-
         if (expression instanceof Literal) {
-            return expression.value;
+            return expression.reference ?? expression.value;
         }
 
         return null;
@@ -675,6 +671,14 @@ export class CodeGenerator extends AstVisitor<void> {
 
     override visitIntegerLiteral(integerLiteral: IntegerLiteral): void {
         this.lineInstruction(integerLiteral);
+
+        // Push the reference if one exists.
+        const reference = integerLiteral.reference;
+        if (reference != null) {
+            this.instruction(Opcode.PushConstantSymbol, reference, integerLiteral.source);
+            return;
+        }
+
         this.instruction(Opcode.PushConstantInt, integerLiteral.value, integerLiteral.source);
     }
 
@@ -727,7 +731,7 @@ export class CodeGenerator extends AstVisitor<void> {
         }
 
         // Push the reference if one exists.
-        const reference = stringLiteral.symbol;
+        const reference = stringLiteral.reference;
         if (reference != null) {
             this.instruction(Opcode.PushConstantSymbol, reference, stringLiteral.source);
             return;
