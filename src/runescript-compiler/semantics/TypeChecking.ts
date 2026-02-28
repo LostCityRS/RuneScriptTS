@@ -1,5 +1,6 @@
-import { ANTLRErrorListener, CharStream, RecognitionException, Recognizer, type ATNConfigSet, type BitSet, type DFA, type Parser } from 'antlr4ng';
+import { ANTLRErrorListener, CharStream, CommonTokenStream, ParserRuleContext, RecognitionException, Recognizer, type ATNConfigSet, type BitSet, type DFA, type Parser } from 'antlr4ng';
 
+import { RuneScriptLexer } from '#/antlr/RuneScriptLexer.js';
 import { RuneScriptParser } from '#/antlr/RuneScriptParser.js';
 
 import { ParserErrorListener } from '#/runescript-compiler/ParserErrorListener.js';
@@ -74,6 +75,7 @@ import { SwitchStatement } from '#/runescript-parser/ast/statement/SwitchStateme
 import { WhileStatement } from '#/runescript-parser/ast/statement/WhileStatement.js';
 
 import { ScriptParser } from '#/runescript-parser/parser/ScriptParser.js';
+import { AstBuilder } from '#/runescript-parser/parser/AstBuilder.js';
 
 /**
  * An implementation of [AstVisitor] that implements all remaining semantic/type
@@ -112,6 +114,11 @@ export class TypeChecking extends AstVisitor<void> {
      */
     private readonly constantsBeingEvaluated: Set<RuneScriptSymbol>;
 
+    /**
+     * Cache for parsed constant expressions to avoid re-parsing the same value.
+     */
+    private readonly constantExpressionCache: Map<string, ParserRuleContext | null>;
+
     constructor(
         protected readonly typeManager: TypeManager,
         protected readonly triggerManager: TriggerManager,
@@ -128,6 +135,7 @@ export class TypeChecking extends AstVisitor<void> {
         this.table = this.rootTable;
 
         this.constantsBeingEvaluated = new Set();
+        this.constantExpressionCache = new Map();
     }
 
     /**
@@ -903,11 +911,9 @@ export class TypeChecking extends AstVisitor<void> {
             const graphicType = this.typeManager.findOrNull('graphic');
             const stringExpected = typeHint == PrimitiveType.STRING || (graphicType != null && typeHint == graphicType);
 
-            const stream = CharStream.fromString(symbol.value);
-            stream.name = name;
             const parsedExpression: Expression | null = stringExpected
                 ? new StringLiteral({ name, line: line - 1, column: column - 1, endLine: line - 1, endColumn: column }, symbol.value)
-                : (ScriptParser.invokeParser(stream, parser => parser.singleExpression(), TypeChecking.DISCARD_ERROR_LISTENER, line - 1, column - 1) as Expression | null);
+                : this.parseConstantExpression(symbol.value, constantVariableExpression.source);
 
             // Verify that the expression is parsed properly.
             if (!parsedExpression) {
@@ -934,6 +940,36 @@ export class TypeChecking extends AstVisitor<void> {
             // Remove the symbol from the set since it is no longer being evaluated.
             this.constantsBeingEvaluated.delete(symbol);
         }
+    }
+
+    private parseConstantExpression(value: string, source: { name: string; line: number; column: number }): Expression | null {
+        let tree = this.constantExpressionCache.get(value);
+        if (tree === undefined) {
+            tree = this.parseConstantExpressionTree(value);
+            this.constantExpressionCache.set(value, tree);
+        }
+
+        if (!tree) return null;
+
+        return new AstBuilder(source.name, source.line - 1, source.column - 1).visit(tree) as Expression;
+    }
+
+    private parseConstantExpressionTree(value: string): ParserRuleContext | null {
+        const stream = CharStream.fromString(value);
+        const lexer = new RuneScriptLexer(stream);
+        const tokens = new CommonTokenStream(lexer);
+        const parser = new RuneScriptParser(tokens);
+
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(TypeChecking.DISCARD_ERROR_LISTENER);
+        parser.removeErrorListeners();
+        parser.addErrorListener(TypeChecking.DISCARD_ERROR_LISTENER);
+
+        const tree = parser.singleExpression();
+        if (parser.numberOfSyntaxErrors > 0) {
+            return null;
+        }
+        return tree;
     }
 
     override visitIntegerLiteral(integerLiteral: IntegerLiteral): void {
