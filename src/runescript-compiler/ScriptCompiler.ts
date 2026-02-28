@@ -117,7 +117,7 @@ export class ScriptCompiler {
         this.types.addTypeChecker((left, _) => left === MetaType.Any);
 
         // Allow nothing to be assigned to any (bottom type).
-        this.types.addTypeChecker((_, right) => right === MetaType.Nothing);
+        // this.types.addTypeChecker((_, right) => right === MetaType.Nothing);
 
         // Allow anything to be assigned to error to prevent error propagation.
         this.types.addTypeChecker((left, right) => left === MetaType.Error || right === MetaType.Error);
