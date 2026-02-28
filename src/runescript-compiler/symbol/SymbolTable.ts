@@ -14,15 +14,23 @@ export class SymbolTable {
 
     constructor(private parent: SymbolTable | null = null) {}
 
+    private normalizeName(type: SymbolType<any>, name: string): string {
+        if (type.kind === 'Basic') {
+            return name.toLowerCase();
+        }
+        return name;
+    }
+
     /**
      * Inserts [symbol] into the table and indicates if the insertion was successful.
      */
     insert<T extends RuneScriptSymbol>(type: SymbolType<T>, symbol: T): boolean {
+        const key = this.normalizeName(type, symbol.name);
         let current: SymbolTable | null = this;
 
         while (current) {
             const table = current.symbols.get(type);
-            if (table?.has(symbol.name)) {
+            if (table?.has(key)) {
                 return false;
             }
             current = current.parent;
@@ -34,7 +42,7 @@ export class SymbolTable {
             this.symbols.set(type, table);
         }
 
-        table.set(symbol.name, symbol);
+        table.set(key, symbol);
         return true;
     }
 
@@ -43,7 +51,8 @@ export class SymbolTable {
      */
     find<T extends RuneScriptSymbol>(type: SymbolType<T>, name: string): T | null {
         const table = this.symbols.get(type);
-        const symbol = table?.get(name) as T | undefined;
+        const key = this.normalizeName(type, name);
+        const symbol = table?.get(key) as T | undefined;
 
         if (symbol) return symbol;
         return this.parent?.find(type, name) ?? null;
@@ -55,8 +64,9 @@ export class SymbolTable {
      */
     findAll<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): T[] {
         const results: T[] = [];
-        for (const table of this.symbols.values()) {
-            const symbol = table.get(name);
+        for (const [symbolType, table] of this.symbols.entries()) {
+            const key = this.normalizeName(symbolType, name);
+            const symbol = table.get(key);
             if (symbol && (!type || symbol instanceof type)) {
                 results.push(symbol as T);
             }
