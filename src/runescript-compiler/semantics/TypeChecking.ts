@@ -77,7 +77,7 @@ import { ScriptParser } from '#/runescript-parser/parser/ScriptParser.js';
 
 /**
  * An implementation of [AstVisitor] that implements all remaining semantic/type
- * checking required to safely build scripts. This implementation assumes [PreTypeChecking]
+ * checking required to safely build scripts. This implementation assumes [ScriptRegistration]
  * is run beforehand.
  */
 export class TypeChecking extends AstVisitor<void> {
@@ -156,7 +156,7 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitBlockStatement(blockStatement: BlockStatement): void {
-        this.scoped(blockStatement.scope, () => {
+        this.scoped(this.table.createSubTable(), () => {
             // Visit all statements.
             this.visitNodes(blockStatement.statements);
         });
@@ -245,13 +245,23 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitSwitchStatement(switchStatement: SwitchStatement): void {
-        const expectedType = switchStatement.type;
+        const typeName = switchStatement.typeToken.text.replace('switch_', '');
+        const type = this.typeManager.findOrNull(typeName);
+
+        // Notify invalid type.
+        if (!type) {
+            switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
+        } else if (type.options && !type.options.allowSwitch) {
+            switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.SWITCH_INVALID_TYPE, type.representation);
+        }
+
+        switchStatement.type = type;
 
         // Type hint the condition and visit it.
         const condition = switchStatement.condition;
-        condition.typeHint = expectedType;
+        condition.typeHint = type;
         this.visitNodeOrNull(condition);
-        this.checkTypeMatch(condition, expectedType, condition.type ?? MetaType.Error);
+        this.checkTypeMatch(condition, type, condition.type ?? MetaType.Error);
 
         /**
          * TODO: Check for duplicate case labels (other than default).
@@ -294,7 +304,7 @@ export class TypeChecking extends AstVisitor<void> {
             this.checkTypeMatch(key, switchType, key.type);
         }
 
-        this.scoped(switchCase.scope, () => {
+        this.scoped(this.table.createSubTable(), () => {
             // Visit the statements.
             this.visitNodes(switchCase.statements);
         });

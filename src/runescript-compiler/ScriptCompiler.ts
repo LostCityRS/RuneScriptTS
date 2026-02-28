@@ -18,7 +18,7 @@ import { BaseDiagnosticsHandler, DiagnosticsHandler } from '#/runescript-compile
 
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
-import { PreTypeChecking } from '#/runescript-compiler/semantics/PreTypeChecking.js';
+import { ScriptRegistration } from '#/runescript-compiler/semantics/ScriptRegistration.js';
 import { TypeChecking } from '#/runescript-compiler/semantics/TypeChecking.js';
 
 import { SymbolTable } from '#/runescript-compiler/symbol/SymbolTable.js';
@@ -290,20 +290,20 @@ export class ScriptCompiler {
     private analyze(files: ScriptFile[]): boolean {
         const diagnostics = new Diagnostics();
 
-        // Pre-type check: This adds all scripts to the symbol table for lookup in the next phase.
-        // this.logger.debug("Starting pre-type checking.");
-        // const preTypeStart = performance.now();
+        // Script registration: This adds all scripts to the symbol table for lookup in the next phase.
+        // this.logger.debug("Starting script registration.");
+        // const scriptRegistrationStart = performance.now();
 
-        const preTypeChecking = new PreTypeChecking(this.types, this.triggers, this.rootTable, diagnostics);
+        const scriptRegistration = new ScriptRegistration(this.types, this.triggers, this.rootTable, diagnostics);
         for (const file of files) {
             // const fileStart = performance.now();
-            file.accept(preTypeChecking);
+            file.accept(scriptRegistration);
             // const fileTime = (performance.now() - fileStart).toFixed(2);
-            //this.logger.debug(`Pre-type checked ${file.source.name} in ${fileTime}ms.`);
+            // this.logger.debug(`Registered scripts in ${file.source.name} in ${fileTime}ms.`);
         }
 
-        // const preTypeCheckingTime = (performance.now() - preTypeStart).toFixed(2);
-        // this.logger.debug(`Finished pre-type checking in ${preTypeCheckingTime}ms.`);
+        // const preTypeCheckingTime = (performance.now() - scriptRegistrationStart).toFixed(2);
+        // this.logger.debug(`Finished script registration in ${preTypeCheckingTime}ms.`);
 
         // Type check: This does all major type checking.
         // this.logger.debug("Starting type checking.");

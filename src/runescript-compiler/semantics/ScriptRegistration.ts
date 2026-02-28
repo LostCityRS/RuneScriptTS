@@ -28,14 +28,9 @@ import { SwitchCase } from '#/runescript-parser/ast/statement/SwitchCase.js';
 import { SwitchStatement } from '#/runescript-parser/ast/statement/SwitchStatement.js';
 
 /**
- * An [AstVisitor] implementation that handles the following.
- *
- * - Script declarations
- * - Switch statement type declaration, which is used later on in [TypeChecking]
- * - Local variable declarations
- * - Constant references
+ * An [AstVisitor] implementation that handles registering scripts and validating their parameters and return types.
  */
-export class PreTypeChecking extends AstVisitor<void> {
+export class ScriptRegistration extends AstVisitor<void> {
     /**
      * A stack of symbol tables to use through the script file.
      */
@@ -154,9 +149,6 @@ export class PreTypeChecking extends AstVisitor<void> {
                 script.symbol = scriptSymbol;
             }
         }
-
-        // Visit the code
-        script.statements.forEach(stmt => stmt.accept(this));
 
         // Set the root symbol table for the script
         script.block = this.table;
@@ -403,54 +395,6 @@ export class PreTypeChecking extends AstVisitor<void> {
         }
 
         parameter.symbol = symbol;
-    }
-
-    override visitBlockStatement(blockStatement: BlockStatement): void {
-        this.createScopedTable(() => {
-            // Visit inner statements
-            this.visit(blockStatement.statements);
-
-            // Set the symbol table for the block.
-            blockStatement.scope = this.table;
-        });
-    }
-
-    override visitSwitchStatement(switchStatement: SwitchStatement): void {
-        const typeName = switchStatement.typeToken.text.replace(/^switch_/, '');
-        const type = this.typeManager.findOrNull(typeName);
-
-        // Notify invalid type.
-        if (!type) {
-            switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
-        } else if (!type?.options?.allowSwitch) {
-            switchStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.SWITCH_INVALID_TYPE, type.representation);
-        }
-
-        // Visit the condition to resolve any reference.
-        switchStatement.condition.accept(this);
-
-        // Visit the cases to resolve references in them.
-        this.visit(switchStatement.cases);
-
-        // Set the expected type of the switch case.
-        switchStatement.type = type ?? MetaType.Error;
-    }
-
-    override visitSwitchCase(switchCase: SwitchCase): void {
-        // Visit the keys to set any types that can be set early.
-        this.visit(switchCase.keys);
-
-        // Create a new scope and visit the statements in it.
-        this.createScopedTable(() => {
-            this.visit(switchCase.statements);
-
-            // Set the symbol table for the block
-            switchCase.scope = this.table;
-        });
-    }
-
-    override visitNode(node: Node): void {
-        this.visit(node.children);
     }
 
     /**

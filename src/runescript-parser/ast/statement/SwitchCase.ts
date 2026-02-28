@@ -19,7 +19,6 @@ export class SwitchCase extends Node {
     public readonly kind = NodeKind.SwitchCase;
     public readonly keys: Expression[];
     public readonly statements: Statement[];
-    public scope: SymbolTable;
 
     public constructor(source: NodeSourceLocation, keys: Expression[], statements: Statement[]) {
         super(source);

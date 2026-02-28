@@ -19,7 +19,6 @@ import { Statement } from '#/runescript-parser/ast/statement/Statement.js';
 export class BlockStatement extends Statement {
     public readonly kind = NodeKind.BlockStatement;
     public readonly statements: Statement[];
-    public scope: SymbolTable;
 
     public constructor(source: NodeSourceLocation, statements: Statement[]) {
         super(source);
