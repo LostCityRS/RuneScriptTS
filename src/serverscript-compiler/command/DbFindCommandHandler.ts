@@ -45,19 +45,10 @@ export class DbFindCommandHandler implements DynamicCommandHandler {
         // Should not get to this point unless first argument is a dbcolumn.
         const columnType = (context.arguments[0].type as DbColumnType).inner;
 
-        const baseType = columnType.baseType;
-        const stackType = (() => {
-            switch (baseType) {
-                case BaseVarType.INTEGER:
-                    return 0;
-                case BaseVarType.LONG:
-                    return 1;
-                case BaseVarType.STRING:
-                    return 2;
-                default:
-                    throw new Error(`Unsupported base type: ${baseType}.`);
-            }
-        })();
+        const stackType = columnType.baseType;
+        if (stackType == null) {
+            throw new Error('No base type for db_find column');
+        }
 
         // Emit the arguments.
         context.visitNodes(context.arguments);

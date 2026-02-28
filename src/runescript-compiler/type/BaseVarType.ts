@@ -3,7 +3,7 @@
  * of other types. All [PrimitiveType]s are one of these.
  */
 export enum BaseVarType {
-    INTEGER,
-    STRING,
-    LONG
+    INTEGER = 0,
+    LONG = 1,
+    STRING = 2
 }
