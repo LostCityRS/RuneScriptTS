@@ -319,6 +319,9 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
     protected override writeCommand(context: BinaryScriptWriterContext, symbol: ScriptSymbol): void {
         const op = this.idProvider.get(symbol);
         const secondary = symbol.name.startsWith('.');
+        if (op === -1) {
+            throw new Error(`Missing opcode id for command ${symbol.name}`);
+        }
         context.instructionRaw(op, secondary ? 1 : 0);
     }
 
