@@ -1,4 +1,5 @@
 import { Opcode } from '#/runescript-compiler/codegen/Opcode.js';
+import { Instruction } from '#/runescript-compiler/codegen/Instruction.js';
 
 import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
 
@@ -15,10 +16,13 @@ import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
 
 import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
-import { BasicSymbol } from '#/runescript-compiler/symbol/Symbol.js';
+import { BasicSymbol, LocalVariableSymbol } from '#/runescript-compiler/symbol/Symbol.js';
 
 import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
 
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import { Type } from '#/runescript-compiler/type/Type.js';
 import { VarBitType, VarNpcType, VarPlayerType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
 
 type ScriptPointerAnalysis = {
@@ -29,9 +33,21 @@ type ScriptPointerAnalysis = {
     setNodes: Set<InstructionNode>[];
     corruptedNodes: Set<InstructionNode>[];
     returns: InstructionNode[];
+    staticLabelArgsByCall: Map<Instruction<any>, Map<number, ScriptSymbol>>;
 };
 
 export class PointerChecker {
+    private static readonly LABEL_JUMP_COMMANDS = new Set(['jump', '.jump']);
+    private static readonly ARG_PUSH_OPCODES = new Set([
+        Opcode.PushConstantInt,
+        Opcode.PushConstantString,
+        Opcode.PushConstantLong,
+        Opcode.PushConstantSymbol,
+        Opcode.PushLocalVar,
+        Opcode.PushVar,
+        Opcode.PushVar2
+    ]);
+
     /**
      * Mapping of a scripts symbol to the code generated script.
      */
@@ -56,6 +72,11 @@ export class PointerChecker {
      * Cache of pointer analysis per script.
      */
     private readonly scriptAnalyses = new Map<ScriptSymbol, ScriptPointerAnalysis>();
+
+    /**
+     * Cache of jump-parameter usage per script (parameter index -> jump command nodes).
+     */
+    private readonly jumpParamNodesByScript = new Map<ScriptSymbol, Map<number, InstructionNode[]>>();
 
     /**
      * Tracks scripts currently undergoing analysis to avoid recursive analysis.
@@ -218,20 +239,51 @@ export class PointerChecker {
             }
 
             const logProcRequirement = (node: InstructionNode): void => {
-                const opcode = node.instruction?.opcode;
+                const inst = node.instruction;
+                const opcode = inst?.opcode;
                 if (opcode !== Opcode.Gosub && opcode !== Opcode.Jump) {
                     return;
                 }
 
-                const symbol = node.instruction!.operand as ScriptSymbol;
-                const calledScript = this.scripts.find(s => s.symbol === symbol);
+                const symbol = inst!.operand as ScriptSymbol;
+                const calledScript = this.scriptsBySymbol.get(symbol) ?? this.scripts.find(s => s.symbol === symbol);
                 if (!calledScript) {
                     throw new Error('Unable to find script.');
                 }
 
                 const scriptPath = this.requiresPointerPathScript(calledScript, pointer);
                 if (!scriptPath) {
-                    throw new Error('Unable to find requirement path?');
+                    const staticArgs = analysis.staticLabelArgsByCall.get(inst!);
+                    if (!staticArgs) {
+                        return;
+                    }
+
+                    const jumpParamNodes = this.getJumpParamNodes(calledScript);
+                    for (const [paramIndex, labelSymbol] of staticArgs.entries()) {
+                        if (!this.getPointers(labelSymbol).required.has(pointer)) {
+                            continue;
+                        }
+
+                        const nodes = jumpParamNodes.get(paramIndex);
+                        if (!nodes || nodes.length === 0) {
+                            continue;
+                        }
+
+                        if (!this.requiresPointerAtNodes(calledScript, pointer, nodes)) {
+                            continue;
+                        }
+
+                        const requiredNode = nodes[0];
+                        const requireLocation =
+                            requiredNode.instruction?.source ??
+                            (() => {
+                                throw new Error('Invalid instruction/source.');
+                            })();
+
+                        this.diagnostics.report(new Diagnostic(DiagnosticType.HINT, requireLocation, DiagnosticMessage.POINTER_REQUIRED_LOC, [pointer.representation]));
+                    }
+
+                    return;
                 }
 
                 const requiredNode = scriptPath[0];
@@ -379,6 +431,173 @@ export class PointerChecker {
         }
     }
 
+    private buildInstructionNodeMap(graph: InstructionNode[]): Map<Instruction<any>, InstructionNode> {
+        const map = new Map<Instruction<any>, InstructionNode>();
+        for (const node of graph) {
+            if (node.instruction) {
+                map.set(node.instruction, node);
+            }
+        }
+        return map;
+    }
+
+    private findPreviousNonLineInstruction(instructions: Instruction<any>[], startIndex: number): Instruction<any> | null {
+        for (let i = startIndex; i >= 0; i--) {
+            const inst = instructions[i];
+            if (inst.opcode === Opcode.LineNumber) continue;
+            return inst;
+        }
+        return null;
+    }
+
+    private collectArgumentPushes(instructions: Instruction<any>[], callIndex: number, count: number): Instruction<any>[] | null {
+        if (count <= 0) return [];
+        const result: Instruction<any>[] = [];
+        for (let i = callIndex - 1; i >= 0 && result.length < count; i--) {
+            const inst = instructions[i];
+            if (inst.opcode === Opcode.LineNumber) {
+                continue;
+            }
+            if (!PointerChecker.ARG_PUSH_OPCODES.has(inst.opcode)) {
+                return null;
+            }
+            result.push(inst);
+        }
+        if (result.length !== count) {
+            return null;
+        }
+        result.reverse();
+        return result;
+    }
+
+    private isLabelType(type: Type): boolean {
+        return type instanceof MetaType.Script && type.trigger.identifier === 'label';
+    }
+
+    private isLabelScriptSymbol(symbol: ScriptSymbol): boolean {
+        return symbol.trigger.identifier === 'label';
+    }
+
+    private buildStaticLabelArgsByCall(script: RuneScript): Map<Instruction<any>, Map<number, ScriptSymbol>> {
+        const result = new Map<Instruction<any>, Map<number, ScriptSymbol>>();
+
+        for (const block of script.blocks) {
+            const instructions = block.instructions;
+            for (let idx = 0; idx < instructions.length; idx++) {
+                const inst = instructions[idx];
+                if (inst.opcode === Opcode.LineNumber) continue;
+                if (inst.opcode !== Opcode.Gosub && inst.opcode !== Opcode.Jump) continue;
+
+                const symbol = inst.operand as ScriptSymbol;
+                const paramTypes = TupleType.toList(symbol.parameters);
+                if (paramTypes.length === 0) continue;
+
+                const argPushes = this.collectArgumentPushes(instructions, idx, paramTypes.length);
+                if (!argPushes) continue;
+
+                const staticArgs = new Map<number, ScriptSymbol>();
+                for (let paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
+                    const paramType = paramTypes[paramIndex];
+                    if (!this.isLabelType(paramType)) continue;
+
+                    const argInst = argPushes[paramIndex];
+                    if (argInst.opcode !== Opcode.PushConstantSymbol) continue;
+
+                    const argSymbol = argInst.operand as ScriptSymbol;
+                    if (argSymbol instanceof ScriptSymbol && this.isLabelScriptSymbol(argSymbol)) {
+                        staticArgs.set(paramIndex, argSymbol);
+                    }
+                }
+
+                if (staticArgs.size > 0) {
+                    result.set(inst, staticArgs);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private getJumpParamNodes(script: RuneScript, instructionToNode?: Map<Instruction<any>, InstructionNode>): Map<number, InstructionNode[]> {
+        const cached = this.jumpParamNodesByScript.get(script.symbol);
+        if (cached) return cached;
+
+        const nodeMap = instructionToNode ?? this.buildInstructionNodeMap(this.getGraph(script));
+        const paramIndexBySymbol = new Map<LocalVariableSymbol, number>();
+        for (let i = 0; i < script.locals.parameters.length; i++) {
+            paramIndexBySymbol.set(script.locals.parameters[i], i);
+        }
+
+        const jumpParamNodes = new Map<number, InstructionNode[]>();
+
+        for (const block of script.blocks) {
+            const instructions = block.instructions;
+            for (let idx = 0; idx < instructions.length; idx++) {
+                const inst = instructions[idx];
+                if (inst.opcode === Opcode.LineNumber) continue;
+                if (inst.opcode !== Opcode.Command) continue;
+
+                const command = inst.operand as ScriptSymbol;
+                if (!PointerChecker.LABEL_JUMP_COMMANDS.has(command.name)) continue;
+
+                const prev = this.findPreviousNonLineInstruction(instructions, idx - 1);
+                if (!prev || prev.opcode !== Opcode.PushLocalVar) continue;
+
+                const local = prev.operand as LocalVariableSymbol;
+                const paramIndex = paramIndexBySymbol.get(local);
+                if (paramIndex == null) continue;
+
+                const paramType = script.locals.parameters[paramIndex]?.type;
+                if (!paramType || !this.isLabelType(paramType)) continue;
+
+                const node = nodeMap.get(inst);
+                if (!node) continue;
+
+                let list = jumpParamNodes.get(paramIndex);
+                if (!list) {
+                    list = [];
+                    jumpParamNodes.set(paramIndex, list);
+                }
+                list.push(node);
+            }
+        }
+
+        this.jumpParamNodesByScript.set(script.symbol, jumpParamNodes);
+        return jumpParamNodes;
+    }
+
+    private requiresPointerAtNodes(script: RuneScript, pointer: PointerType, nodes: InstructionNode[]): boolean {
+        if (!nodes.length) return false;
+        const analysis = this.getAnalysis(script);
+        const pointerIndex = this.pointerIndex(pointer);
+        return this.findEdgePath(nodes, node => node === analysis.graph[0], analysis.setNodes[pointerIndex]) !== null;
+    }
+
+    private addStaticLabelRequirements(
+        required: InstructionNode[][],
+        callerNode: InstructionNode,
+        calledSymbol: ScriptSymbol,
+        staticLabelArgs: Map<number, ScriptSymbol>
+    ): void {
+        const calledScript = this.scriptsBySymbol.get(calledSymbol);
+        if (!calledScript) return;
+
+        const jumpParamNodes = this.getJumpParamNodes(calledScript);
+        if (!jumpParamNodes.size) return;
+
+        for (const [paramIndex, labelSymbol] of staticLabelArgs.entries()) {
+            const nodes = jumpParamNodes.get(paramIndex);
+            if (!nodes || nodes.length === 0) continue;
+
+            const labelPointers = this.getPointers(labelSymbol);
+            for (const pointer of labelPointers.required) {
+                if (this.requiresPointerAtNodes(calledScript, pointer, nodes)) {
+                    this.addPointer(required, pointer, callerNode);
+                }
+            }
+        }
+    }
+
     private getAnalysis(script: RuneScript): ScriptPointerAnalysis {
         const cached = this.scriptAnalyses.get(script.symbol);
         if (cached) return cached;
@@ -389,6 +608,9 @@ export class PointerChecker {
         }
 
         this.pendingAnalyses.add(script.symbol);
+        const instructionToNode = this.buildInstructionNodeMap(graph);
+        const staticLabelArgsByCall = this.buildStaticLabelArgsByCall(script);
+        this.getJumpParamNodes(script, instructionToNode);
         const pointerCount = PointerType.ALL.length;
         const required: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
         const set: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
@@ -430,6 +652,10 @@ export class PointerChecker {
                         this.addPointers(required, pointers.required, node);
                         this.addPointers(set, pointers.set, node);
                         this.addPointers(corrupted, pointers.corrupted, node);
+                        const staticLabelArgs = staticLabelArgsByCall.get(inst);
+                        if (staticLabelArgs) {
+                            this.addStaticLabelRequirements(required, node, symbol, staticLabelArgs);
+                        }
                         break;
                     }
 
@@ -492,7 +718,8 @@ export class PointerChecker {
             corrupted,
             setNodes: set.map(nodes => new Set(nodes)),
             corruptedNodes: corrupted.map(nodes => new Set(nodes)),
-            returns
+            returns,
+            staticLabelArgsByCall
         };
 
         this.scriptAnalyses.set(script.symbol, analysis);
@@ -505,6 +732,7 @@ export class PointerChecker {
         const set: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
         const corrupted: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
         const returns: InstructionNode[] = [];
+        const staticLabelArgsByCall = new Map<Instruction<any>, Map<number, ScriptSymbol>>();
 
         for (const node of graph) {
             if (node.instruction?.opcode === Opcode.Return) {
@@ -519,7 +747,8 @@ export class PointerChecker {
             corrupted,
             setNodes: set.map(nodes => new Set(nodes)),
             corruptedNodes: corrupted.map(nodes => new Set(nodes)),
-            returns
+            returns,
+            staticLabelArgsByCall
         };
     }
 }
