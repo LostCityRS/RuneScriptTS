@@ -21,6 +21,16 @@ import { TriggerType } from '#/runescript-compiler/trigger/TriggerType.js';
 
 import { VarBitType, VarNpcType, VarPlayerType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
 
+type ScriptPointerAnalysis = {
+    graph: InstructionNode[];
+    required: InstructionNode[][];
+    set: InstructionNode[][];
+    corrupted: InstructionNode[][];
+    setNodes: Set<InstructionNode>[];
+    corruptedNodes: Set<InstructionNode>[];
+    returns: InstructionNode[];
+};
+
 export class PointerChecker {
     /**
      * Mapping of a scripts symbol to the code generated script.
@@ -41,6 +51,16 @@ export class PointerChecker {
      * Cache of calculated [PointerHolder]s.
      */
     private readonly scriptPointers = new Map<ScriptSymbol, PointerHolder>();
+
+    /**
+     * Cache of pointer analysis per script.
+     */
+    private readonly scriptAnalyses = new Map<ScriptSymbol, ScriptPointerAnalysis>();
+
+    /**
+     * Tracks scripts currently undergoing analysis to avoid recursive analysis.
+     */
+    private readonly pendingAnalyses = new Set<ScriptSymbol>();
 
     /**
      * Contains the scripts currently having their pointers calculated.
@@ -137,11 +157,14 @@ export class PointerChecker {
      * not valid, an error is reported to [diagnostics].
      */
     private validatePointer(script: RuneScript, pointer: PointerType): void {
-        const graph = this.getGraph(script);
+        const analysis = this.getAnalysis(script);
+        const pointerIndex = this.pointerIndex(pointer);
 
-        const required = graph.filter(node => this.requiresPointerNode(node, pointer));
-        const set = graph.filter(node => this.setsPointerNode(node, pointer));
-        const corrupted = graph.filter(node => this.corruptsPointerNode(node, pointer));
+        const graph = analysis.graph;
+        const required = analysis.required[pointerIndex];
+        const setNodes = analysis.setNodes[pointerIndex];
+        let corrupted = analysis.corrupted[pointerIndex];
+        let corruptedSet = analysis.corruptedNodes[pointerIndex];
 
         // Check if the trigger implicitly defines the pointer.
         if (!this.setsPointerTrigger(script.trigger, pointer)) {
@@ -149,7 +172,11 @@ export class PointerChecker {
              * If the trigger doesn't implicitly define the pointer we need to specify the starting
              * node as corrupting it so that there is a path found, resulting in an error.
              */
-            if (graph.length > 0) corrupted.push(graph[0]);
+            if (graph.length > 0 && !corruptedSet.has(graph[0])) {
+                corrupted = [...corrupted, graph[0]];
+                corruptedSet = new Set(corruptedSet);
+                corruptedSet.add(graph[0]);
+            }
         }
 
         /**
@@ -158,8 +185,8 @@ export class PointerChecker {
          */
         const path = this.findEdgePath(
             required,
-            node => corrupted.includes(node),
-            node => node.previous.filter(prev => !set.includes(prev))
+            node => corruptedSet.has(node),
+            setNodes
         );
 
         /**
@@ -243,28 +270,25 @@ export class PointerChecker {
      * an instruction that sets the pointer.
      */
     private requiresPointerPathScript(script: RuneScript, pointer: PointerType): InstructionNode[] | null {
-        const graph = this.getGraph(script);
-        const usages = graph.filter(node => this.requiresPointerNode(node, pointer));
+        const analysis = this.getAnalysis(script);
+        const pointerIndex = this.pointerIndex(pointer);
+        const usages = analysis.required[pointerIndex];
 
-        return this.findEdgePath(
-            usages,
-            node => node === graph[0],
-            node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
-        );
+        return this.findEdgePath(usages, node => node === analysis.graph[0], analysis.setNodes[pointerIndex]);
     }
 
     /**
      * Checks if [RuneScript] sets the [pointer] after being called.
      */
     private setsPointerScript(script: RuneScript, pointer: PointerType): boolean {
-        const graph = this.getGraph(script);
-        const returns = graph.filter(n => n.instruction?.opcode === Opcode.Return);
+        const analysis = this.getAnalysis(script);
+        const pointerIndex = this.pointerIndex(pointer);
 
         return (
             this.findEdgePath(
-                returns,
-                node => node === graph[0] || this.corruptsPointerNode(node, pointer),
-                node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
+                analysis.returns,
+                node => node === analysis.graph[0] || analysis.corruptedNodes[pointerIndex].has(node),
+                analysis.setNodes[pointerIndex]
             ) === null
         );
     }
@@ -273,15 +297,14 @@ export class PointerChecker {
      * Checks if [RuneScript] corrupts the [pointer] after being called.
      */
     private corruptsPointerScript(script: RuneScript, pointer: PointerType): boolean {
-        const graph = this.getGraph(script);
-
-        const returns = graph.filter(node => node.instruction?.opcode === Opcode.Return);
+        const analysis = this.getAnalysis(script);
+        const pointerIndex = this.pointerIndex(pointer);
 
         return (
             this.findEdgePath(
-                returns,
-                node => this.corruptsPointerNode(node, pointer),
-                node => node.previous.filter(prev => !this.setsPointerNode(prev, pointer))
+                analysis.returns,
+                node => analysis.corruptedNodes[pointerIndex].has(node),
+                analysis.setNodes[pointerIndex]
             ) !== null
         );
     }
@@ -290,135 +313,10 @@ export class PointerChecker {
      * [InstructionNode]
      * Checks if the instruction requires [pointer].
      */
-    private requiresPointerNode(node: InstructionNode, pointer: PointerType): boolean {
-        const inst = node.instruction;
-        if (!inst) return false;
-
-        switch (inst.opcode) {
-            case Opcode.Command: {
-                const command = inst.operand as ScriptSymbol;
-                const pointers = this.commandPointers.get(command.name);
-                return pointers ? pointers.required.has(pointer) : false;
-            }
-
-            case Opcode.Gosub:
-            case Opcode.Jump: {
-                const symbol = inst.operand as ScriptSymbol;
-                return this.getPointers(symbol).required.has(pointer);
-            }
-
-            case Opcode.PushVar: {
-                const symbol = inst.operand as BasicSymbol;
-                const type = symbol.type;
-
-                if (type instanceof VarPlayerType) return pointer === PointerType.ACTIVE_PLAYER;
-                if (type instanceof VarBitType) return pointer === PointerType.ACTIVE_PLAYER;
-                if (type instanceof VarNpcType) return pointer === PointerType.ACTIVE_NPC;
-                return false;
-            }
-
-            case Opcode.PopVar: {
-                const symbol = inst.operand as BasicSymbol;
-                const type = symbol.type;
-
-                if (type instanceof VarPlayerType || type instanceof VarBitType) {
-                    return symbol.isProtected ? pointer === PointerType.P_ACTIVE_PLAYER : pointer === PointerType.ACTIVE_PLAYER;
-                }
-
-                if (type instanceof VarNpcType) {
-                    return pointer === PointerType.ACTIVE_NPC;
-                }
-
-                return false;
-            }
-
-            case Opcode.PushVar2: {
-                const symbol = inst.operand as BasicSymbol;
-                const type = symbol.type;
-
-                if (type instanceof VarPlayerType) return pointer === PointerType.ACTIVE_PLAYER2;
-                if (type instanceof VarBitType) return pointer === PointerType.ACTIVE_PLAYER2;
-                if (type instanceof VarNpcType) return pointer === PointerType.ACTIVE_NPC2;
-                return false;
-            }
-
-            case Opcode.PopVar2: {
-                const symbol = inst.operand as BasicSymbol;
-                const type = symbol.type;
-
-                if (type instanceof VarPlayerType || type instanceof VarBitType) {
-                    return symbol.isProtected ? pointer === PointerType.P_ACTIVE_PLAYER2 : pointer === PointerType.ACTIVE_PLAYER2;
-                }
-
-                if (type instanceof VarNpcType) {
-                    return pointer === PointerType.ACTIVE_NPC2;
-                }
-
-                return false;
-            }
-
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * [InstructionNode]
-     * Checks if the instruction sets [pointer].
-     */
-    private setsPointerNode(node: InstructionNode, pointer: PointerType): boolean {
-        if (node instanceof PointerInstructionNode) {
-            // Special node inserted for commands that conditionally set a pointer.
-            return node.set.has(pointer);
-        }
-
-        const inst = node.instruction;
-        if (!inst) return false;
-
-        switch (inst.opcode) {
-            case Opcode.Command: {
-                const command = inst.operand as ScriptSymbol;
-                const pointers = this.commandPointers.get(command.name);
-                return pointers ? pointers.set.has(pointer) && !pointers.conditionalSet : false;
-            }
-            case Opcode.Gosub: {
-                const symbol = inst.operand as ScriptSymbol;
-                const pointers = this.getPointers(symbol);
-                return pointers.set.has(pointer);
-            }
-            default:
-                return false;
-        }
-    }
-
-    /**
-     * [InstructionNode]
-     * Checks if the instruction corrupts [pointer].
-     */
-    private corruptsPointerNode(node: InstructionNode, pointer: PointerType): boolean {
-        const inst = node.instruction;
-        if (!inst) return false;
-
-        switch (inst.opcode) {
-            case Opcode.Command: {
-                const command = inst.operand as ScriptSymbol;
-                const pointers = this.commandPointers.get(command.name);
-                return pointers ? pointers.corrupted.has(pointer) : false;
-            }
-            case Opcode.Gosub: {
-                const symbol = inst.operand as ScriptSymbol;
-                const pointers = this.getPointers(symbol);
-                return pointers.corrupted.has(pointer);
-            }
-            default:
-                return false;
-        }
-    }
-
     /**
      * Attempts to find a path starting from any neighbors of any nodes within [starts].
      */
-    findEdgePath(starts: InstructionNode[], end: (node: InstructionNode) => boolean, getNeighbors: (node: InstructionNode) => InstructionNode[]): InstructionNode[] | null {
+    findEdgePath(starts: InstructionNode[], end: (node: InstructionNode) => boolean, blocked: Set<InstructionNode>): InstructionNode[] | null {
         if (!starts.length) return null;
 
         const sources = new Map<InstructionNode, InstructionNode | null>();
@@ -426,7 +324,8 @@ export class PointerChecker {
         const queue: InstructionNode[] = [];
 
         for (const start of starts) {
-            for (const neighbor of getNeighbors(start)) {
+            for (const neighbor of start.previous) {
+                if (blocked.has(neighbor)) continue;
                 if (!sources.has(neighbor)) {
                     startSource.set(neighbor, start);
                     sources.set(neighbor, null);
@@ -435,8 +334,8 @@ export class PointerChecker {
             }
         }
 
-        while (queue.length) {
-            const current = queue.shift()!;
+        for (let i = 0; i < queue.length; i++) {
+            const current = queue[i];
             if (end(current)) {
                 const result: InstructionNode[] = [];
                 let node: InstructionNode | undefined = current;
@@ -448,7 +347,8 @@ export class PointerChecker {
                 return result;
             }
 
-            for (const neighbor of getNeighbors(current)) {
+            for (const neighbor of current.previous) {
+                if (blocked.has(neighbor)) continue;
                 if (!sources.has(neighbor)) {
                     sources.set(neighbor, current);
                     queue.push(neighbor);
@@ -457,5 +357,169 @@ export class PointerChecker {
         }
 
         return null;
+    }
+
+    private pointerIndex(pointer: PointerType): number {
+        const index = PointerType.INDEX.get(pointer);
+        if (index == null) {
+            throw new Error(`Unknown pointer type: ${pointer.representation}`);
+        }
+        return index;
+    }
+
+    private addPointer(target: InstructionNode[][], pointer: PointerType | null, node: InstructionNode): void {
+        if (!pointer) return;
+        target[this.pointerIndex(pointer)].push(node);
+    }
+
+    private addPointers(target: InstructionNode[][], pointers: Set<PointerType> | undefined, node: InstructionNode): void {
+        if (!pointers || pointers.size === 0) return;
+        for (const pointer of pointers) {
+            target[this.pointerIndex(pointer)].push(node);
+        }
+    }
+
+    private getAnalysis(script: RuneScript): ScriptPointerAnalysis {
+        const cached = this.scriptAnalyses.get(script.symbol);
+        if (cached) return cached;
+
+        const graph = this.getGraph(script);
+        if (this.pendingAnalyses.has(script.symbol)) {
+            return this.createEmptyAnalysis(graph);
+        }
+
+        this.pendingAnalyses.add(script.symbol);
+        const pointerCount = PointerType.ALL.length;
+        const required: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const set: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const corrupted: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const returns: InstructionNode[] = [];
+
+        try {
+            for (const node of graph) {
+                if (node instanceof PointerInstructionNode) {
+                    this.addPointers(set, node.set, node);
+                    continue;
+                }
+
+                const inst = node.instruction;
+                if (!inst) continue;
+
+                if (inst.opcode === Opcode.Return) {
+                    returns.push(node);
+                }
+
+                switch (inst.opcode) {
+                    case Opcode.Command: {
+                        const command = inst.operand as ScriptSymbol;
+                        const pointers = this.commandPointers.get(command.name);
+                        if (pointers) {
+                            this.addPointers(required, pointers.required, node);
+                            this.addPointers(corrupted, pointers.corrupted, node);
+                            if (!pointers.conditionalSet) {
+                                this.addPointers(set, pointers.set, node);
+                            }
+                        }
+                        break;
+                    }
+
+                    case Opcode.Gosub:
+                    case Opcode.Jump: {
+                        const symbol = inst.operand as ScriptSymbol;
+                        const pointers = this.getPointers(symbol);
+                        this.addPointers(required, pointers.required, node);
+                        this.addPointers(set, pointers.set, node);
+                        this.addPointers(corrupted, pointers.corrupted, node);
+                        break;
+                    }
+
+                    case Opcode.PushVar: {
+                        const symbol = inst.operand as BasicSymbol;
+                        const type = symbol.type;
+                        if (type instanceof VarPlayerType || type instanceof VarBitType) {
+                            this.addPointer(required, PointerType.ACTIVE_PLAYER, node);
+                        } else if (type instanceof VarNpcType) {
+                            this.addPointer(required, PointerType.ACTIVE_NPC, node);
+                        }
+                        break;
+                    }
+
+                    case Opcode.PopVar: {
+                        const symbol = inst.operand as BasicSymbol;
+                        const type = symbol.type;
+                        if (type instanceof VarPlayerType || type instanceof VarBitType) {
+                            this.addPointer(required, symbol.isProtected ? PointerType.P_ACTIVE_PLAYER : PointerType.ACTIVE_PLAYER, node);
+                        } else if (type instanceof VarNpcType) {
+                            this.addPointer(required, PointerType.ACTIVE_NPC, node);
+                        }
+                        break;
+                    }
+
+                    case Opcode.PushVar2: {
+                        const symbol = inst.operand as BasicSymbol;
+                        const type = symbol.type;
+                        if (type instanceof VarPlayerType || type instanceof VarBitType) {
+                            this.addPointer(required, PointerType.ACTIVE_PLAYER2, node);
+                        } else if (type instanceof VarNpcType) {
+                            this.addPointer(required, PointerType.ACTIVE_NPC2, node);
+                        }
+                        break;
+                    }
+
+                    case Opcode.PopVar2: {
+                        const symbol = inst.operand as BasicSymbol;
+                        const type = symbol.type;
+                        if (type instanceof VarPlayerType || type instanceof VarBitType) {
+                            this.addPointer(required, symbol.isProtected ? PointerType.P_ACTIVE_PLAYER2 : PointerType.ACTIVE_PLAYER2, node);
+                        } else if (type instanceof VarNpcType) {
+                            this.addPointer(required, PointerType.ACTIVE_NPC2, node);
+                        }
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            }
+        } finally {
+            this.pendingAnalyses.delete(script.symbol);
+        }
+
+        const analysis: ScriptPointerAnalysis = {
+            graph,
+            required,
+            set,
+            corrupted,
+            setNodes: set.map(nodes => new Set(nodes)),
+            corruptedNodes: corrupted.map(nodes => new Set(nodes)),
+            returns
+        };
+
+        this.scriptAnalyses.set(script.symbol, analysis);
+        return analysis;
+    }
+
+    private createEmptyAnalysis(graph: InstructionNode[]): ScriptPointerAnalysis {
+        const pointerCount = PointerType.ALL.length;
+        const required: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const set: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const corrupted: InstructionNode[][] = Array.from({ length: pointerCount }, () => []);
+        const returns: InstructionNode[] = [];
+
+        for (const node of graph) {
+            if (node.instruction?.opcode === Opcode.Return) {
+                returns.push(node);
+            }
+        }
+
+        return {
+            graph,
+            required,
+            set,
+            corrupted,
+            setNodes: set.map(nodes => new Set(nodes)),
+            corruptedNodes: corrupted.map(nodes => new Set(nodes)),
+            returns
+        };
     }
 }

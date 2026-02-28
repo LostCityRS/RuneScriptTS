@@ -23,8 +23,19 @@ export class GraphGenerator {
         const nodeCache = new Map<Instruction<any>, InstructionNode>();
         const nodes: InstructionNode[] = [];
 
+        const labelToBlock = new Map<Label, Block>();
+        const blockIndex = new Map<Block, number>();
+        const firstValidByBlock = new Map<Block, Instruction<any> | null>();
+
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            blockIndex.set(block, i);
+            labelToBlock.set(block.label, block);
+            firstValidByBlock.set(block, this.firstValid(block.instructions));
+        }
+
         const start = new InstructionNode(null);
-        start.addNext(this.firstInstruction(blocks[0], nodeCache, blocks));
+        start.addNext(this.firstInstruction(blocks[0], nodeCache, blocks, blockIndex, firstValidByBlock));
         nodes.push(start);
 
         let potentialConditionalPointer = false;
@@ -97,7 +108,7 @@ export class GraphGenerator {
 
                 if (potentialConditionalPointer && instruction.opcode === Opcode.BranchEquals && this.checkConditional(block.instructions, instructionIdx)) {
                     const label = instruction.operand as Label;
-                    const jumpBlock = blocks.find(b => b.label === label);
+                    const jumpBlock = labelToBlock.get(label);
                     if (!jumpBlock) {
                         throw new Error('Unable to find block.');
                     }
@@ -114,17 +125,17 @@ export class GraphGenerator {
                     nodes.push(setPointerNode);
 
                     node.addNext(setPointerNode);
-                    setPointerNode.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks));
+                    setPointerNode.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks, blockIndex, firstValidByBlock));
 
                     potentialConditionalPointer = false;
                 } else if (BRANCH_OPCODES.has(instruction.opcode)) {
                     const label = instruction.operand as Label;
-                    const jumpBlock = blocks.find(b => b.label === label);
+                    const jumpBlock = labelToBlock.get(label);
                     if (!jumpBlock) {
                         throw new Error('Unable to find block.');
                     }
 
-                    node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks));
+                    node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks, blockIndex, firstValidByBlock));
                 } else if (instruction.opcode === Opcode.Switch) {
                     const table = instruction.operand as SwitchTable;
 
@@ -133,12 +144,12 @@ export class GraphGenerator {
                             continue;
                         }
 
-                        const jumpBlock = blocks.find(b => b.label === c.label);
+                        const jumpBlock = labelToBlock.get(c.label);
                         if (!jumpBlock) {
                             throw new Error('Unable to find block.');
                         }
 
-                        node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks));
+                        node.addNext(this.firstInstruction(jumpBlock, nodeCache, blocks, blockIndex, firstValidByBlock));
                     }
                 }
 
@@ -179,15 +190,24 @@ export class GraphGenerator {
         return false;
     }
 
-    private firstInstruction(block: Block, cache: Map<Instruction<any>, InstructionNode>, blocks: Block[]): InstructionNode {
-        const first = this.firstValid(block.instructions);
+    private firstInstruction(
+        block: Block,
+        cache: Map<Instruction<any>, InstructionNode>,
+        blocks: Block[],
+        blockIndex: Map<Block, number>,
+        firstValidByBlock: Map<Block, Instruction<any> | null>
+    ): InstructionNode {
+        const first = firstValidByBlock.get(block);
         if (first) {
             return this.getOrCreate(cache, first);
         }
 
-        const startIdx = blocks.indexOf(block);
+        const startIdx = blockIndex.get(block);
+        if (startIdx == null) {
+            throw new Error('Block index not found.');
+        }
         for (let i = startIdx; i < blocks.length; i++) {
-            const inst = this.firstValid(blocks[i].instructions);
+            const inst = firstValidByBlock.get(blocks[i]);
             if (inst) {
                 return this.getOrCreate(cache, inst);
             }

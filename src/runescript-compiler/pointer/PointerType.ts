@@ -24,6 +24,8 @@ export class PointerType {
 
     public static readonly ALL: PointerType[] = Object.values(PointerType).filter((v): v is PointerType => v instanceof PointerType);
 
+    public static readonly INDEX: Map<PointerType, number> = new Map(PointerType.ALL.map((pointer, index) => [pointer, index]));
+
     private static readonly NAME_TO_TYPE: Record<string, PointerType> = PointerType.ALL.reduce(
         (acc, type) => {
             acc[type.getName().toLowerCase()] = type;
