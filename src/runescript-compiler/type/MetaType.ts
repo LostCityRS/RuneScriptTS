@@ -64,7 +64,7 @@ export class MetaType implements MainType {
         constructor(inner: MainType) {
             super('type');
             this.inner = inner;
-            this.representation = `type<${inner.representation}>`;
+            this.representation = inner == MetaType.Any ? 'type' : `type<${inner.representation}>`;
         }
     };
 

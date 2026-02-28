@@ -1,4 +1,5 @@
 import { BaseVarType } from '#/runescript-compiler/type/BaseVarType.js';
+import { MetaType } from '#/runescript-compiler/type/MetaType.js';
 import { Type } from '#/runescript-compiler/type/Type.js';
 import { MutableOptionsType, TypeOptions } from '#/runescript-compiler/type/TypeOptions.js';
 
@@ -12,7 +13,7 @@ export class ParamType implements WrappedType {
     readonly options: TypeOptions;
 
     constructor(public readonly inner: Type) {
-        this.representation = `param<${inner.representation}>`;
+        this.representation = inner == MetaType.Any ? 'param' : `param<${inner.representation}>`;
         this.options = new MutableOptionsType({
             allowSwitch: false,
             allowArray: false,
