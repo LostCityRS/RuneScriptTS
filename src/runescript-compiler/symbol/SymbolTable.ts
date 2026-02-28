@@ -64,17 +64,27 @@ export class SymbolTable {
      */
     findAll<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): T[] {
         const results: T[] = [];
+        for (const symbol of this.findAllIter(name, type)) {
+            results.push(symbol);
+        }
+        return results;
+    }
+
+    /**
+     * Iterates all symbols with the given name,
+     * optionally restricted by kind.
+     */
+    *findAllIter<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): IterableIterator<T> {
         for (const [symbolType, table] of this.symbols.entries()) {
             const key = this.normalizeName(symbolType, name);
             const symbol = table.get(key);
             if (symbol && (!type || symbol instanceof type)) {
-                results.push(symbol as T);
+                yield symbol as T;
             }
         }
         if (this.parent) {
-            results.push(...this.parent.findAll(name, type));
+            yield* this.parent.findAllIter(name, type);
         }
-        return results;
     }
 
     /**

@@ -834,7 +834,13 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitGameVariableExpression(gameVariableExpression: GameVariableExpression): void {
         const name = gameVariableExpression.name.text;
-        const symbol = this.rootTable.findAll<BasicSymbol>(name).find(sym => sym.type instanceof GameVarType);
+        let symbol: BasicSymbol | null = null;
+        for (const sym of this.rootTable.findAllIter<BasicSymbol>(name, BasicSymbol)) {
+            if (sym.type instanceof GameVarType) {
+                symbol = sym;
+                break;
+            }
+        }
 
         if (!symbol || !(symbol.type instanceof GameVarType)) {
             gameVariableExpression.type = MetaType.Error;
@@ -1080,7 +1086,7 @@ export class TypeChecking extends AstVisitor<void> {
         let symbol: RuneScriptSymbol | null = null;
         let symbolType: Type | null = null;
 
-        for (const temp of this.table.findAll<RuneScriptSymbol>(name)) {
+        for (const temp of this.table.findAllIter<RuneScriptSymbol>(name)) {
             const tempType = this.symbolToType(temp);
             if (!tempType) continue;
 
