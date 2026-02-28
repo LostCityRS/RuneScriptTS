@@ -938,6 +938,8 @@ export class TypeChecking extends AstVisitor<void> {
             integerLiteral.type = PrimitiveType.INT;
         } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
             integerLiteral.reference = this.resolveSymbol(integerLiteral, integerLiteral.value.toString(), hint);
+        } else if (hint == PrimitiveType.BOOLEAN && (integerLiteral.value == 0 || integerLiteral.value == 1)) {
+            integerLiteral.type = PrimitiveType.BOOLEAN;
         } else {
             integerLiteral.type = PrimitiveType.INT;
         }
