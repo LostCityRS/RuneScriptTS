@@ -16,7 +16,7 @@ export class SymbolTable {
 
     private normalizeName(type: SymbolType<any>, name: string): string {
         if (type.kind === 'Basic') {
-            return name.toLowerCase();
+            return name.toLowerCase().replace(/\s+/g, '_');
         }
         return name;
     }
