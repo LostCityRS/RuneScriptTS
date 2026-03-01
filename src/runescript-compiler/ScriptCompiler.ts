@@ -22,6 +22,8 @@ import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
 import { MacroProcessor, MacroRegistry, MacroExpansionSpan } from '#/runescript-compiler/preprocess/MacroProcessor.js';
 
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+
 import { ScriptRegistration } from '#/runescript-compiler/semantics/ScriptRegistration.js';
 import { TypeChecking } from '#/runescript-compiler/semantics/TypeChecking.js';
 
@@ -92,12 +94,17 @@ export class ScriptCompiler {
      */
     public diagnosticsHandler: DiagnosticsHandler = ScriptCompiler.DEFAULT_DIAGNOSTICS_HANDLER;
 
+    protected features: StrictFeatureLevel;
+
     constructor(
         sourcePaths: string[],
         excludePaths: string[],
         private readonly scriptWriter: ScriptWriter,
-        private readonly commandPointers: Map<string, PointerHolder>
+        private readonly commandPointers: Map<string, PointerHolder>,
+        features: StrictFeatureLevel = {}
     ) {
+        this.features = features;
+
         // Normalize paths.
         this.sourcePaths = sourcePaths.map(p => this.normalizePath(p));
         this.excludePaths = excludePaths.map(p => this.normalizePath(p));
@@ -265,15 +272,18 @@ export class ScriptCompiler {
 
         const macroRegistry = new MacroRegistry();
         const macroExpansionMap = new Map<string, MacroExpansionSpan[]>();
-        this.attachMacroLookup(macroExpansionMap, macroRegistry);
+        if (this.features.macros !== false) {
+            this.attachMacroLookup(macroExpansionMap, macroRegistry);
 
-        for (const sourcePath of this.sourcePaths) {
-            const files = this.walkTopDown(sourcePath);
-            for (const file of files) {
-                if (!file.endsWith('.macro')) {
-                    continue;
+            for (const sourcePath of this.sourcePaths) {
+                const files = this.walkTopDown(sourcePath);
+                for (const file of files) {
+                    if (!file.endsWith('.macro')) {
+                        continue;
+                    }
+
+                    MacroProcessor.parseMacroFile(file, macroRegistry, diagnostics);
                 }
-                MacroProcessor.parseMacroFile(file, macroRegistry, diagnostics);
             }
         }
 
@@ -291,15 +301,24 @@ export class ScriptCompiler {
                 //this.logger.debug(`Attempting to parse: ${file}.`);
 
                 const errorListener = new ParserErrorListener(file, diagnostics);
-                const rawSource = fs.readFileSync(file, 'utf8');
-                const expandedResult = MacroProcessor.expandSourceWithMap(rawSource, macroRegistry, diagnostics, file);
-                const expanded = expandedResult.text;
-                macroExpansionMap.set(path.resolve(file), expandedResult.spans);
+                let node: ScriptFile | null = null;
 
-                const stream = CharStream.fromString(expanded);
-                stream.name = file;
+                if (this.features.macros !== false) {
+                    // macros enabled: need to expand them
+                    const rawSource = fs.readFileSync(file, 'utf8');
+                    const expandedResult = MacroProcessor.expandSourceWithMap(rawSource, macroRegistry, diagnostics, file);
+                    const expanded = expandedResult.text;
+                    macroExpansionMap.set(path.resolve(file), expandedResult.spans);
 
-                const node: ScriptFile | null = ScriptParser.invokeParser(stream, parser => parser.scriptFile(), errorListener) as ScriptFile | null;
+                    const stream = CharStream.fromString(expanded);
+                    stream.name = file;
+
+                    node = ScriptParser.invokeParser(stream, parser => parser.scriptFile(), errorListener) as ScriptFile | null;
+                } else {
+                    // macros disabled
+                    node = ScriptParser.createScriptFile(file, errorListener);
+                }
+
                 if (node) {
                     fileNodes.push(node);
                 }
@@ -325,7 +344,7 @@ export class ScriptCompiler {
         // this.logger.debug("Starting script registration.");
         // const scriptRegistrationStart = performance.now();
 
-        const scriptRegistration = new ScriptRegistration(this.types, this.triggers, this.rootTable, diagnostics);
+        const scriptRegistration = new ScriptRegistration(this.types, this.triggers, this.rootTable, diagnostics, this.features);
         for (const file of files) {
             // const fileStart = performance.now();
             file.accept(scriptRegistration);
@@ -333,14 +352,14 @@ export class ScriptCompiler {
             // this.logger.debug(`Registered scripts in ${file.source.name} in ${fileTime}ms.`);
         }
 
-        // const preTypeCheckingTime = (performance.now() - scriptRegistrationStart).toFixed(2);
-        // this.logger.debug(`Finished script registration in ${preTypeCheckingTime}ms.`);
+        // const scriptRegistrationTime = (performance.now() - scriptRegistrationStart).toFixed(2);
+        // this.logger.debug(`Finished script registration in ${scriptRegistrationTime}ms.`);
 
         // Type check: This does all major type checking.
         // this.logger.debug("Starting type checking.");
         // const typeStart = performance.now();
 
-        const typeChecking = new TypeChecking(this.types, this.triggers, this.rootTable, this.dynamicCommandHandlers, diagnostics);
+        const typeChecking = new TypeChecking(this.types, this.triggers, this.rootTable, this.dynamicCommandHandlers, diagnostics, this.features);
         for (const file of files) {
             // const fileStart = performance.now();
             file.accept(typeChecking);
@@ -396,7 +415,7 @@ export class ScriptCompiler {
 
         const diagnostics = new Diagnostics();
 
-        const pointerChecker = new PointerChecker(diagnostics, scripts, this.commandPointers);
+        const pointerChecker = new PointerChecker(diagnostics, scripts, this.commandPointers, this.features);
         // this.logger.debug("Starting pointer checking.");
         // const pointerCheckStart = performance.now();
         pointerChecker.run();

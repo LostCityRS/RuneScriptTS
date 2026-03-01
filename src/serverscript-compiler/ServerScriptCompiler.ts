@@ -1,5 +1,7 @@
 import { ScriptCompiler } from '#/runescript-compiler/ScriptCompiler.js';
 
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
 import { MetaType } from '#/runescript-compiler/type/MetaType.js';
@@ -38,21 +40,32 @@ export class ServerScriptCompiler extends ScriptCompiler {
     private readonly symbols: Record<string, CompilerTypeInfo>;
     private readonly mapper: SymbolMapper;
 
-    constructor(sourcePaths: string[], excludePaths: string[], scriptWriter: ScriptWriter, commandPointers: Map<string, PointerHolder>, symbols: Record<string, CompilerTypeInfo>, mapper: SymbolMapper) {
-        super(sourcePaths, excludePaths, scriptWriter, commandPointers);
+    constructor(
+        sourcePaths: string[],
+        excludePaths: string[],
+        scriptWriter: ScriptWriter,
+        commandPointers: Map<string, PointerHolder>,
+        symbols: Record<string, CompilerTypeInfo>,
+        mapper: SymbolMapper,
+        features: StrictFeatureLevel = {}
+    ) {
+        super(sourcePaths, excludePaths, scriptWriter, commandPointers, features);
         this.symbols = symbols;
         this.mapper = mapper;
+        this.features = features;
     }
 
     setup(): void {
         this.triggers.registerAll(ServerTriggerType);
-        this.types.registerAll(ScriptVarType);
+        this.registerScriptVarTypes();
 
         this.types.changeOptions('long', opts => {
             opts.allowDeclaration = false;
         });
 
-        this.types.register('proc', new MetaType.Script(ServerTriggerType.PROC, MetaType.Unit, MetaType.Unit));
+        if (this.features.procs !== false) {
+            this.types.register('proc', new MetaType.Script(ServerTriggerType.PROC, MetaType.Unit, MetaType.Unit));
+        }
         this.types.register('label', new MetaType.Script(ServerTriggerType.LABEL, MetaType.Unit, MetaType.Nothing));
 
         // Allow assignment of 'namedobj' to 'obj'.
@@ -67,12 +80,16 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.types.register('queue', new MetaType.Script(ServerTriggerType.QUEUE, MetaType.Any, MetaType.Nothing));
         this.addDynamicCommandHandler('queue', new QueueCommandHandler(this.types.find('queue')));
         this.addDynamicCommandHandler('.queue', new QueueCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler('queue*', new QueueVarArgCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler('.queue*', new QueueVarArgCommandHandler(this.types.find('queue')));
+        if (this.features.queueTyped !== false) {
+            this.addDynamicCommandHandler('queue*', new QueueVarArgCommandHandler(this.types.find('queue')));
+            this.addDynamicCommandHandler('.queue*', new QueueVarArgCommandHandler(this.types.find('queue')));
+        }
         this.addDynamicCommandHandler('longqueue', new LongQueueCommandHandler(this.types.find('queue')));
         this.addDynamicCommandHandler('.longqueue', new LongQueueCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler('longqueue*', new LongQueueVarArgCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler('.longqueue*', new LongQueueVarArgCommandHandler(this.types.find('queue')));
+        if (this.features.queueTyped !== false) {
+            this.addDynamicCommandHandler('longqueue*', new LongQueueVarArgCommandHandler(this.types.find('queue')));
+            this.addDynamicCommandHandler('.longqueue*', new LongQueueVarArgCommandHandler(this.types.find('queue')));
+        }
 
         this.types.register('timer', new MetaType.Script(ServerTriggerType.TIMER, MetaType.Any, MetaType.Nothing));
         this.addDynamicCommandHandler('settimer', new TimerCommandHandler(this.types.find('timer')));
@@ -125,44 +142,62 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.addProtectedSymLoaderWithSupplier('varbit', sub => new VarBitType(sub));
         this.addDynamicCommandHandler('weakqueue', new QueueCommandHandler(this.types.find('queue')));
         this.addDynamicCommandHandler(`.weakqueue`, new QueueCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler(`weakqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler(`.weakqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+        if (this.features.queueTyped !== false) {
+            this.addDynamicCommandHandler(`weakqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+            this.addDynamicCommandHandler(`.weakqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+        }
 
-        // Late 2004/early 2005.
+        // Late 2004/early 2005
         this.addDynamicCommandHandler('strongqueue', new QueueCommandHandler(this.types.find('queue')));
         this.addDynamicCommandHandler(`.strongqueue`, new QueueCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler(`strongqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
-        this.addDynamicCommandHandler(`.strongqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+        if (this.features.queueTyped !== false) {
+            this.addDynamicCommandHandler(`strongqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+            this.addDynamicCommandHandler(`.strongqueue*`, new QueueVarArgCommandHandler(this.types.find('queue')));
+        }
 
         // 2005
-        this.addDynamicCommandHandler('enum', new EnumCommandHandler());
-        this.addSymLoader('enum', ScriptVarType.ENUM);
-        // TODO: Mes type alias.
+        if (this.features.enums !== false) {
+            this.addDynamicCommandHandler('enum', new EnumCommandHandler());
+            this.addSymLoader('enum', ScriptVarType.ENUM);
+        }
 
         // 2006
         // TODO: 'runclientscipt' command handler.
 
         // 2009
-        this.addDynamicCommandHandler('struct_param', new ParamCommandHandler(ScriptVarType.STRUCT));
-        this.addSymLoader('struct', ScriptVarType.STRUCT);
+        if (this.features.structs !== false) {
+            this.addDynamicCommandHandler('struct_param', new ParamCommandHandler(ScriptVarType.STRUCT));
+            this.addSymLoader('struct', ScriptVarType.STRUCT);
+        }
         this.types.register('softtimer', new MetaType.Script(ServerTriggerType.SOFTTIMER, MetaType.Any, MetaType.Nothing));
         this.addDynamicCommandHandler('softtimer', new TimerCommandHandler(this.types.find('softtimer')));
         this.addDynamicCommandHandler('.softtimer', new TimerCommandHandler(this.types.find('softtimer')));
 
-        // 2013 RS / 2018 OSRS
-        this.types.register('dbcolumn', new DbColumnType(MetaType.Any));
-        this.addDynamicCommandHandler('db_find', new DbFindCommandHandler(false));
-        this.addDynamicCommandHandler('db_find_refine', new DbFindCommandHandler(false));
-        this.addDynamicCommandHandler('db_find_with_count', new DbFindCommandHandler(true));
-        this.addDynamicCommandHandler('db_find_refine_with_count', new DbFindCommandHandler(true));
-        this.addDynamicCommandHandler('db_getfield', new DbGetFieldCommandHandler());
-        this.addSymLoaderWithSupplier('dbcolumn', sub => new DbColumnType(sub));
-        this.addSymLoader('dbrow', ScriptVarType.DBROW);
-        this.addSymLoader('dbtable', ScriptVarType.DBTABLE);
+        // 2012 RS / 2018 OSRS
+        if (this.features.dbtables !== false) {
+            this.types.register('dbcolumn', new DbColumnType(MetaType.Any));
+            this.addDynamicCommandHandler('db_find', new DbFindCommandHandler(false));
+            this.addDynamicCommandHandler('db_find_refine', new DbFindCommandHandler(false));
+            this.addDynamicCommandHandler('db_find_with_count', new DbFindCommandHandler(true));
+            this.addDynamicCommandHandler('db_find_refine_with_count', new DbFindCommandHandler(true));
+            this.addDynamicCommandHandler('db_getfield', new DbGetFieldCommandHandler());
+            this.addSymLoaderWithSupplier('dbcolumn', sub => new DbColumnType(sub));
+            this.addSymLoader('dbrow', ScriptVarType.DBROW);
+            this.addSymLoader('dbtable', ScriptVarType.DBTABLE);
+        }
 
         // Debugging
         this.addDynamicCommandHandler('dump', new DumpCommandHandler());
         this.addDynamicCommandHandler('script', new ScriptCommandHandler());
+    }
+
+    private registerScriptVarTypes(): void {
+        for (const type of ScriptVarType.ALL) {
+            if (this.features.enums === false && type === ScriptVarType.ENUM) continue;
+            if (this.features.structs === false && type === ScriptVarType.STRUCT) continue;
+            if (this.features.dbtables === false && (type === ScriptVarType.DBROW || type === ScriptVarType.DBTABLE)) continue;
+            this.types.register(type);
+        }
     }
 
     private addSymConstantLoaders(): void {

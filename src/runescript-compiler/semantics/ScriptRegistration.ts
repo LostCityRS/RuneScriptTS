@@ -17,6 +17,8 @@ import { TupleType } from '#/runescript-compiler/type/TupleType.js';
 import { Type } from '#/runescript-compiler/type/Type.js';
 import { TypeManager } from '#/runescript-compiler/type/TypeManager.js';
 
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+
 import { AstVisitor } from '#/runescript-parser/ast/AstVisitor.js';
 import { Node } from '#/runescript-parser/ast/Node.js';
 import { Parameter } from '#/runescript-parser/ast/Parameter.js';
@@ -52,13 +54,29 @@ export class ScriptRegistration extends AstVisitor<void> {
         private readonly typeManager: TypeManager,
         private readonly triggerManager: TriggerManager,
         private readonly rootTable: SymbolTable,
-        private readonly diagnostics: Diagnostics
+        private readonly diagnostics: Diagnostics,
+        private readonly features: StrictFeatureLevel = {}
     ) {
         super();
         this.categoryType = this.typeManager.findOrNull('category');
-
         // Add a base table for the file
         this.tables.unshift(this.rootTable.createSubTable());
+    }
+
+    private isDisabledTypeName(typeText: string): boolean {
+        const text = typeText.toLowerCase();
+        const baseText = text.endsWith('array') ? text.substring(0, text.length - 5) : text;
+        if (this.features.booleans === false && baseText === PrimitiveType.BOOLEAN.representation) return true;
+        if (this.features.enums === false && baseText === 'enum') return true;
+        if (this.features.structs === false && baseText === 'struct') return true;
+        if (this.features.dbtables === false && (baseText === 'dbtable' || baseText === 'dbrow' || baseText === 'dbcolumn')) return true;
+        return false;
+    }
+
+    private isDisabledTrigger(trigger: TriggerType | null | undefined): boolean {
+        if (!trigger) return false;
+        if (this.features.procs === false && trigger.identifier === 'proc') return true;
+        return false;
     }
 
     private isTypeMode(mode: SubjectMode): mode is { type: Type; category: boolean; global: boolean } {
@@ -93,6 +111,9 @@ export class ScriptRegistration extends AstVisitor<void> {
             script.trigger.reportError(this.diagnostics, DiagnosticMessage.SCRIPT_TRIGGER_INVALID, script.trigger.text);
         } else {
             script.triggerType = trigger;
+            if (this.isDisabledTrigger(trigger)) {
+                script.trigger.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TRIGGER, trigger.identifier);
+            }
         }
 
         if (script.isStar && trigger !== CommandTrigger) {
@@ -122,9 +143,15 @@ export class ScriptRegistration extends AstVisitor<void> {
         if (returnTokens && returnTokens.length > 0) {
             const returns: Type[] = [];
             for (const token of returnTokens) {
-                const type = this.typeManager.findOrNull(token.text);
-                if (!type) {
-                    token.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, token.text);
+                let type: Type | null = null;
+                if (this.isDisabledTypeName(token.text)) {
+                    token.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TYPE, token.text);
+                    type = MetaType.Error;
+                } else {
+                    type = this.typeManager.findOrNull(token.text);
+                    if (!type) {
+                        token.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, token.text);
+                    }
                 }
                 returns.push(type ?? MetaType.Error);
             }
@@ -137,7 +164,7 @@ export class ScriptRegistration extends AstVisitor<void> {
         // Verify returns match what the trigger type allows
         this.checkScriptReturns(trigger, script);
 
-        if (trigger) {
+        if (trigger && !this.isDisabledTrigger(trigger)) {
             // Attempt to insert the script into the root table and error if failed.
             const scriptSymbol = new ServerScriptSymbol(trigger, script.nameString, script.parameterType, script.returnType);
 
@@ -379,7 +406,17 @@ export class ScriptRegistration extends AstVisitor<void> {
     override visitParameter(parameter: Parameter): void {
         const name = parameter.name.text;
         const typeText = parameter.typeToken.text;
-        const type = this.typeManager.findOrNull(typeText, true);
+        let type: Type | null = null;
+
+        if (this.features.procs === false) {
+            parameter.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_LOCAL);
+            type = MetaType.Error;
+        } else if (this.isDisabledTypeName(typeText)) {
+            parameter.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TYPE, typeText);
+            type = MetaType.Error;
+        } else {
+            type = this.typeManager.findOrNull(typeText, true);
+        }
 
         // Type isn't valid, report the error.
         if (!type) {

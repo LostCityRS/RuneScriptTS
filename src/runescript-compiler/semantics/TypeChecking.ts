@@ -4,6 +4,7 @@ import { RuneScriptLexer } from '#/antlr/RuneScriptLexer.js';
 import { RuneScriptParser } from '#/antlr/RuneScriptParser.js';
 
 import { ParserErrorListener } from '#/runescript-compiler/ParserErrorListener.js';
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
 
 import { DynamicCommandHandler } from '#/runescript-compiler/configuration/command/DynamicCommandHandler.js';
 import { TypeCheckingContext } from '#/runescript-compiler/configuration/command/TypeCheckingContext.js';
@@ -83,6 +84,10 @@ import { AstBuilder } from '#/runescript-parser/parser/AstBuilder.js';
  * is run beforehand.
  */
 export class TypeChecking extends AstVisitor<void> {
+    private static readonly DISABLED_ENUM_COMMANDS = new Set(['enum']);
+    private static readonly DISABLED_STRUCT_COMMANDS = new Set(['struct_param']);
+    private static readonly DISABLED_DB_COMMANDS = new Set(['db_find', 'db_find_refine', 'db_find_with_count', 'db_find_refine_with_count', 'db_getfield']);
+
     /**
      * The trigger that represents 'command'.
      */
@@ -124,7 +129,8 @@ export class TypeChecking extends AstVisitor<void> {
         protected readonly triggerManager: TriggerManager,
         protected readonly rootTable: SymbolTable,
         protected readonly dynamicCommands: Map<string, DynamicCommandHandler>,
-        protected readonly diagnostics: Diagnostics
+        protected readonly diagnostics: Diagnostics,
+        private readonly features: StrictFeatureLevel = {}
     ) {
         super();
         this.commandTrigger = this.triggerManager.find('command');
@@ -136,6 +142,23 @@ export class TypeChecking extends AstVisitor<void> {
 
         this.constantsBeingEvaluated = new Set();
         this.constantExpressionCache = new Map();
+    }
+
+    private isDisabledTypeName(typeText: string): boolean {
+        const text = typeText.toLowerCase();
+        const baseText = text.endsWith('array') ? text.substring(0, text.length - 5) : text;
+        if (this.features.booleans === false && baseText === PrimitiveType.BOOLEAN.representation) return true;
+        if (this.features.enums === false && baseText === 'enum') return true;
+        if (this.features.structs === false && baseText === 'struct') return true;
+        if (this.features.dbtables === false && (baseText === 'dbtable' || baseText === 'dbrow' || baseText === 'dbcolumn')) return true;
+        return false;
+    }
+
+    private isDisabledCommandName(name: string): boolean {
+        if (this.features.enums === false && TypeChecking.DISABLED_ENUM_COMMANDS.has(name)) return true;
+        if (this.features.structs === false && TypeChecking.DISABLED_STRUCT_COMMANDS.has(name)) return true;
+        if (this.features.dbtables === false && TypeChecking.DISABLED_DB_COMMANDS.has(name)) return true;
+        return false;
     }
 
     /**
@@ -355,14 +378,27 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitDeclarationStatement(declarationStatement: DeclarationStatement): void {
+        if (this.features.procs === false) {
+            declarationStatement.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_LOCAL);
+            return;
+        }
+
+        if (this.features.topLevelDefOnly && !(declarationStatement.parent instanceof Script)) {
+            declarationStatement.reportError(this.diagnostics, DiagnosticMessage.LOCAL_DECLARATION_NOT_TOPLEVEL);
+            return;
+        }
+
         const typeName = declarationStatement.typeToken.text.replace(/^def_/, '');
         const name = declarationStatement.name.text;
-        const type = this.typeManager.findOrNull(typeName);
+        let type = this.typeManager.findOrNull(typeName);
 
         // Notify invalid type.
-        if (!type) {
+        if (this.isDisabledTypeName(typeName)) {
+            declarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TYPE, typeName);
+            type = MetaType.Error;
+        } else if (!type) {
             declarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
-        } else if (type.options && !type.options.allowDeclaration) {
+        } else if (type !== MetaType.Error && type.options && !type.options.allowDeclaration) {
             declarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_DECLARATION_INVALID_TYPE, type.representation);
         }
 
@@ -385,16 +421,29 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitArrayDeclarationStatement(arrayDeclarationStatement: ArrayDeclarationStatement): void {
+        if (this.features.procs === false) {
+            arrayDeclarationStatement.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_LOCAL);
+            return;
+        }
+
+        if (this.features.topLevelDefOnly && !(arrayDeclarationStatement.parent instanceof Script)) {
+            arrayDeclarationStatement.reportError(this.diagnostics, DiagnosticMessage.LOCAL_DECLARATION_NOT_TOPLEVEL);
+            return;
+        }
+
         const typeName = arrayDeclarationStatement.typeToken.text.replace(/^def_/, '');
         const name = arrayDeclarationStatement.name.text;
         let type = this.typeManager.findOrNull(typeName);
 
         // Notify invalid type.
-        if (!type) {
+        if (this.isDisabledTypeName(typeName)) {
+            arrayDeclarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TYPE, typeName);
+            type = MetaType.Error;
+        } else if (!type) {
             arrayDeclarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.GENERIC_INVALID_TYPE, typeName);
-        } else if (type.options && !type.options.allowDeclaration) {
+        } else if (type !== MetaType.Error && type.options && !type.options.allowDeclaration) {
             arrayDeclarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_DECLARATION_INVALID_TYPE, type.representation);
-        } else if (type.options && !type.options.allowArray) {
+        } else if (type !== MetaType.Error && type.options && !type.options.allowArray) {
             arrayDeclarationStatement.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_ARRAY_INVALID_TYPE, type.representation);
         }
 
@@ -487,10 +536,21 @@ export class TypeChecking extends AstVisitor<void> {
      * Verified the binary expression is a valid condition operation.
      */
     private checkBinaryConditionOperation(left: Expression, operator: Token, right: Expression): boolean {
+        const opText = operator.text;
+        if (opText === '&' && this.features.logicalAnd === false) {
+            operator.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_OPERATOR, opText);
+            return false;
+        }
+
+        if ((opText === '<=' || opText === '>=') && this.features.relationalEquals === false) {
+            operator.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_OPERATOR, opText);
+            return false;
+        }
+
         // Some operators expect a specific type on both sides, specify those type(s) here.
         let allowedTypes: Type[] | null;
 
-        switch (operator.text) {
+        switch (opText) {
             case '&':
             case '|':
                 allowedTypes = TypeChecking.ALLOWED_LOGICAL_TYPES;
@@ -622,6 +682,12 @@ export class TypeChecking extends AstVisitor<void> {
     override visitCommandCallExpression(commandCallExpression: CommandCallExpression): void {
         const name = commandCallExpression.nameString;
 
+        if (this.isDisabledCommandName(name)) {
+            commandCallExpression.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_COMMAND, name);
+            commandCallExpression.type = MetaType.Error;
+            return;
+        }
+
         // Attempt to call the dynamic command handlers type checker (if one exists).
         if (this.checkDynamicCommand(name, commandCallExpression)) {
             return;
@@ -632,6 +698,12 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitProcCallExpression(procCallExpression: ProcCallExpression): void {
+        if (this.features.procs === false) {
+            procCallExpression.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_TRIGGER, 'proc');
+            procCallExpression.type = MetaType.Error;
+            return;
+        }
+
         // Check the proc call.
         this.checkCallExpression(procCallExpression, this.procTrigger, DiagnosticMessage.PROC_REFERENCE_UNRESOLVED);
     }
@@ -658,6 +730,12 @@ export class TypeChecking extends AstVisitor<void> {
      * Runs the type checking for dynamic command if one exists with [name].
      */
     private checkDynamicCommand(name: string, expression: Expression): boolean {
+        if (this.isDisabledCommandName(name)) {
+            expression.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_COMMAND, name);
+            expression.type = MetaType.Error;
+            return true;
+        }
+
         const dynamicCommand = this.dynamicCommands.get(name);
         if (!dynamicCommand) return false;
 
@@ -805,6 +883,12 @@ export class TypeChecking extends AstVisitor<void> {
      * Type check the index value of expression if it is defined.
      */
     override visitLocalVariableExpression(localVariableExpression: LocalVariableExpression): void {
+        if (this.features.procs === false) {
+            localVariableExpression.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_LOCAL);
+            localVariableExpression.type = MetaType.Error;
+            return;
+        }
+
         const name = localVariableExpression.name.text;
         const symbol = this.table.find(SymbolType.localVariable(), name) as LocalVariableSymbol | null;
         if (!symbol) {
@@ -994,6 +1078,12 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitBooleanLiteral(booleanLiteral: BooleanLiteral): void {
+        if (this.features.booleans === false) {
+            booleanLiteral.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_BOOLEAN);
+            booleanLiteral.type = MetaType.Error;
+            return;
+        }
+
         const hint = booleanLiteral.type;
 
         if (hint == PrimitiveType.STRING) {
@@ -1112,6 +1202,12 @@ export class TypeChecking extends AstVisitor<void> {
 
         if (symbol instanceof ScriptSymbol && symbol.trigger === this.commandTrigger && symbol.parameters !== MetaType.Unit) {
             identifier.reportError(this.diagnostics, DiagnosticMessage.GENERIC_TYPE_MISMATCH, '<unit>', symbol.parameters.representation);
+        }
+
+        if (symbol instanceof ScriptSymbol && symbol.trigger === this.commandTrigger && this.isDisabledCommandName(symbol.name)) {
+            identifier.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_COMMAND, symbol.name);
+            identifier.type = MetaType.Error;
+            return;
         }
 
         identifier.reference = symbol;

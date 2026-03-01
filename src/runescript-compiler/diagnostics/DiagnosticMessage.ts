@@ -82,6 +82,15 @@ export const DiagnosticMessage = {
     CONSTANT_PARSE_ERROR: "Unable to parse constant value of '%s' into type '%s'.",
     CONSTANT_NONCONSTANT: "Constant value of '%s' evaluated to a non-constant expression.",
 
+    // Feature flag specific
+    FEATURE_DISABLED_TRIGGER: "Trigger '%s' is disabled.",
+    FEATURE_DISABLED_COMMAND: "Command '%s' is disabled.",
+    FEATURE_DISABLED_TYPE: "Type '%s' is disabled.",
+    FEATURE_DISABLED_LOCAL: 'Local variables are disabled.',
+    FEATURE_DISABLED_BOOLEAN: 'Boolean usage is disabled.',
+    FEATURE_DISABLED_OPERATOR: "Operator '%s' is disabled.",
+    LOCAL_DECLARATION_NOT_TOPLEVEL: 'Local variables may only be declared at the top level of a script.',
+
     // Pointer checking specific
     POINTER_UNINITIALIZED: 'Attempt to access uninitialized pointer %s.',
     POINTER_CORRUPTED: 'Attempt to access corrupted pointer %s.',

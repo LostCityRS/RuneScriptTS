@@ -14,6 +14,7 @@ import { DiagnosticType } from '#/runescript-compiler/diagnostics/DiagnosticType
 
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 import { PointerType } from '#/runescript-compiler/pointer/PointerType.js';
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
 
 import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
 import { BasicSymbol, LocalVariableSymbol } from '#/runescript-compiler/symbol/Symbol.js';
@@ -91,10 +92,11 @@ export class PointerChecker {
     constructor(
         private readonly diagnostics: Diagnostics,
         private readonly scripts: RuneScript[],
-        private readonly commandPointers: Map<string, PointerHolder>
+        private readonly commandPointers: Map<string, PointerHolder>,
+        private readonly features: StrictFeatureLevel = {}
     ) {
         this.scriptsBySymbol = new Map(scripts.map(s => [s.symbol, s]));
-        this.graphGenerator = new GraphGenerator(commandPointers);
+        this.graphGenerator = new GraphGenerator(commandPointers, this.features);
     }
 
     /**

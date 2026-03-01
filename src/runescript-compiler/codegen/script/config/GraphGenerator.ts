@@ -10,13 +10,17 @@ import { PointerInstructionNode } from '#/runescript-compiler/codegen/script/con
 
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+
 import { ScriptSymbol } from '#/runescript-compiler/symbol/ScriptSymbol.js';
 
 export class GraphGenerator {
     private readonly commandPointers: Map<string, PointerHolder>;
+    private readonly allowPointerInversion: boolean;
 
-    constructor(commandPointers: Map<string, PointerHolder>) {
+    constructor(commandPointers: Map<string, PointerHolder>, features: StrictFeatureLevel = {}) {
         this.commandPointers = commandPointers;
+        this.allowPointerInversion = features.pointerInversion !== false;
     }
 
     public generate(blocks: Block[]): InstructionNode[] {
@@ -66,30 +70,44 @@ export class GraphGenerator {
                      *      /
                      * branch if_end
                      */
-                    if (instructionIdx + 1 >= block.instructions.length) {
-                        throw new Error('Invalid inverted conditional layout');
+                    if (this.allowPointerInversion) {
+                        if (instructionIdx + 1 >= block.instructions.length) {
+                            throw new Error('Invalid inverted conditional layout');
+                        }
+
+                        const next = block.instructions[instructionIdx + 1];
+                        const nextNode = this.getOrCreate(nodeCache, next);
+
+                        if (next.opcode !== Opcode.Branch) {
+                            throw new Error('Expected Branch opcode');
+                        }
+
+                        const commandInst = block.instructions[instructionIdx - 2];
+                        if (commandInst.opcode !== Opcode.Command) {
+                            throw new Error('Expected command before conditional');
+                        }
+
+                        const commandName = (commandInst.operand as ScriptSymbol).name;
+                        const pointers = this.commandPointers.get(commandName)!.set;
+
+                        const setPointerNode = new PointerInstructionNode(pointers);
+                        nodes.push(setPointerNode);
+
+                        node.addNext(setPointerNode);
+                        setPointerNode.addNext(nextNode);
+                    } else if (!TERMINAL_OPCODES.has(instruction.opcode)) {
+                        let next: Instruction<any>;
+
+                        if (instructionIdx + 1 < block.instructions.length) {
+                            next = block.instructions[instructionIdx + 1];
+                        } else if (blockIdx + 1 < blocks.length) {
+                            next = blocks[blockIdx + 1].instructions[0];
+                        } else {
+                            throw new Error('No next instruction');
+                        }
+
+                        node.addNext(this.getOrCreate(nodeCache, next));
                     }
-
-                    const next = block.instructions[instructionIdx + 1];
-                    const nextNode = this.getOrCreate(nodeCache, next);
-
-                    if (next.opcode !== Opcode.Branch) {
-                        throw new Error('Expected Branch opcode');
-                    }
-
-                    const commandInst = block.instructions[instructionIdx - 2];
-                    if (commandInst.opcode !== Opcode.Command) {
-                        throw new Error('Expected command before conditional');
-                    }
-
-                    const commandName = (commandInst.operand as ScriptSymbol).name;
-                    const pointers = this.commandPointers.get(commandName)!.set;
-
-                    const setPointerNode = new PointerInstructionNode(pointers);
-                    nodes.push(setPointerNode);
-
-                    node.addNext(setPointerNode);
-                    setPointerNode.addNext(nextNode);
 
                     potentialConditionalPointer = false;
                 } else if (!TERMINAL_OPCODES.has(instruction.opcode)) {

@@ -8,6 +8,7 @@ import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
 import { CompilerTypeInfo } from '#/serverscript-compiler/CompilerTypeInfo.js';
 import { ServerScriptCompiler } from '#/serverscript-compiler/ServerScriptCompiler.js';
 import { SymbolMapper } from '#/serverscript-compiler/SymbolMapper.js';
+import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
 
 import { JagFileScriptWriter } from '#/serverscript-compiler/writer/JagFileScriptWriter.js';
 import { Js5PackScriptWriter } from '#/serverscript-compiler/writer/Js5PackScriptWriter.js';
@@ -17,6 +18,7 @@ export function CompileServerScript(config?: {
     symbols?: Record<string, CompilerTypeInfo>;
     excludePaths?: string[];
     checkPointers?: boolean;
+    features?: StrictFeatureLevel;
     writer?: {
         jag?: {
             output: string;
@@ -80,7 +82,7 @@ export function CompileServerScript(config?: {
     const commandPointers = new Map<string, PointerHolder>();
     loadSpecialSymbols(config.symbols['command'], config.symbols['runescript'], mapper, commandPointers, checkPointers);
 
-    const compiler = new ServerScriptCompiler(sourcePaths, excludePaths, writer, commandPointers, config.symbols, mapper);
+    const compiler = new ServerScriptCompiler(sourcePaths, excludePaths, writer, commandPointers, config.symbols, mapper, config.features ?? {});
     compiler.setup();
     compiler.run('rs2');
 }

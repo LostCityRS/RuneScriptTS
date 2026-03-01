@@ -6,6 +6,7 @@ export declare function CompileServerScript(config?: {
     symbols?: Record<string, CompilerTypeInfo>;
     excludePaths?: string[];
     checkPointers?: boolean;
+    features?: StrictFeatureLevel;
     writer?: {
         jag?: {
             output: string;
@@ -15,6 +16,20 @@ export declare function CompileServerScript(config?: {
         };
     };
 }): void;
+
+export declare type StrictFeatureLevel = {
+    booleans?: boolean;
+    procs?: boolean;
+    macros?: boolean;
+    enums?: boolean;
+    structs?: boolean;
+    dbtables?: boolean;
+    logicalAnd?: boolean;
+    relationalEquals?: boolean;
+    queueTyped?: boolean;
+    topLevelDefOnly?: boolean;
+    pointerInversion?: boolean;
+};
 
 export declare type CompilerTypeInfo = {
     max: number;
