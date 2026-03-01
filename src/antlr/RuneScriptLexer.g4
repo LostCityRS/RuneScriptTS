@@ -48,6 +48,7 @@ SWITCH_TYPE : 'switch_' IDENTIFIER ;
 // literals
 INTEGER_LITERAL : '-'? Digit+ ;
 HEX_LITERAL     : '0' [xX] [0-9a-fA-F]+ ;
+BIN_LITERAL     : '0' [bB] [01]+ ;
 COORD_LITERAL   : Digit+ '_' Digit+ '_' Digit+ '_' Digit+ '_' Digit+ ;
 MAPZONE_LITERAL : Digit+ '_' Digit+ '_' Digit+ ;
 BOOLEAN_LITERAL : 'true' | 'false' ;
