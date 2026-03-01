@@ -34,6 +34,7 @@ import {
     JoinedStringExpressionContext,
     JumpCallExpressionContext,
     LiteralExpressionContext,
+    ScriptNameContext,
     LocalArrayVariableContext,
     LocalArrayVariableExpressionContext,
     LocalVariableContext,
@@ -134,7 +135,7 @@ export class AstBuilder extends RuneScriptParserVisitor<Node> {
         return new Script({
             source: this.location(ctx),
             trigger: this.visitNode(ctx._trigger),
-            name: this.visitNode(ctx._name),
+            name: this.visitNode(ctx.scriptName()),
             isStar: ctx.MUL() !== null,
             parameters:
                 ctx
@@ -144,6 +145,15 @@ export class AstBuilder extends RuneScriptParserVisitor<Node> {
             returnTokens: returns ?? null,
             statements: ctx.statement().map(statement => this.visitNode(statement))
         });
+    };
+
+    visitScriptName = (ctx: ScriptNameContext): Node => {
+        const identifiers = ctx.identifier();
+        if (identifiers.length === 1) {
+            return this.visitNode(identifiers[0]);
+        }
+        const name = identifiers.map(id => id.getText()).join(' ');
+        return new Identifier(this.location(ctx), name);
     };
 
     visitParameter = (ctx: ParameterContext): Node => {

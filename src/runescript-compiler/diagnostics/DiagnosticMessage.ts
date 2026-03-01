@@ -38,6 +38,7 @@ export const DiagnosticMessage = {
     SCRIPT_SUBJECT_ONLY_GLOBAL: "Trigger '%s' only allows global subjects.",
     SCRIPT_SUBJECT_NO_GLOBAL: "Trigger '%s' does not allow global subjects.",
     SCRIPT_SUBJECT_NO_CATEGORY: "Trigger '%s' does not allow category subjects.",
+    SCRIPT_SUBJECT_NO_SPACES: "Trigger '%s' does not allow spaces in subjects.",
 
     // Switch statement node specific
     SWITCH_INVALID_TYPE: "'%s' is not allowed within a switch statement.",

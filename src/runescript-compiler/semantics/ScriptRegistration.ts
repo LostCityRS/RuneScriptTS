@@ -190,6 +190,10 @@ export class ScriptRegistration extends AstVisitor<void> {
         if (!mode) return;
 
         const subject = script.name.text;
+        if (subject.includes(' ') && !this.isTypeMode(mode)) {
+            script.name.reportError(this.diagnostics, DiagnosticMessage.SCRIPT_SUBJECT_NO_SPACES, trigger?.identifier ?? '<unknown>');
+            return;
+        }
 
         // Name mode allows anything as the subject
         if (mode === SubjectMode.Name) {

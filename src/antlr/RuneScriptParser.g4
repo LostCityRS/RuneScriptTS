@@ -9,9 +9,13 @@ scriptFile
     ;
 
 script
-    : LBRACK trigger=identifier COMMA name=identifier MUL? RBRACK
+    : LBRACK trigger=identifier COMMA name=scriptName MUL? RBRACK
       ((LPAREN parameterList? RPAREN) (LPAREN typeList? RPAREN)?)?
       statement*
+    ;
+
+scriptName
+    : identifier (identifier)*
     ;
 
 parameterList
