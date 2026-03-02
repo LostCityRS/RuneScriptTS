@@ -9,6 +9,7 @@ import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
 import { MetaType } from '#/runescript-compiler/type/MetaType.js';
+import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
 import { Type } from '#/runescript-compiler/type/Type.js';
 
 import { VarBitType, VarNpcType, VarPlayerType, VarSharedType } from '#/runescript-compiler/type/wrapped/GameVarType.js';
@@ -123,6 +124,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.addSymLoader('idk', ScriptVarType.IDKIT);
         this.addSymLoader('mesanim', ScriptVarType.MESANIM);
         this.types.register('param', new ParamType(MetaType.Any));
+        this.types.register('intparam', new ParamType(PrimitiveType.INT));
         this.addSymLoaderWithSupplier('param', sub => new ParamType(sub));
         this.addSymLoader('seq', ScriptVarType.SEQ);
         this.addSymLoader('spotanim', ScriptVarType.SPOTANIM);
