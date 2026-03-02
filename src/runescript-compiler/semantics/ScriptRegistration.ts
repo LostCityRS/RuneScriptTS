@@ -421,8 +421,11 @@ export class ScriptRegistration extends AstVisitor<void> {
         } else {
             type = this.typeManager.findOrNull(typeText, true);
 
-            if (type && type !== MetaType.Error && !type.options.allowParameter) {
-                parameter.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_PARAMETER_INVALID_TYPE, type.representation);
+            if (type && type !== MetaType.Error) {
+                const script = parameter.findParentByType(Script);
+                if (script.triggerType !== CommandTrigger && !type.options.allowParameter) {
+                    parameter.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_PARAMETER_INVALID_TYPE, type.representation);
+                }
             }
         }
 

@@ -17,7 +17,7 @@ export class MetaType implements MainType {
         allowSwitch: false,
         allowArray: false,
         allowDeclaration: false,
-        allowParameter: true
+        allowParameter: false
     });
 
     private constructor(
@@ -91,6 +91,7 @@ export class MetaType implements MainType {
             this.parameterType = parameterType;
             this.returnType = returnType;
             this.representation = trigger.identifier;
+            this.options.allowParameter = true;
         }
     };
 
