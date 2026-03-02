@@ -190,7 +190,7 @@ export class PointerChecker {
         let corruptedSet = analysis.corruptedNodes[pointerIndex];
 
         // Check if the trigger implicitly defines the pointer.
-        if (!this.setsPointerTrigger(script.trigger, pointer)) {
+        if (!this.setsPointerTrigger(script, pointer)) {
             /**
              * If the trigger doesn't implicitly define the pointer we need to specify the starting
              * node as corrupting it so that there is a path found, resulting in an error.
@@ -307,8 +307,8 @@ export class PointerChecker {
     /**
      * Checks if the [TriggerType] sets [pointer] by default.
      */
-    private setsPointerTrigger(trigger: TriggerType, pointer: PointerType): boolean {
-        const pointers = trigger.pointers;
+    protected setsPointerTrigger(script: RuneScript, pointer: PointerType): boolean {
+        const pointers = script.trigger.pointers;
         return pointers != null && pointers.has(pointer);
     }
 

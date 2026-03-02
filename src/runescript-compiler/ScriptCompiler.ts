@@ -35,6 +35,7 @@ import { TriggerManager } from '#/runescript-compiler/trigger/TriggerManager.js'
 import { MetaType } from '#/runescript-compiler/type/MetaType.js';
 import { PrimitiveType } from '#/runescript-compiler/type/PrimitiveType.js';
 import { TupleType } from '#/runescript-compiler/type/TupleType.js';
+import type { Type } from '#/runescript-compiler/type/Type.js';
 import { TypeManager } from '#/runescript-compiler/type/TypeManager.js';
 
 import { ScriptWriter } from '#/runescript-compiler/writer/ScriptWriter.js';
@@ -100,7 +101,7 @@ export class ScriptCompiler {
         sourcePaths: string[],
         excludePaths: string[],
         private readonly scriptWriter: ScriptWriter,
-        private readonly commandPointers: Map<string, PointerHolder>,
+        protected readonly commandPointers: Map<string, PointerHolder>,
         features: StrictFeatureLevel = {}
     ) {
         this.features = features;
@@ -415,7 +416,7 @@ export class ScriptCompiler {
 
         const diagnostics = new Diagnostics();
 
-        const pointerChecker = new PointerChecker(diagnostics, scripts, this.commandPointers, this.features);
+        const pointerChecker = this.createPointerChecker(diagnostics, scripts);
         // this.logger.debug("Starting pointer checking.");
         // const pointerCheckStart = performance.now();
         pointerChecker.run();
@@ -426,6 +427,10 @@ export class ScriptCompiler {
         this.diagnosticsHandler.handlePointerChecking?.(diagnostics);
 
         return !diagnostics.hasErrors();
+    }
+
+    protected createPointerChecker(diagnostics: Diagnostics, scripts: RuneScript[]): PointerChecker {
+        return new PointerChecker(diagnostics, scripts, this.commandPointers, this.features);
     }
 
     /**

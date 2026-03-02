@@ -1,6 +1,10 @@
 import { ScriptCompiler } from '#/runescript-compiler/ScriptCompiler.js';
-
 import { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+
+import { PointerChecker } from '#/runescript-compiler/codegen/script/config/PointerChecker.js';
+import { RuneScript } from '#/runescript-compiler/codegen/script/RuneScript.js';
+
+import { Diagnostics } from '#/runescript-compiler/diagnostics/Diagnostics.js';
 
 import { PointerHolder } from '#/runescript-compiler/pointer/PointerHolder.js';
 
@@ -15,6 +19,7 @@ import { CompilerTypeInfo } from '#/serverscript-compiler/CompilerTypeInfo.js';
 import { CompilerTypeInfoConstantLoader } from '#/serverscript-compiler/CompilerTypeInfoConstantLoader.js';
 import { CompilerTypeInfoLoader } from '#/serverscript-compiler/CompilerTypeInfoLoader.js';
 import { CompilerTypeInfoProtectedLoader } from '#/serverscript-compiler/CompilerTypeInfoProtectedLoader.js';
+import { ServerPointerChecker } from '#/serverscript-compiler/ServerPointerChecker.js';
 import { SymbolMapper } from '#/serverscript-compiler/SymbolMapper.js';
 
 import { DbFindCommandHandler } from '#/serverscript-compiler/command/DbFindCommandHandler.js';
@@ -224,5 +229,11 @@ export class ServerScriptCompiler extends ScriptCompiler {
         if (this.symbols[name]) {
             this.addSymbolLoader(new CompilerTypeInfoProtectedLoader(this.mapper, this.symbols[name], typeSupplier));
         }
+    }
+
+    protected override createPointerChecker(diagnostics: Diagnostics, scripts: RuneScript[]): PointerChecker {
+        const overlaySymbols = this.symbols['overlayinterface'];
+        const overlayInterfaces = overlaySymbols ? Object.values(overlaySymbols.map) : [];
+        return new ServerPointerChecker(diagnostics, scripts, this.commandPointers, this.features, overlayInterfaces);
     }
 }
