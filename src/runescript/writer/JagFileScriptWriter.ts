@@ -14,7 +14,7 @@ export class JagFileScriptWriter extends BinaryScriptWriter {
     private readonly output: string;
     private readonly buffers = new Map<number, Buffer>();
 
-    private static readonly VERSION = 26;
+    private static readonly VERSION = 27;
 
     constructor(output: string, idProvider: IdProvider) {
         super(idProvider);

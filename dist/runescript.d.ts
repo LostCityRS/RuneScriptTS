@@ -25,6 +25,7 @@ export declare type StrictFeatureLevel = {
     structs?: boolean;
     dbtables?: boolean;
     logicalAnd?: boolean;
+    calc?: boolean;
     relationalEquals?: boolean;
     queueTyped?: boolean;
     topLevelDefOnly?: boolean;
