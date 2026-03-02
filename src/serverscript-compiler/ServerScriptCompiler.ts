@@ -122,6 +122,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.addSymLoader('inv', ScriptVarType.INV);
         this.addSymLoader('idk', ScriptVarType.IDKIT);
         this.addSymLoader('mesanim', ScriptVarType.MESANIM);
+        this.types.register('param', new ParamType(MetaType.Any));
         this.addSymLoaderWithSupplier('param', sub => new ParamType(sub));
         this.addSymLoader('seq', ScriptVarType.SEQ);
         this.addSymLoader('spotanim', ScriptVarType.SPOTANIM);
