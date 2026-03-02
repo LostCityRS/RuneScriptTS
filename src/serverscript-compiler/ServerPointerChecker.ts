@@ -31,12 +31,13 @@ export class ServerPointerChecker extends PointerChecker {
 
         if (
             script.trigger === ServerTriggerType.IF_BUTTON ||
-            script.trigger === ServerTriggerType.INV_BUTTON1 ||
-            script.trigger === ServerTriggerType.INV_BUTTON2 ||
-            script.trigger === ServerTriggerType.INV_BUTTON3 ||
-            script.trigger === ServerTriggerType.INV_BUTTON4 ||
-            script.trigger === ServerTriggerType.INV_BUTTON5 ||
-            script.trigger === ServerTriggerType.INV_BUTTOND
+            // these triggers have aliases for "if_buttonX" (later rs) and must be checked with id
+            script.trigger.id === ServerTriggerType.INV_BUTTON1.id ||
+            script.trigger.id === ServerTriggerType.INV_BUTTON2.id ||
+            script.trigger.id === ServerTriggerType.INV_BUTTON3.id ||
+            script.trigger.id === ServerTriggerType.INV_BUTTON4.id ||
+            script.trigger.id === ServerTriggerType.INV_BUTTON5.id ||
+            script.trigger.id === ServerTriggerType.INV_BUTTOND.id
         ) {
             const subject = script.subjectReference;
             if (!subject) {

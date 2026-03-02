@@ -992,9 +992,23 @@ export class ServerTriggerType implements TriggerType {
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
     });
 
+    static readonly IF_BUTTON1 = new ServerTriggerType({
+        id: 149,
+        name: 'IF_BUTTON1',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
+    });
+
     static readonly INV_BUTTON2 = new ServerTriggerType({
         id: 150,
         name: 'INV_BUTTON2',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
+    });
+
+    static readonly IF_BUTTON2 = new ServerTriggerType({
+        id: 150,
+        name: 'IF_BUTTON2',
         subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
     });
@@ -1006,9 +1020,23 @@ export class ServerTriggerType implements TriggerType {
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
     });
 
+    static readonly IF_BUTTON3 = new ServerTriggerType({
+        id: 151,
+        name: 'IF_BUTTON3',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
+    });
+
     static readonly INV_BUTTON4 = new ServerTriggerType({
         id: 152,
         name: 'INV_BUTTON4',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
+    });
+
+    static readonly IF_BUTTON4 = new ServerTriggerType({
+        id: 152,
+        name: 'IF_BUTTON4',
         subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
     });
@@ -1020,9 +1048,23 @@ export class ServerTriggerType implements TriggerType {
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
     });
 
+    static readonly IF_BUTTON5 = new ServerTriggerType({
+        id: 153,
+        name: 'IF_BUTTON5',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_ITEM, PointerType.LAST_SLOT])
+    });
+
     static readonly INV_BUTTOND = new ServerTriggerType({
         id: 154,
         name: 'INV_BUTTOND',
+        subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
+        pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_SLOT, PointerType.LAST_TARGETSLOT])
+    });
+
+    static readonly IF_BUTTOND = new ServerTriggerType({
+        id: 154,
+        name: 'IF_BUTTOND',
         subjectMode: SubjectMode.Type(ScriptVarType.COMPONENT, false, false),
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.LAST_SLOT, PointerType.LAST_TARGETSLOT])
     });
