@@ -1,4 +1,4 @@
-import { CompileServerScript } from '#/serverscript-compiler/ServerScriptCompilerApplication.js';
+import { CompileServerScript } from '#/runescript/ServerScriptCompilerApplication.js';
 
 export { CompileServerScript };
-export type { StrictFeatureLevel } from '#/runescript-compiler/StrictFeatureLevel.js';
+export type { StrictFeatureLevel } from '#/compiler/StrictFeatureLevel.js';
