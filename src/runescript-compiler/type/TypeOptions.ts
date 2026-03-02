@@ -17,11 +17,18 @@ export interface TypeOptions {
     readonly allowArray: boolean;
 
     /**
-     * Whether the type is allowed to be declared as a parameter or local variable.
+     * Whether the type is allowed to be declared as a local variable.
      *
      * Default: `true`
      */
     readonly allowDeclaration: boolean;
+
+    /**
+     * Whether the type is allowed to be declared as a script parameter.
+     *
+     * Default: `true`
+     */
+    readonly allowParameter?: boolean;
 }
 
 /**
@@ -31,6 +38,7 @@ export class MutableOptionsType implements TypeOptions {
     allowSwitch = true;
     allowArray = true;
     allowDeclaration = true;
+    allowParameter = true;
 
     constructor(init?: Partial<TypeOptions>) {
         if (init) {

@@ -18,7 +18,9 @@ export abstract class GameVarType implements WrappedType {
     readonly options: TypeOptions = new MutableOptionsType({
         allowArray: false,
         allowDeclaration: false,
-        allowSwitch: false
+        allowSwitch: false,
+        // todo: expose this as a feature option? osrs supports varp-refs
+        allowParameter: false
     });
 }
 

@@ -13,10 +13,17 @@ export class MetaType implements MainType {
     readonly representation: string;
     readonly baseType: BaseVarType = BaseVarType.INTEGER;
     readonly defaultValue: unknown = -1;
-    readonly options: TypeOptions = new MutableOptionsType({ allowSwitch: false, allowArray: false, allowDeclaration: false });
+    readonly options: MutableOptionsType = new MutableOptionsType({
+        allowSwitch: false,
+        allowArray: false,
+        allowDeclaration: false,
+        allowParameter: true
+    });
 
-    private constructor(private readonly name: string) {
-        this.representation = name.toLowerCase();
+    private constructor(
+        private readonly name: string
+    ) {
+        this.representation = this.name.toLowerCase();
     }
 
     public get code(): string {

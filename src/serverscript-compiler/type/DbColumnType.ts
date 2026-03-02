@@ -20,7 +20,8 @@ export class DbColumnType implements WrappedType {
         this.options = new MutableOptionsType({
             allowSwitch: false,
             allowArray: false,
-            allowDeclaration: false
+            allowDeclaration: false,
+            allowParameter: true
         });
     }
 }

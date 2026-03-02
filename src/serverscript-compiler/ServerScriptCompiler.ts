@@ -66,6 +66,7 @@ export class ServerScriptCompiler extends ScriptCompiler {
 
         this.types.changeOptions('long', opts => {
             opts.allowDeclaration = false;
+            opts.allowParameter = true;
         });
 
         if (this.features.procs !== false) {
@@ -80,7 +81,6 @@ export class ServerScriptCompiler extends ScriptCompiler {
         this.addSymConstantLoaders();
 
         this.types.register('walktrigger', new MetaType.Script(ServerTriggerType.WALKTRIGGER, MetaType.Any, MetaType.Nothing));
-        this.types.register('ai_walktrigger', new MetaType.Script(ServerTriggerType.AI_WALKTRIGGER, MetaType.Any, MetaType.Nothing));
 
         this.types.register('queue', new MetaType.Script(ServerTriggerType.QUEUE, MetaType.Any, MetaType.Nothing));
         this.addDynamicCommandHandler('queue', new QueueCommandHandler(this.types.find('queue')));

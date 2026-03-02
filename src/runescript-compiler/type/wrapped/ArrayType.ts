@@ -13,7 +13,8 @@ export class ArrayType implements WrappedType {
     readonly options = new MutableOptionsType({
         allowArray: false,
         allowDeclaration: true,
-        allowSwitch: true
+        allowSwitch: true,
+        allowParameter: true
     });
 
     constructor(inner: Type) {

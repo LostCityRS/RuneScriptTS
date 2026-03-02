@@ -72,6 +72,7 @@ export const DiagnosticMessage = {
 
     // Local variable specific
     LOCAL_DECLARATION_INVALID_TYPE: "'%s' is not allowed to be declared as a type.",
+    LOCAL_PARAMETER_INVALID_TYPE: "'%s' is not allowed to be used as a parameter.",
     LOCAL_REFERENCE_UNRESOLVED: "'$%s' cannot be resolved to a local variable.",
     LOCAL_REFERENCE_NOT_ARRAY: "Access of indexed value of non-array type variable '$%s'.",
     LOCAL_ARRAY_INVALID_TYPE: "'%s' is not allowed to be used as an array.",

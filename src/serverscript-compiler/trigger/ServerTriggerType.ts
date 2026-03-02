@@ -1076,13 +1076,6 @@ export class ServerTriggerType implements TriggerType {
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.P_ACTIVE_PLAYER])
     });
 
-    static readonly AI_WALKTRIGGER = new ServerTriggerType({
-        id: 156,
-        name: 'AI_WALKTRIGGER',
-        subjectMode: SubjectMode.Name,
-        pointers: new Set([PointerType.ACTIVE_NPC])
-    });
-
     static readonly LOGIN = new ServerTriggerType({
         id: 157,
         name: 'LOGIN',

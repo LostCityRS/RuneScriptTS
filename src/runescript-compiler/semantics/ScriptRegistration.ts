@@ -420,6 +420,10 @@ export class ScriptRegistration extends AstVisitor<void> {
             type = MetaType.Error;
         } else {
             type = this.typeManager.findOrNull(typeText, true);
+
+            if (type && type !== MetaType.Error && !type.options.allowParameter) {
+                parameter.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_PARAMETER_INVALID_TYPE, type.representation);
+            }
         }
 
         // Type isn't valid, report the error.

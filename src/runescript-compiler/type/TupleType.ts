@@ -19,7 +19,8 @@ export class TupleType implements Type {
     public readonly options: TypeOptions = new MutableOptionsType({
         allowArray: false,
         allowSwitch: false,
-        allowDeclaration: false
+        allowDeclaration: false,
+        allowParameter: false
     });
 
     constructor(...children: Type[]) {
