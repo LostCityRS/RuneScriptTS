@@ -53,6 +53,7 @@ export const DiagnosticMessage = {
 
     // Condition expression specific
     CONDITION_INVALID_NODE_TYPE: 'Conditions are only allowed to be binary expressions.',
+    CONDITION_NOT_VALID: 'Condition is not valid.',
 
     // Binary expression specific
     BINOP_INVALID_TYPES: "Operator '%s' cannot be applied to '%s', '%s'.",

@@ -570,6 +570,11 @@ export class TypeChecking extends AstVisitor<void> {
                 allowedTypes = null;
         }
 
+        if (opText !== '&' && opText !== '|' && (this.isConditionExpression(left) || this.isConditionExpression(right))) {
+            operator.reportError(this.diagnostics, DiagnosticMessage.CONDITION_NOT_VALID);
+            return false;
+        }
+
         /**
          * If required type is set we should hint with those, otherwise use the opposite
          * sides type as a hint.
@@ -632,6 +637,14 @@ export class TypeChecking extends AstVisitor<void> {
 
         // Other cases are true.
         return true;
+    }
+
+    private isConditionExpression(expression: Expression): boolean {
+        if (expression instanceof ParenthesizedExpression) {
+            return this.isConditionExpression(expression.expression);
+        }
+
+        return expression instanceof ConditionExpression;
     }
 
     override visitArithmeticExpression(arithmeticExpression: ArithmeticExpression): void {
