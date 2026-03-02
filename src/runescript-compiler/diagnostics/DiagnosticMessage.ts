@@ -94,6 +94,7 @@ export const DiagnosticMessage = {
     FEATURE_DISABLED_LOCAL: 'Local variables are disabled.',
     FEATURE_DISABLED_BOOLEAN: 'Boolean usage is disabled.',
     FEATURE_DISABLED_OPERATOR: "Operator '%s' is disabled.",
+    FEATURE_DISABLED_CALC: 'calc(...) usage is disabled.',
     LOCAL_DECLARATION_NOT_TOPLEVEL: 'Local variables may only be declared at the top level of a script.',
 
     // Pointer checking specific

@@ -72,4 +72,4 @@ Consumers should use this. It is production-ready and produces compatible output
 
 Polar: For your years of work on Neptune and many days brainstorming together.  
 Flenarn: For your effort porting so much Kotlin code to TypeScript. There were only a few lines to fix afterwards - great job.  
-Contributions in RuneScriptKt: Henke96 [PR #1](https://github.com/LostCityRS/RuneScriptKt/pull/1) and Bea5 [PR #2](https://github.com/LostCityRS/RuneScriptKt/pull/1).
+Contributions in RuneScriptKt: Henke96 [PR #1](https://github.com/LostCityRS/RuneScriptKt/pull/1) and Bea5 [PR #2](https://github.com/LostCityRS/RuneScriptKt/pull/2).

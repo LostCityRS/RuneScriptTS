@@ -58,6 +58,14 @@ export interface StrictFeatureLevel {
 
     /**
      * AUTHENTIC-OVER-TIME:
+     * Enables calc(...) expressions for arithmetic lowering into math commands.
+     *
+     * Default: true
+     */
+    calc?: boolean;
+
+    /**
+     * AUTHENTIC-OVER-TIME:
      * Enables inclusive relational operators ('<=' and '>=') in conditional expressions.
      * 
      * Default: true

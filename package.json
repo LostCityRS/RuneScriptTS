@@ -20,7 +20,8 @@
     ],
     "scripts": {
         "antlr": "antlr-ng -Dlanguage=TypeScript -o src/antlr --generate-visitor true --generate-listener false --exact-output-dir true src/antlr/RuneScriptLexer.g4 src/antlr/RuneScriptParser.g4",
-        "build": "bun build --target node --outfile dist/runescript.js --minify src/Compiler.ts"
+        "build": "bun build --target node --outfile dist/runescript.js --minify src/Compiler.ts",
+        "prepare": "bun run antlr"
     },
     "devDependencies": {
         "@types/node": "^25.2.3",

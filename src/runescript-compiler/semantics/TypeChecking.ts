@@ -681,6 +681,12 @@ export class TypeChecking extends AstVisitor<void> {
     }
 
     override visitCalcExpression(calcExpression: CalcExpression): void {
+        if (this.features.calc === false) {
+            calcExpression.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_CALC);
+            calcExpression.type = MetaType.Error;
+            return;
+        }
+
         const typeHint = calcExpression.typeHint ?? PrimitiveType.INT;
         const innerExpression = calcExpression.expression;
 
