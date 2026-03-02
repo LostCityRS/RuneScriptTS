@@ -48,6 +48,9 @@ export const DiagnosticMessage = {
     // Assignment statement node specific
     ASSIGN_MULTI_ARRAY: 'Arrays are not allowed in multi-assignment statements.',
 
+    // Expression statement node specific
+    EXPRESSION_STATEMENT_NO_SIDE_EFFECT: 'Value is discarded.',
+
     // Condition expression specific
     CONDITION_INVALID_NODE_TYPE: 'Conditions are only allowed to be binary expressions.',
 

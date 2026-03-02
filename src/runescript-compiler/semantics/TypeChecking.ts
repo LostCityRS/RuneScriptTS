@@ -496,7 +496,12 @@ export class TypeChecking extends AstVisitor<void> {
 
     override visitExpressionStatement(expressionStatement: ExpressionStatement): void {
         // Just visit the inside expression.
-        this.visitNodeOrNull(expressionStatement.expression);
+        const expression = expressionStatement.expression;
+        this.visitNodeOrNull(expression);
+
+        if (expression.type != null && expression.type !== MetaType.Error && !this.expressionHasSideEffects(expression)) {
+            expressionStatement.reportWarning(this.diagnostics, DiagnosticMessage.EXPRESSION_STATEMENT_NO_SIDE_EFFECT);
+        }
     }
 
     override visitEmptyStatement(emptyStatement: EmptyStatement): void {
@@ -1261,6 +1266,79 @@ export class TypeChecking extends AstVisitor<void> {
 
         node.type = symbolType;
         return symbol;
+    }
+
+    private expressionHasSideEffects(expression: Expression | null): boolean {
+        if (!expression) {
+            return false;
+        }
+
+        if (expression instanceof CommandCallExpression) {
+            return this.commandHasSideEffects(expression.type);
+        }
+
+        if (
+            expression instanceof ProcCallExpression ||
+            expression instanceof JumpCallExpression ||
+            expression instanceof ClientScriptExpression
+        ) {
+            return true;
+        }
+
+        if (expression instanceof Identifier) {
+            const reference = expression.reference;
+            if (reference instanceof ScriptSymbol && reference.trigger === this.commandTrigger) {
+                return this.commandHasSideEffects(expression.type ?? reference.returns);
+            }
+            return false;
+        }
+
+        if (expression instanceof LocalVariableExpression) {
+            return this.expressionHasSideEffects(expression.index);
+        }
+
+        if (expression instanceof ConstantVariableExpression) {
+            return this.expressionHasSideEffects(expression.subExpression);
+        }
+
+        if (expression instanceof ParenthesizedExpression) {
+            return this.expressionHasSideEffects(expression.expression);
+        }
+
+        if (expression instanceof CalcExpression) {
+            return this.expressionHasSideEffects(expression.expression);
+        }
+
+        if (expression instanceof ArithmeticExpression || expression instanceof ConditionExpression) {
+            return this.expressionHasSideEffects(expression.left) || this.expressionHasSideEffects(expression.right);
+        }
+
+        if (expression instanceof JoinedStringExpression) {
+            for (const part of expression.parts) {
+                if (part instanceof ExpressionStringPart && this.expressionHasSideEffects(part.expression)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    private commandHasSideEffects(type: Type | null | undefined): boolean {
+        if (!type || type === MetaType.Error) {
+            return true;
+        }
+
+        if (type === MetaType.Unit) {
+            return true;
+        }
+
+        if (type instanceof TupleType) {
+            return type.children.every(child => child === MetaType.Unit);
+        }
+
+        return false;
     }
 
     private allowStringConversion(symbol?: RuneScriptSymbol): boolean {
