@@ -412,7 +412,9 @@ export class ScriptRegistration extends AstVisitor<void> {
         const typeText = parameter.typeToken.text;
         let type: Type | null = null;
 
-        if (this.features.procs === false) {
+        const script = parameter.findParentByType(Script);
+
+        if (this.features.procs === false && script?.triggerType !== CommandTrigger) {
             parameter.reportError(this.diagnostics, DiagnosticMessage.FEATURE_DISABLED_LOCAL);
             type = MetaType.Error;
         } else if (this.isDisabledTypeName(typeText)) {
@@ -422,7 +424,6 @@ export class ScriptRegistration extends AstVisitor<void> {
             type = this.typeManager.findOrNull(typeText, true);
 
             if (type && type !== MetaType.Error) {
-                const script = parameter.findParentByType(Script);
                 if (script.triggerType !== CommandTrigger && !type.options.allowParameter) {
                     parameter.typeToken.reportError(this.diagnostics, DiagnosticMessage.LOCAL_PARAMETER_INVALID_TYPE, type.representation);
                 }
