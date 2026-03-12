@@ -1088,7 +1088,7 @@ export class ServerTriggerType implements TriggerType {
         name: 'LOGOUT',
         subjectMode: SubjectMode.None,
         allowReturns: true,
-        returns: PrimitiveType.BOOLEAN,
+        returns: PrimitiveType.INT,
         pointers: new Set([PointerType.ACTIVE_PLAYER, PointerType.P_ACTIVE_PLAYER])
     });
 
