@@ -28,6 +28,8 @@ import { ScriptRegistration } from '#/compiler/semantics/ScriptRegistration.js';
 import { TypeChecking } from '#/compiler/semantics/TypeChecking.js';
 
 import { SymbolTable } from '#/compiler/symbol/SymbolTable.js';
+import { ScriptSymbol, ServerScriptSymbol } from '#/compiler/symbol/ScriptSymbol.js';
+import { SymbolType } from '#/compiler/symbol/SymbolType.js';
 
 import { CommandTrigger } from '#/compiler/trigger/CommandTrigger.js';
 import { TriggerManager } from '#/compiler/trigger/TriggerManager.js';
@@ -353,6 +355,8 @@ export class ScriptCompiler {
             // this.logger.debug(`Registered scripts in ${file.source.name} in ${fileTime}ms.`);
         }
 
+        this.registerSecondaryCommands();
+
         // const scriptRegistrationTime = (performance.now() - scriptRegistrationStart).toFixed(2);
         // this.logger.debug(`Finished script registration in ${scriptRegistrationTime}ms.`);
 
@@ -375,6 +379,36 @@ export class ScriptCompiler {
         this.diagnosticsHandler.handleTypeChecking?.(diagnostics);
 
         return !diagnostics.hasErrors();
+    }
+
+    private registerSecondaryCommands(): void {
+        if (this.commandPointers.size < 1) {
+            return;
+        }
+
+        const commandType = SymbolType.serverScript(CommandTrigger);
+        for (const name of this.commandPointers.keys()) {
+            if (!name.startsWith('.')) {
+                continue;
+            }
+
+            const baseName = name.substring(1);
+            if (!baseName) {
+                continue;
+            }
+
+            const baseSymbol = this.rootTable.find(commandType, baseName);
+            if (!baseSymbol || !(baseSymbol instanceof ScriptSymbol)) {
+                continue;
+            }
+
+            if (this.rootTable.find(commandType, name)) {
+                continue;
+            }
+
+            const alias = new ServerScriptSymbol(CommandTrigger, name, baseSymbol.parameters, baseSymbol.returns);
+            this.rootTable.insert(commandType, alias);
+        }
     }
 
     /**
