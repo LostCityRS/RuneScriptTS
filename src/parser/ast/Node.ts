@@ -17,19 +17,19 @@ export abstract class Node {
     /**
      * A [MutableList] of children for our use only.
      */
-    private readonly _children: Node[] = [];
+    // private readonly _children: Node[] = [];
 
     /**
      * All nodes that belong (directly) to this node.
      */
-    public get children(): readonly Node[] {
-        return this._children;
-    }
+    // public get children(): readonly Node[] {
+    //     return this._children;
+    // }
 
     /**
      * A map of attributes that allows external code to add extra information to the node.
      */
-    private readonly attributes = new Map<string, unknown>();
+    // private readonly attributes = new Map<string, unknown>();
 
     protected constructor(public readonly source: NodeSourceLocation) {
         this.source = source;
@@ -53,7 +53,7 @@ export abstract class Node {
         }
 
         node.parent = this;
-        this._children.push(node);
+        // this._children.push(node);
     }
 
     /**
@@ -70,7 +70,7 @@ export abstract class Node {
             }
 
             node.parent = this;
-            this._children.push(node);
+            // this._children.push(node);
         }
     }
 

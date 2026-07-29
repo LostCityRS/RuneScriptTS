@@ -275,11 +275,12 @@ export class ScriptCompiler {
 
         const macroRegistry = new MacroRegistry();
         const macroExpansionMap = new Map<string, MacroExpansionSpan[]>();
+        const filesBySourcePath = this.sourcePaths.map(sourcePath => this.walkTopDown(sourcePath));
+
         if (this.features.macros !== false) {
             this.attachMacroLookup(macroExpansionMap, macroRegistry);
 
-            for (const sourcePath of this.sourcePaths) {
-                const files = this.walkTopDown(sourcePath);
+            for (const files of filesBySourcePath) {
                 for (const file of files) {
                     if (!file.endsWith('.macro')) {
                         continue;
@@ -290,12 +291,7 @@ export class ScriptCompiler {
             }
         }
 
-        for (const sourcePath of this.sourcePaths) {
-            // this.logger.debug(`Parsing files in '${sourcePath}'.`);
-
-            // Recursively walk all files.
-            const files = this.walkTopDown(sourcePath);
-
+        for (const files of filesBySourcePath) {
             for (const file of files) {
                 if (!file.endsWith(`.${ext}`)) {
                     continue;

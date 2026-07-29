@@ -121,6 +121,10 @@ export class MacroProcessor {
     }
 
     private static expandSourceInternal(source: string, registry: MacroRegistry, diagnostics: Diagnostics, sourceName: string, stack: string[], collapseNewlines: boolean): MacroExpansionResult {
+        if (!collapseNewlines && !source.includes('#')) {
+            return { text: source, spans: [] };
+        }
+
         const out: string[] = [];
         const spans: MacroExpansionSpan[] = [];
         let index = 0;
