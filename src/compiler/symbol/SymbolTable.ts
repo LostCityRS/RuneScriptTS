@@ -11,6 +11,9 @@ import { SymbolType } from '#/compiler/symbol/SymbolType.js';
  */
 export class SymbolTable {
     private symbols: Map<SymbolType<any>, Map<string, RuneScriptSymbol>> = new Map();
+    private readonly basicSymbolsByName = new Map<string, { order: number; symbol: RuneScriptSymbol }[]>();
+    private readonly exactSymbolsByName = new Map<string, { order: number; symbol: RuneScriptSymbol }[]>();
+    private readonly symbolTypeOrder = new Map<SymbolType<any>, number>();
 
     constructor(private parent: SymbolTable | null = null) {}
 
@@ -40,9 +43,19 @@ export class SymbolTable {
         if (!table) {
             table = new Map();
             this.symbols.set(type, table);
+            this.symbolTypeOrder.set(type, this.symbolTypeOrder.size);
         }
 
         table.set(key, symbol);
+        const index = type.kind === 'Basic' ? this.basicSymbolsByName : this.exactSymbolsByName;
+        let matches = index.get(key);
+        if (!matches) {
+            matches = [];
+            index.set(key, matches);
+        }
+        const entry = { order: this.symbolTypeOrder.get(type)!, symbol };
+        const next = matches.findIndex(match => match.order > entry.order);
+        matches.splice(next < 0 ? matches.length : next, 0, entry);
         return true;
     }
 
@@ -75,9 +88,13 @@ export class SymbolTable {
      * optionally restricted by kind.
      */
     *findAllIter<T extends RuneScriptSymbol>(name: string, type?: { new (...args: any[]): T }): IterableIterator<T> {
-        for (const [symbolType, table] of this.symbols.entries()) {
-            const key = this.normalizeName(symbolType, name);
-            const symbol = table.get(key);
+        const basic = this.basicSymbolsByName.get(name.toLowerCase().replace(/\s+/g, '_')) ?? [];
+        const exact = this.exactSymbolsByName.get(name) ?? [];
+        let basicIndex = 0;
+        let exactIndex = 0;
+        while (basicIndex < basic.length || exactIndex < exact.length) {
+            const useBasic = exactIndex >= exact.length || (basicIndex < basic.length && basic[basicIndex].order < exact[exactIndex].order);
+            const symbol = (useBasic ? basic[basicIndex++] : exact[exactIndex++]).symbol;
             if (symbol && (!type || symbol instanceof type)) {
                 yield symbol as T;
             }
