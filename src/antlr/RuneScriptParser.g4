@@ -177,8 +177,8 @@ constantVariable
 
 literal
     : INTEGER_LITERAL   # IntegerLiteral
-    | HEX_LITERAL       # IntegerLiteral
-    | BIN_LITERAL       # IntegerLiteral
+    | HEX_LITERAL       # HexLiteral
+    | BIN_LITERAL       # BinLiteral
     | COORD_LITERAL     # CoordLiteral
     | BOOLEAN_LITERAL   # BooleanLiteral
     | CHAR_LITERAL      # CharacterLiteral

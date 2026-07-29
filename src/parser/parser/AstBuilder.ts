@@ -7,6 +7,7 @@ import {
     ArithmeticParenthesizedExpressionContext,
     ArrayDeclarationStatementContext,
     AssignmentStatementContext,
+    BinLiteralContext,
     BlockStatementContext,
     BooleanLiteralContext,
     CalcExpressionContext,
@@ -26,6 +27,7 @@ import {
     ExpressionStatementContext,
     GameVariableContext,
     GameVariableExpressionContext,
+    HexLiteralContext,
     IdentifierContext,
     IdentifierExpressionContext,
     IfStatementContext,
@@ -293,14 +295,15 @@ export class AstBuilder extends RuneScriptParserVisitor<Node> {
     };
 
     visitIntegerLiteral = (ctx: IntegerLiteralContext): Node => {
-        const text = ctx.getText();
-        if (text.length > 1 && text[0] === '0' && (text[1] === 'x' || text[1] === 'X')) {
-            return new IntegerLiteral(this.location(ctx), parseInt(text.slice(2), 16));
-        }
-        if (text.length > 1 && text[0] === '0' && (text[1] === 'b' || text[1] === 'B')) {
-            return new IntegerLiteral(this.location(ctx), parseInt(text.slice(2), 2));
-        }
-        return new IntegerLiteral(this.location(ctx), parseInt(text, 10));
+        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText(), 10));
+    };
+
+    visitHexLiteral = (ctx: HexLiteralContext): Node => {
+        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText().slice(2), 16));
+    };
+
+    visitBinLiteral = (ctx: BinLiteralContext): Node => {
+        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText().slice(2), 2));
     };
 
     visitCoordLiteral = (ctx: CoordLiteralContext): Node => {
