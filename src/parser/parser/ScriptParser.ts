@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 
-import { ANTLRErrorListener, CharStream, CommonTokenStream, ParserRuleContext } from 'antlr4ng';
+import { ANTLRErrorListener, BailErrorStrategy, CharStream, CommonTokenStream, DefaultErrorStrategy, ParseCancellationException, ParserRuleContext, PredictionMode } from 'antlr4ng';
 
 import { RuneScriptLexer } from '#/antlr/RuneScriptLexer.js';
 import { RuneScriptParser } from '#/antlr/RuneScriptParser.js';
@@ -44,16 +44,34 @@ export class ScriptParser {
         const tokens = new CommonTokenStream(lexer);
         const parser = new RuneScriptParser(tokens);
 
-        // Setup error listeners
+        // Lexer errors are always real, but SLL parser errors may only mean LL is required
         if (errorListener) {
             lexer.removeErrorListeners();
             lexer.addErrorListener(errorListener);
-
-            parser.removeErrorListeners();
-            parser.addErrorListener(errorListener);
         }
 
-        const tree = entry(parser);
+        const parserErrorListeners = errorListener ? [errorListener] : parser.getErrorListeners();
+        parser.removeErrorListeners();
+        parser.interpreter.predictionMode = PredictionMode.SLL;
+        parser.errorHandler = new BailErrorStrategy();
+
+        let tree: ParserRuleContext;
+        try {
+            tree = entry(parser);
+        } catch (error) {
+            if (!(error instanceof ParseCancellationException)) {
+                throw error;
+            }
+
+            tokens.seek(0);
+            parser.reset(false);
+            parser.interpreter.predictionMode = PredictionMode.LL;
+            parser.errorHandler = new DefaultErrorStrategy();
+            for (const listener of parserErrorListeners) {
+                parser.addErrorListener(listener);
+            }
+            tree = entry(parser);
+        }
 
         // If there were any errors detected, return null for the whole node
         if (parser.numberOfSyntaxErrors > 0) {
