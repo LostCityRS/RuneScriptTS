@@ -675,6 +675,7 @@ export class TypeChecking extends AstVisitor<void> {
             expression instanceof CommandCallExpression ||
             expression instanceof ProcCallExpression ||
             expression instanceof ConditionExpression ||
+            (expression instanceof ArithmeticExpression && (this.hasConcreteType(expression.left) || this.hasConcreteType(expression.right))) ||
             expression instanceof GameVariableExpression ||
             expression instanceof LocalVariableExpression ||
             expression instanceof JoinedStringExpression ||
