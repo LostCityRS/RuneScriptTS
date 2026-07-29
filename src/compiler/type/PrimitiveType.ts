@@ -46,7 +46,7 @@ export class PrimitiveType extends Type {
         opts.allowSwitch = false;
     });
     static readonly CHAR = new PrimitiveType('CHAR', 'z', BaseVarType.INTEGER, -1);
-    static readonly LONG = new PrimitiveType('LONG', 'Ï', BaseVarType.LONG, -1, opts => {
+    static readonly LONG = new PrimitiveType('LONG', 'Ï', BaseVarType.LONG, 0n, opts => {
         ((opts.allowArray = false), (opts.allowSwitch = false));
     });
     static readonly MAPZONE = new PrimitiveType('MAPZONE', '0', BaseVarType.INTEGER, -1);
