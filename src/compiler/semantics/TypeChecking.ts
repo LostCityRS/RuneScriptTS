@@ -1167,7 +1167,8 @@ export class TypeChecking extends AstVisitor<void> {
             nullLiteral.type = hint;
             return;
         }
-        nullLiteral.type = PrimitiveType.INT;
+        nullLiteral.type = MetaType.Error;
+        nullLiteral.reportError(this.diagnostics, DiagnosticMessage.NULL_AMBIGUOUS);
     }
 
     override visitStringLiteral(stringLiteral: StringLiteral): void {

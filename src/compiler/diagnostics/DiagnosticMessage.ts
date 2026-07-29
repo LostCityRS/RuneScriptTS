@@ -89,6 +89,9 @@ export const DiagnosticMessage = {
     CONSTANT_PARSE_ERROR: "Unable to parse constant value of '%s' into type '%s'.",
     CONSTANT_NONCONSTANT: "Constant value of '%s' evaluated to a non-constant expression.",
 
+    // Null literal specific
+    NULL_AMBIGUOUS: "Cannot infer type of 'null' from context.",
+
     // Feature flag specific
     FEATURE_DISABLED_TRIGGER: "Trigger '%s' is disabled.",
     FEATURE_DISABLED_COMMAND: "Command '%s' is disabled.",
