@@ -575,28 +575,7 @@ export class TypeChecking extends AstVisitor<void> {
             return false;
         }
 
-        /**
-         * If required type is set we should hint with those, otherwise use the opposite
-         * sides type as a hint.
-         */
-        if (allowedTypes != null) {
-            left.typeHint = allowedTypes[0];
-            right.typeHint = allowedTypes[0];
-        } else {
-            // Assign the type hints using the opposite side if it isn't already assigned.
-            left.typeHint = left.typeHint ?? right.type ?? null;
-            right.typeHint = right.typeHint ?? left.type ?? null;
-        }
-
-        /**
-         * TODO: Better logic for this to allow things such as 'if (null ! $var)', should also revisit the above.
-         * Visit left side to get the type for hinting to the right side if needed.
-         */
-        this.visitNodeOrNull(left);
-
-        // Type hint right if not already hinted to the left type and then visit.
-        right.typeHint = right.typeHint ?? left.type;
-        this.visitNodeOrNull(right);
+        this.visitHintedPair(left, right);
 
         // Ensure both types are set, otherwise report error and return false.
         if (left.type == null || right.type == null) {
@@ -652,16 +631,16 @@ export class TypeChecking extends AstVisitor<void> {
         const right = arithmeticExpression.right;
         const operator = arithmeticExpression.operator;
 
-        // Arithmetic expression only expect 'int' or 'long' return types, but just allow.
-        const expectedType = arithmeticExpression.typeHint ?? PrimitiveType.INT;
+        const hint = arithmeticExpression.typeHint;
+        if (hint != null) {
+            left.typeHint = hint;
+            this.visitNodeOrNull(left);
 
-        // Visit left-hand side.
-        left.typeHint = expectedType;
-        this.visitNodeOrNull(left);
-
-        // Visit right-hand side.
-        right.typeHint = expectedType;
-        this.visitNodeOrNull(right);
+            right.typeHint = hint;
+            this.visitNodeOrNull(right);
+        } else {
+            this.visitHintedPair(left, right);
+        }
 
         // Verify if both sides are 'int' or 'long' and are of the same type.
         if (
@@ -669,15 +648,44 @@ export class TypeChecking extends AstVisitor<void> {
             right.type == null ||
             !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, left.type ?? MetaType.Error) ||
             !this.checkTypeMatchAny(left, TypeChecking.ALLOWED_ARITHMETIC_TYPES, right.type ?? MetaType.Error) ||
-            !this.checkTypeMatch(left, expectedType, left.type ?? MetaType.Error, false) ||
-            !this.checkTypeMatch(right, expectedType, right.type ?? MetaType.Error, false)
+            !this.checkTypeMatch(left, left.type ?? MetaType.Error, right.type ?? MetaType.Error, false)
         ) {
             operator.reportError(this.diagnostics, DiagnosticMessage.BINOP_INVALID_TYPES, operator.text, left.type ? left.type.representation : '<null>', right.type ? right.type.representation : '<null>');
             arithmeticExpression.type = MetaType.Error;
             return;
         }
 
-        arithmeticExpression.type = expectedType;
+        arithmeticExpression.type = left.type;
+    }
+
+    private visitHintedPair(left: Expression, right: Expression): void {
+        if (this.hasConcreteType(left) || !this.hasConcreteType(right)) {
+            this.visitNodeOrNull(left);
+            right.typeHint = left.type;
+            this.visitNodeOrNull(right);
+        } else {
+            this.visitNodeOrNull(right);
+            left.typeHint = right.type;
+            this.visitNodeOrNull(left);
+        }
+    }
+
+    private hasConcreteType(expression: Expression): boolean {
+        if (
+            expression instanceof CommandCallExpression ||
+            expression instanceof ProcCallExpression ||
+            expression instanceof ConditionExpression ||
+            expression instanceof GameVariableExpression ||
+            expression instanceof LocalVariableExpression ||
+            expression instanceof JoinedStringExpression ||
+            expression instanceof StringLiteral ||
+            expression instanceof CharacterLiteral ||
+            expression instanceof CoordLiteral
+        ) {
+            return true;
+        }
+
+        return expression instanceof ParenthesizedExpression && this.hasConcreteType(expression.expression);
     }
 
     override visitCalcExpression(calcExpression: CalcExpression): void {
@@ -687,11 +695,10 @@ export class TypeChecking extends AstVisitor<void> {
             return;
         }
 
-        const typeHint = calcExpression.typeHint ?? PrimitiveType.INT;
         const innerExpression = calcExpression.expression;
 
         // Hint to the expression that we expect an 'int'.
-        innerExpression.typeHint = typeHint;
+        innerExpression.typeHint = calcExpression.typeHint;
         this.visitNodeOrNull(innerExpression);
 
         // Verify type is an 'int'.
