@@ -10,6 +10,7 @@ import { BasicStringPart, ExpressionStringPart, StringPart } from '#/parser/ast/
 import { CommandCallExpression } from '#/parser/ast/expr/call/CommandCallExpression.js';
 
 import { CharacterLiteral } from '#/parser/ast/expr/literal/CharacterLiteral.js';
+import { IntegerLiteral } from '#/parser/ast/expr/literal/IntegerLiteral.js';
 import { Literal } from '#/parser/ast/expr/literal/Literal.js';
 import { NullLiteral } from '#/parser/ast/expr/literal/NullLiteral.js';
 import { StringLiteral } from '#/parser/ast/expr/literal/StringLiteral.js';
@@ -49,6 +50,16 @@ export class ExpressionGenerator extends AstVisitor<string> {
 
     override visitConstantVariableExpression(expr: ConstantVariableExpression): string {
         return `^${this.visit(expr.name)}`;
+    }
+
+    override visitIntegerLiteral(literal: IntegerLiteral): string {
+        if (literal.radix == IntegerLiteral.RADIX_HEXADECIMAL) {
+            return `0x${literal.value}`;
+        }
+        if (literal.radix == IntegerLiteral.RADIX_BINARY) {
+            return `0b${literal.value}`;
+        }
+        return literal.value;
     }
 
     override visitCharacterLiteral(literal: CharacterLiteral): string {
