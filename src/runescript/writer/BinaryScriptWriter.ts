@@ -236,9 +236,12 @@ export abstract class BinaryScriptWriter extends BaseScriptWriter<BinaryScriptWr
         });
     }
 
-    private findCaseKeyValue(key: number | RuneScriptSymbol): number {
+    private findCaseKeyValue(key: number | boolean | RuneScriptSymbol): number {
         if (typeof key === 'number') {
             return key;
+        }
+        if (typeof key === 'boolean') {
+            return key ? 1 : 0;
         }
 
         /**
