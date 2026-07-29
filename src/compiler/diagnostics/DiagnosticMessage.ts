@@ -25,6 +25,7 @@ export const DiagnosticMessage = {
     GENERIC_TYPE_MISMATCH: "Type mismatch: '%s' was given but '%s' was expected.",
     GENERIC_UNRESOLVED_SYMBOL: "'%s' could not be resolved to a symbol.",
     ARITHMETIC_INVALID_TYPE: "Type mismatch: '%s' was given but 'int' or 'long' was expected.",
+    INTEGER_VALUE_OUT_OF_RANGE: "Integer value is out of range for type '%s'.",
 
     // Script node specific
     SCRIPT_REDECLARATION: '[%s,%s] is already defined.',

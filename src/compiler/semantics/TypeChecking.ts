@@ -1083,17 +1083,56 @@ export class TypeChecking extends AstVisitor<void> {
     override visitIntegerLiteral(integerLiteral: IntegerLiteral): void {
         const hint = integerLiteral.typeHint;
 
-        // This logic is a simplified version from string literals.
-        if (hint == null || hint == MetaType.Unit || this.typeManager.check(hint, PrimitiveType.INT)) {
-            integerLiteral.type = PrimitiveType.INT;
-        } else if (!TypeChecking.LITERAL_TYPES.has(hint)) {
-            integerLiteral.reference = this.resolveSymbol(integerLiteral, integerLiteral.value.toString(), hint);
-        } else if (hint == PrimitiveType.BOOLEAN && (integerLiteral.value == 0 || integerLiteral.value == 1)) {
-            integerLiteral.type = PrimitiveType.BOOLEAN;
-        } else if (hint == PrimitiveType.STRING) {
+        if (hint == PrimitiveType.STRING) {
             integerLiteral.type = PrimitiveType.STRING;
-        } else {
-            integerLiteral.type = PrimitiveType.INT;
+            return;
+        }
+
+        if (hint == PrimitiveType.BOOLEAN && this.isBooleanCompatible(integerLiteral.value, integerLiteral.radix)) {
+            integerLiteral.numberValue = Number(integerLiteral.value);
+            integerLiteral.type = PrimitiveType.BOOLEAN;
+            return;
+        }
+
+        if (hint != null && hint != MetaType.Error && hint != MetaType.Unit && !TypeChecking.LITERAL_TYPES.has(hint)) {
+            integerLiteral.reference = this.resolveSymbol(integerLiteral, integerLiteral.value, hint);
+            return;
+        }
+
+        const type = hint == PrimitiveType.LONG ? PrimitiveType.LONG : PrimitiveType.INT;
+        const numericValue = this.parseNumericValue(integerLiteral.value, integerLiteral.radix, type);
+        if (numericValue == null) {
+            integerLiteral.reportError(this.diagnostics, DiagnosticMessage.INTEGER_VALUE_OUT_OF_RANGE, type.representation);
+            integerLiteral.type = MetaType.Error;
+            return;
+        }
+
+        integerLiteral.numberValue = numericValue;
+        integerLiteral.type = type;
+    }
+
+    private isBooleanCompatible(value: string, radix: number): boolean {
+        return radix == IntegerLiteral.RADIX_DECIMAL && (value == '0' || value == '1');
+    }
+
+    private parseNumericValue(value: string, radix: number, type: Type): number | bigint | null {
+        try {
+            const prefixedValue = radix == IntegerLiteral.RADIX_HEXADECIMAL ? `0x${value}` : radix == IntegerLiteral.RADIX_BINARY ? `0b${value}` : value;
+            const parsed = BigInt(prefixedValue);
+
+            if (type == PrimitiveType.INT) {
+                const valid = radix == IntegerLiteral.RADIX_DECIMAL ? parsed >= -0x80000000n && parsed <= 0x7fffffffn : parsed >= 0n && parsed <= 0xffffffffn;
+                return valid ? Number(BigInt.asIntN(32, parsed)) : null;
+            }
+
+            if (type == PrimitiveType.LONG) {
+                const valid = radix == IntegerLiteral.RADIX_DECIMAL ? parsed >= -0x8000000000000000n && parsed <= 0x7fffffffffffffffn : parsed >= 0n && parsed <= 0xffffffffffffffffn;
+                return valid ? BigInt.asIntN(64, parsed) : null;
+            }
+
+            throw new Error(`Unexpected type: ${type.representation}`);
+        } catch {
+            return null;
         }
     }
 

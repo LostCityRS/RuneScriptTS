@@ -396,6 +396,10 @@ export class CodeGenerator extends AstVisitor<void> {
             return expression.reference;
         }
 
+        if (expression instanceof IntegerLiteral) {
+            return expression.reference ?? expression.numberValue;
+        }
+
         if (expression instanceof Literal) {
             return expression.reference ?? expression.value;
         }
@@ -680,11 +684,18 @@ export class CodeGenerator extends AstVisitor<void> {
         }
 
         if (integerLiteral.type == PrimitiveType.STRING) {
-            this.instruction(Opcode.PushConstantString, integerLiteral.value.toString(), integerLiteral.source);
+            this.instruction(Opcode.PushConstantString, integerLiteral.value, integerLiteral.source);
             return;
         }
 
-        this.instruction(Opcode.PushConstantInt, integerLiteral.value, integerLiteral.source);
+        const numberValue = integerLiteral.numberValue;
+        if (typeof numberValue === 'number') {
+            this.instruction(Opcode.PushConstantInt, numberValue, integerLiteral.source);
+        } else if (typeof numberValue === 'bigint') {
+            this.instruction(Opcode.PushConstantLong, numberValue, integerLiteral.source);
+        } else {
+            throw new Error(`Integer literal has no numeric value: ${integerLiteral.value}`);
+        }
     }
 
     override visitCoordLiteral(coordLiteral: CoordLiteral): void {

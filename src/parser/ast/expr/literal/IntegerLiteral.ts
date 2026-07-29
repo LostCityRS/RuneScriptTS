@@ -12,14 +12,19 @@ import { Literal } from '#/parser/ast/expr/literal/Literal.js';
  * 123456
  * ```
  */
-export class IntegerLiteral extends Literal<number> {
+export class IntegerLiteral extends Literal<string> {
     public readonly kind = NodeKind.IntegerLiteral;
+    public numberValue: number | bigint | null = null;
 
-    public constructor(source: NodeSourceLocation, value: number) {
+    public constructor(source: NodeSourceLocation, value: string, public readonly radix: number) {
         super(source, value);
     }
 
     public accept<R>(visitor: AstVisitor<R>): R {
         return visitor.visitIntegerLiteral(this);
     }
+
+    public static readonly RADIX_BINARY = 2;
+    public static readonly RADIX_DECIMAL = 10;
+    public static readonly RADIX_HEXADECIMAL = 16;
 }

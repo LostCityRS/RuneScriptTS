@@ -295,15 +295,15 @@ export class AstBuilder extends RuneScriptParserVisitor<Node> {
     };
 
     visitIntegerLiteral = (ctx: IntegerLiteralContext): Node => {
-        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText(), 10));
+        return new IntegerLiteral(this.location(ctx), ctx.getText(), IntegerLiteral.RADIX_DECIMAL);
     };
 
     visitHexLiteral = (ctx: HexLiteralContext): Node => {
-        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText().slice(2), 16));
+        return new IntegerLiteral(this.location(ctx), ctx.getText().slice(2), IntegerLiteral.RADIX_HEXADECIMAL);
     };
 
     visitBinLiteral = (ctx: BinLiteralContext): Node => {
-        return new IntegerLiteral(this.location(ctx), parseInt(ctx.getText().slice(2), 2));
+        return new IntegerLiteral(this.location(ctx), ctx.getText().slice(2), IntegerLiteral.RADIX_BINARY);
     };
 
     visitCoordLiteral = (ctx: CoordLiteralContext): Node => {
